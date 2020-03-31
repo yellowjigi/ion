@@ -2037,7 +2037,10 @@ nm_agent_SOURCES =  	$(nm_shared_src)		\
 			nm/agent/adm_ion_ltp_admin_impl.c	\
 			nm/agent/adm_ion_ltp_admin_agent.c	\
 			nm/agent/adm_ltp_agent_impl.c	\
-			nm/agent/adm_ltp_agent_agent.c 
+			nm/agent/adm_ltp_agent_agent.c 	\
+			nm/agent/adm_ion_bpcp_impl.c	\
+			nm/agent/adm_ion_bpcp_agent.c
+#last two lines added by jigi
 
 
 nm_agent_LDADD = libici.la libbp.la libltp.la $(LIBOBJS) $(PTHREAD_LIBS)
@@ -2065,7 +2068,9 @@ nm_mgr_SOURCES =	$(nm_shared_src)		\
 			nm/mgr/adm_ionsec_admin_mgr.c	\
 			nm/mgr/adm_ion_ipn_admin_mgr.c	\
 			nm/mgr/adm_ion_ltp_admin_mgr.c	\
-			nm/mgr/adm_ltp_agent_mgr.c
+			nm/mgr/adm_ltp_agent_mgr.c	\
+			nm/mgr/adm_ion_bpcp_mgr.c
+#last line added by jigi
 
 nm_mgr_LDADD = libici.la libbp.la libltp.la $(LIBOBJS) $(PTHREAD_LIBS)
 

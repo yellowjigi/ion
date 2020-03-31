@@ -48,6 +48,7 @@
 #include "adm_ionsec_admin.h"
 #include "adm_ion_ltp_admin.h"
 #include "adm_ltp_agent.h"
+#include "adm_ion_bpcp.h"//jigi
 
 vector_t g_adm_info;
 
