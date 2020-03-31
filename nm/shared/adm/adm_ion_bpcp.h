@@ -73,7 +73,7 @@ extern vec_idx_t g_dtn_ion_bpcp_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |bp_version           |448218ca00    |Version of installed ION BPCP utility.|STR    |
+ * |bpcp_version         |448218ca00    |Version of installed ION BPCP utility.|STR    |
  * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_BPCP_EDD_BPCP_VERSION 0x00
