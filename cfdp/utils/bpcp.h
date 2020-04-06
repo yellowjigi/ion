@@ -4,6 +4,9 @@
  *	All rights reserved.
  *	Author: Samuel Jero <sj323707@ohio.edu>, Ohio University
  */
+#ifndef BPCP_H_
+#define BPCP_H_
+
 #include "cfdp.h"
 #include "cfdpops.h"
 #include "bputa.h"
@@ -99,6 +102,35 @@ typedef struct
 	int			directoryListingResponseCode;
 } CfdpDirListingResponse;
 
+extern char *remote_path(char *cp);
+extern int is_dir(char *cp);
+extern int open_remote_dir(char *host, char *dir);
+extern char* read_remote_dir(int dir, int index, char* buf, int size);
+extern int close_remote_dir(int dir);
+extern void toremote(char *targ, int argc, char **argv);
+extern void tolocal(int argc, char **argv);
+extern void ion_cfdp_init();
+extern int ion_cfdp_put(struct transfer *t);
+extern int ion_cfdp_get(struct transfer *t);
+extern int ion_cfdp_rput(struct transfer *t);
+extern int local_cp(struct transfer* t);
+extern void manage_src(struct transfer *t);
+extern void manage_dest(struct transfer* t);
+extern void transfer(struct transfer *t);
+extern void* rcv_msg_thread(void* param);
+extern void dbgprintf(int level, const char *fmt, ...);
+extern void usage(void);
+extern void version();
+extern void print_parsed(struct transfer* t);
+extern void exit_nicely(int val);
+extern void prog_start_cpy(struct transfer *t);
+extern void prog_end_cpy(struct transfer *t);
+extern void prog_start_dir(struct transfer *t);
+extern void prog_end_dir(struct transfer *t);
+extern int setscreensize(void);
+extern void parseDirectoryListingResponse(unsigned char *text,
+		int bytesRemaining, CfdpDirListingResponse *opsData);
+
 /*Portability for directory structures*/
 #ifndef _D_EXACT_NAMLEN
 #define _D_EXACT_NAMLEN(d) (strlen ((d)->d_name))
@@ -108,3 +140,5 @@ typedef struct
 #if defined(solaris)
 #include <termios.h>
 #endif
+
+#endif //BPCP_H_

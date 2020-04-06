@@ -1,4 +1,4 @@
-SOURCES = ../shared/adm/*.c ../shared/msg/*.c ../shared/utils/*.c ../shared/primitives/*.c ./*.c 
+SOURCES = ../shared/adm/*.c ../shared/msg/*.c ../shared/utils/*.c ../shared/primitives/*.c ./*.c
 IONDIR = ../../
 OPTS = -Wno-write-strings -g 
 
@@ -20,4 +20,3 @@ all:
 	-c ${SOURCES} 
 
 	gcc -o nm_agent *.o -lm -lltp -lbp -lici -lpthread
-

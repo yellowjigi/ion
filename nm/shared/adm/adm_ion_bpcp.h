@@ -34,7 +34,7 @@ extern vec_idx_t g_dtn_ion_bpcp_idx[11];
  *
  * ADM ROOT STRING:DTN/ION/bpcp
  */
-#define ADM_ENUM_DTN_ION_BPCP 10
+#define ADM_ENUM_DTN_ION_BPCP 11
 /*
  * +-----------------------------------------------------------------------------------------------------------+
  * |                                        AGENT NICKNAME DEFINITIONS                                        +
@@ -47,13 +47,13 @@ extern vec_idx_t g_dtn_ion_bpcp_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |         VALUE          |
  * +---------------------+--------------+--------------------------------------+-------+------------------------+
- * |name                 |448018d200    |The human-readable name of the ADM.   |STR    |ion_bpcp                |
+ * |name                 |448018e600    |The human-readable name of the ADM.   |STR    |ion_bpcp                |
  * +---------------------+--------------+--------------------------------------+-------+------------------------+
- * |namespace            |448018d201    |The namespace of the ADM              |STR    |DTN/ION/bpcp            |
+ * |namespace            |448018e601    |The namespace of the ADM              |STR    |DTN/ION/bpcp            |
  * +---------------------+--------------+--------------------------------------+-------+------------------------+
- * |version              |448018d202    |The version of the ADM                |STR    |v1.0                    |
+ * |version              |448018e602    |The version of the ADM                |STR    |v1.0                    |
  * +---------------------+--------------+--------------------------------------+-------+------------------------+
- * |organization         |448018d203    |The name of the issuing organization o|       |                        |
+ * |organization         |448018e603    |The name of the issuing organization o|       |                        |
  * |                     |              |f the ADM                             |STR    |HYUMNI                  |
  * +---------------------+--------------+--------------------------------------+-------+------------------------+
  */
@@ -73,7 +73,7 @@ extern vec_idx_t g_dtn_ion_bpcp_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |bpcp_version         |448218ca00    |Version of installed ION BPCP utility.|STR    |
+ * |bpcp_version         |448218de00    |Version of installed ION BPCP utility.|STR    |
  * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_BPCP_EDD_BPCP_VERSION 0x00
@@ -112,7 +112,7 @@ extern vec_idx_t g_dtn_ion_bpcp_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |bpcp_local_to_remote |44c118c900    |Copy files between hosts utilizing NAS|       |
+ * |bpcp_local_to_remote |44c118dd00    |Copy files between hosts utilizing NAS|       |
  * |                     |              |A JPL's Interplanetary Overlay Network|       |
  * |                     |              |(ION) to provide a delay tolerant netw|       |
  * |                     |              |ork. File copies from local to remote |       |

@@ -268,7 +268,7 @@ AR = ar
 AUTOCONF = ${SHELL} /home/hoyeonjigi/Downloads/ion-3.7.0/missing autoconf
 AUTOHEADER = ${SHELL} /home/hoyeonjigi/Downloads/ion-3.7.0/missing autoheader
 AUTOMAKE = ${SHELL} /home/hoyeonjigi/Downloads/ion-3.7.0/missing automake-1.15
-AWK = mawk
+AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -DNOEXPAT

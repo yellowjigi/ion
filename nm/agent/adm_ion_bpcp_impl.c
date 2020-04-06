@@ -16,10 +16,10 @@
  ****************************************************************************/
 
 /*   START CUSTOM INCLUDES HERE  */
-#include "bpP.h"
-#include "csi.h"
+#include "cfdp.h"
+#include "cfdpops.h"
+#include "bputa.h"
 #include "../../cfdp/utils/bpcp.h"
-#include "../../cfdp/utils/bpcp.c"
 
 /*   STOP CUSTOM INCLUDES HERE  */
 
@@ -138,30 +138,69 @@ tnv_t *dtn_ion_bpcp_ctrl_bpcp_local_to_remote(eid_t *def_mgr, tnvc_t *parms, int
 	 * +-------------------------------------------------------------------------+
 	 */
 	int success;
-	char remote_path_buf[256];
-	struct transfer t;
-	int res;
+	CfdpReqParms cfdpReqParms;
+	BpCustodySwitch custodySwitch;
+	int i;
 
-	char *remote_host = adm_get_parm_obj(parms, 0, AMP_TYPE_STR);
-	char *local_file = adm_get_parm_obj(parms, 1, AMP_TYPE_STR);
-	char *remote_file = adm_get_parm_obj(parms, 2, AMP_TYPE_STR);
+	int bundle_lifetime = adm_get_parm_uint(parms, 0, &success);
+	int bp_custody = adm_get_parm_uint(parms, 1, &success);
+	int class_of_service = adm_get_parm_uint(parms, 2, &success);
+	char *local_file = adm_get_parm_obj(parms, 3, AMP_TYPE_STR);
+	uvast remote_host = adm_get_parm_uvast(parms, 4, &success);
+	char *remote_file = adm_get_parm_obj(parms, 5, AMP_TYPE_STR);
 
 	/* need to manage maximum string length of the buffer */
 	/* if () */
 
-	/* Initialize CFDP */
-	ion_cfdp_init();
+	memset((char *)&cfdpReqParms, 0, sizeof(CfdpReqParms));
+
+	if (bp_custody == 1)
+	{
+		custodySwitch = SourceCustodyRequired;
+	}
+	else
+	{
+		custodySwitch = NoCustodyRequested;
+	}
+
+	cfdpReqParms.utParms.lifespan = bundle_lifetime;
+	cfdpReqParms.utParms.classOfService = class_of_service;
+	cfdpReqParms.utParms.custodySwitch = custodySwitch;
+
+	/* temporarily use default values as below,
+	 * rather than solicit inputs from users	*/
+	for (i = 0; i < 16; i++)
+	{
+		cfdpReqParms.faultHandlers[i] = CfdpIgnore;
+	}
+	cfdpReqParms.faultHandlers[CfdpFilestoreRejection] = CfdpIgnore;
+	cfdpReqParms.faultHandlers[CfdpCheckLimitReached] = CfdpCancel;
+	cfdpReqParms.faultHandlers[CfdpChecksumFailure] = CfdpCancel;
+	cfdpReqParms.faultHandlers[CfdpInactivityDetected] = CfdpCancel;
+	cfdpReqParms.faultHandlers[CfdpFileSizeError] = CfdpCancel;
+
+	cfdp_compress_number(&cfdpReqParms.destinationEntityNbr, remote_host);
+	snprintf(cfdpReqParms.sourceFileNameBuf, 255, "%.254s", local_file);
+	snprintf(cfdpReqParms.destFileNameBuf, 255, "%.254s", remote_file);
+	cfdpReqParms.sourceFileName = cfdpReqParms.sourceFileNameBuf;
+	cfdpReqParms.destFileName = cfdpReqParms.destFileNameBuf;
 
 	if (cfdp_attach() >= 0)
 	{
-		t.type = Local_Remote;
-		snprintf(t.sfile, 255, "%.254s", local_file);
-		memset(t.shost, 0, 256);
-		snprintf(t.dfile, 255, "%.254s", remote_file);
-		snprintf(t.dhost, 255, "%.254s", remote_host);
-		//manage_src(&t);
-
-		if (0 == (res = ion_cfdp_put(t)))
+		if (cfdp_put(&(cfdpReqParms.destinationEntityNbr),
+					sizeof(BpUtParms),
+					(unsigned char *)&(cfdpReqParms.utParms),
+					cfdpReqParms.sourceFileName,
+					cfdpReqParms.destFileName,
+					NULL,
+					NULL,
+					cfdpReqParms.faultHandlers,
+					0,
+					NULL,
+					0,
+					cfdpReqParms.msgsToUser,
+					cfdpReqParms.fsRequests,
+					&(cfdpReqParms.transactionId)) >= 0)
 		{
 			*status = CTRL_SUCCESS;
 		}

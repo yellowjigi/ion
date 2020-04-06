@@ -86,7 +86,7 @@ void dtn_ion_bpcp_init_var()
 void dtn_ion_bpcp_init_ctrl()
 {
 
-	adm_add_ctrldef(g_dtn_ion_bpcp_idx[ADM_CTRL_IDX], DTN_ION_BPCP_CTRL_BPCP_LOCAL_TO_REMOTE, 3, dtn_ion_bpcp_ctrl_bpcp_local_to_remote);
+	adm_add_ctrldef(g_dtn_ion_bpcp_idx[ADM_CTRL_IDX], DTN_ION_BPCP_CTRL_BPCP_LOCAL_TO_REMOTE, 6, dtn_ion_bpcp_ctrl_bpcp_local_to_remote);
 }
 
 void dtn_ion_bpcp_init_mac()

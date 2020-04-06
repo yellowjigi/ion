@@ -665,6 +665,7 @@ void adm_init()
 	dtn_ion_ionsecadmin_init();
 	dtn_ion_ltpadmin_init();
 	dtn_ltp_agent_init();
+	dtn_ion_bpcp_init();//jigi
 
 	AMP_DEBUG_EXIT("adm_init","->.", NULL);
 }

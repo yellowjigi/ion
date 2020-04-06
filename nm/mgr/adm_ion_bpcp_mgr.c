@@ -112,11 +112,14 @@ void dtn_ion_bpcp_init_ctrl()
 	/* BPCP_LOCAL_TO_REMOTE */
 
 	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_bpcp_idx[ADM_CTRL_IDX], DTN_ION_BPCP_CTRL_BPCP_LOCAL_TO_REMOTE);
-	adm_add_ctrldef_ari(id, 3, NULL);
+	adm_add_ctrldef_ari(id, 6, NULL);
 	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_BPCP, "bpcp_local_to_remote", "Copy files between hosts utilizing NASA JPL's Interplanetary Overlay Network (ION) to provide a delay tolerant network. File copies from local to remote are executed.");
 
-	meta_add_parm(meta, "remote_host", AMP_TYPE_STR);
+	meta_add_parm(meta, "bundle_lifetime", AMP_TYPE_UINT);
+	meta_add_parm(meta, "bp_custody", AMP_TYPE_UINT);
+	meta_add_parm(meta, "class_of_service", AMP_TYPE_UINT);
 	meta_add_parm(meta, "local_file", AMP_TYPE_STR);
+	meta_add_parm(meta, "remote_host", AMP_TYPE_UVAST);
 	meta_add_parm(meta, "remote_file", AMP_TYPE_STR);
 }
 
