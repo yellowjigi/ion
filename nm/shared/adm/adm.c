@@ -48,7 +48,9 @@
 #include "adm_ionsec_admin.h"
 #include "adm_ion_ltp_admin.h"
 #include "adm_ltp_agent.h"
-#include "adm_ion_bpcp.h"//jigi
+#include "adm_ion_bpcp.h"//jigi, 03/31/20
+#include "adm_ion_bpsource.h"//jigi, 04/06/20
+#include "adm_kplo_ls.h"//jigi, 04/07/20
 
 vector_t g_adm_info;
 
@@ -666,6 +668,8 @@ void adm_init()
 	dtn_ion_ltpadmin_init();
 	dtn_ltp_agent_init();
 	dtn_ion_bpcp_init();//jigi
+	dtn_ion_bpsource_init();//jigi
+	dtn_kplo_ls_init();//jigi
 
 	AMP_DEBUG_EXIT("adm_init","->.", NULL);
 }

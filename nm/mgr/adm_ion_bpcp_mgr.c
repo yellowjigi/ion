@@ -87,7 +87,7 @@ void dtn_ion_bpcp_init_edd()
 
 	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_bpcp_idx[ADM_EDD_IDX], DTN_ION_BPCP_EDD_BPCP_VERSION);
 	adm_add_edd(id, NULL);
-	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_BPCP, "bpcp_version", "Version of installed ION BPCP utility.");
+	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_BPCP, "bpcp_version", "Version of installed ION bpcp utility.");
 
 }
 

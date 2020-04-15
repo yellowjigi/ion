@@ -149,7 +149,8 @@ nm/shared/adm/nm_agent-adm.o: nm/shared/adm/adm.c \
  nm/shared/adm/adm_ion_admin.h nm/shared/adm/adm_ion_bp_admin.h \
  nm/shared/adm/adm_ion_ipn_admin.h nm/shared/adm/adm_ionsec_admin.h \
  nm/shared/adm/adm_ion_ltp_admin.h nm/shared/adm/adm_ltp_agent.h \
- nm/shared/adm/adm_ion_bpcp.h
+ nm/shared/adm/adm_ion_bpcp.h nm/shared/adm/adm_ion_bpsource.h \
+ nm/shared/adm/adm_kplo_ls.h
 
 /usr/include/stdc-predef.h:
 
@@ -572,3 +573,7 @@ nm/shared/adm/adm_ion_ltp_admin.h:
 nm/shared/adm/adm_ltp_agent.h:
 
 nm/shared/adm/adm_ion_bpcp.h:
+
+nm/shared/adm/adm_ion_bpsource.h:
+
+nm/shared/adm/adm_kplo_ls.h:
