@@ -89,6 +89,7 @@
 //	return 0;
 //}
 
+//static int read_output(char *cmd, char *out, long int *filesize)
 static int read_output(char *cmd, char *out)
 {
 	FILE *fp;
@@ -96,6 +97,7 @@ static int read_output(char *cmd, char *out)
 	char *cursor;
 	int offset;
 
+	//int size = 0;
 	if ((fp = popen(cmd, "r")) == NULL)
 	{
 		fprintf(stderr, "cannot popen %s.\n", cmd);
@@ -136,8 +138,11 @@ static int read_output(char *cmd, char *out)
 
 		strncpy(cursor, line, offset);
 		cursor += offset;
+		//size += offset;
 	}
-	*(cursor - 1) = '\0';
+	//strncpy(cursor, "testtestte", 10);
+	//fprintf(stderr, "total read bytes: %d.\n", size + 10);
+	//*(cursor - 1) = '\0';
 
 	if (pclose(fp) == -1)
 	{
@@ -154,13 +159,12 @@ static void get_this_ari(ari_t **id)
 			g_dtn_kplo_ls_idx[ADM_CTRL_IDX], DTN_KPLO_LS_CTRL_LIST);
 }
 
-static void gen_rpt(eid_t *def_mgr, ari_t *id, char *contents)
+static void gen_rpt(eid_t *def_mgr, ari_t *id, tnv_t *val)
 {
 	eid_t mgr_eid;
 	tnv_t *mgr;
 	msg_rpt_t *msg_rpt;
 	rpt_t *rpt;
-	tnv_t *val;
 	
 	mgr = tnv_from_str(def_mgr->name);
 	strncpy(mgr_eid.name, mgr->value.as_ptr, AMP_MAX_EID_LEN - 1);
@@ -168,7 +172,6 @@ static void gen_rpt(eid_t *def_mgr, ari_t *id, char *contents)
 	msg_rpt = rda_get_msg_rpt(mgr_eid);
 	rpt = rpt_create(ari_copy_ptr(id), getCtime(), NULL);
 
-	val = tnv_from_str(contents);
 	rpt_add_entry(rpt, val);
 
 	msg_rpt_add_rpt(msg_rpt, rpt);
@@ -306,11 +309,68 @@ tnv_t *dtn_kplo_ls_ctrl_list(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	//	}
 	//}
 
+	//blob_t *blob_result = NULL;
+	//FILE *fp = NULL;
+	//long int file_size = 0;
+	//uint8_t data[FILESIZE_MAX] = { 0 };
+	//char *str = NULL;
+
+	//if ((fp = popen(cmd, "r")) == NULL)
+	//{
+	//	fprintf(stderr, "cannot popen %s.\n", cmd);
+	//	return result;
+	//}
+
+	///* Grab the file size. */
+	//if((fseek(fp, 0L, SEEK_END)) != 0)
+	//{
+	//	fprintf(stderr, "Couldn't seek to end of %s.\n", cmd);
+	//	pclose(fp);
+	//	return result;
+	//}
+
+	//if((file_size = ftell(fp)) == -1)
+	//{
+	//	fprintf(stderr, "Couldn't get size of %s.\n", cmd);
+	//	pclose(fp);
+	//	return result;
+	//}
+
+	//rewind(fp);
+
+	//if((data = STAKE(file_size)) == NULL)
+	//{
+	//	fprintf(stderr, "Couldn't allocate %ld bytes.\n", file_size);
+	//	pclose(fp);
+	//	return result;
+	//}
+
+	//if((fread(data, 1, file_size, fp)) != file_size)
+	//{
+	//	SRELEASE(data);
+	//	fprintf(stderr,"Couldn't read %ld bytes from %s", file_size, cmd);
+	//	pclose(fp);
+	//	return result;
+	//}
+
+	//if (read_output(cmd, (char *)data, &file_size) == -1)
 	if (read_output(cmd, buf) == -1)
 	{
 		fprintf(stderr, "cannot read the command output.\n");
 		return result;
 	}
+
+	/* Shallow copy. */
+	//blob_result = blob_create(data, file_size, file_size);
+	//SRELEASE(data);
+
+	//str = utils_hex_to_string(data, file_size);
+	//fprintf(stderr, "Read from %s: %.50s...", cmd, str);
+	//SRELEASE(str);
+	//pclose(fp);
+
+	tnv_t *val = tnv_from_str(buf);
+	//tnv_t *val = tnv_from_obj(AMP_TYPE_BYTESTR, blob_result);
 
 	//if (stdout_set(&stdout_fd_back) == -1)
 	//{
@@ -340,7 +400,7 @@ tnv_t *dtn_kplo_ls_ctrl_list(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		vec_push(&(id->as_reg.parms.values), cur_parm);
 	}
 
-	gen_rpt(def_mgr, id, buf);
+	gen_rpt(def_mgr, id, val);
 
 	*status = CTRL_SUCCESS;
 

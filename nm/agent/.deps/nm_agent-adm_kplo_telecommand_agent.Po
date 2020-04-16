@@ -1,7 +1,7 @@
-nm/shared/adm/nm_mgr-adm.o: nm/shared/adm/adm.c \
- /usr/include/stdc-predef.h config.h ici/include/ion.h \
- ici/include/platform.h /usr/include/time.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+nm/agent/nm_agent-adm_kplo_telecommand_agent.o: \
+ nm/agent/adm_kplo_telecommand_agent.c /usr/include/stdc-predef.h \
+ config.h ici/include/ion.h ici/include/platform.h /usr/include/time.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
@@ -117,40 +117,52 @@ nm/shared/adm/nm_mgr-adm.o: nm/shared/adm/adm.c \
  ici/include/memmgr.h ici/include/psm.h ici/include/sdr.h \
  ici/include/sdrstring.h ici/include/sdrmgt.h ici/include/sdrxn.h \
  ici/include/sdrlist.h ici/include/smlist.h ici/include/smrbt.h \
- ici/include/zco.h ici/include/platform.h nm/shared/adm/adm.h \
- nm/shared/adm/../utils/nm_types.h nm/shared/adm/../utils/debug.h \
- nm/shared/adm/../primitives/edd_var.h \
- nm/shared/adm/../primitives/../utils/db.h ici/include/sdr.h \
- nm/shared/adm/../primitives/../utils/nm_types.h \
- nm/shared/adm/../primitives/../utils/rhht.h \
- nm/shared/adm/../primitives/../utils/vector.h \
- nm/shared/adm/../primitives/../utils/../primitives/blob.h \
+ ici/include/zco.h ici/include/platform.h \
+ nm/agent/../shared/adm/adm_kplo_telecommand.h \
+ nm/agent/../shared/adm/../utils/nm_types.h \
+ nm/agent/../shared/adm/../utils/debug.h nm/agent/../shared/adm/adm.h \
+ nm/agent/../shared/adm/../primitives/edd_var.h \
+ nm/agent/../shared/adm/../primitives/../utils/db.h ici/include/sdr.h \
+ nm/agent/../shared/adm/../primitives/../utils/nm_types.h \
+ nm/agent/../shared/adm/../primitives/../utils/rhht.h \
+ nm/agent/../shared/adm/../primitives/../utils/vector.h \
+ nm/agent/../shared/adm/../primitives/../utils/../primitives/blob.h \
  nm/contrib/QCBOR/inc/qcbor.h \
  /usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h \
- nm/contrib/QCBOR/inc/UsefulBuf.h nm/shared/adm/../primitives/ari.h \
- nm/shared/adm/../primitives/../utils/debug.h \
- nm/shared/adm/../primitives/../utils/rhht.h \
- nm/shared/adm/../primitives/../utils/vector.h \
- nm/shared/adm/../primitives/../primitives/tnv.h \
- nm/shared/adm/../primitives/../primitives/../utils/nm_types.h \
- nm/shared/adm/../primitives/../primitives/../utils/cbor_utils.h \
- nm/shared/adm/../primitives/../primitives/../utils/nm_types.h \
- nm/shared/adm/../primitives/../primitives/../utils/vector.h \
- nm/shared/adm/../primitives/../primitives/../utils/vector.h \
- nm/shared/adm/../primitives/tnv.h nm/shared/adm/../primitives/expr.h \
- nm/shared/adm/../primitives/../utils/nm_types.h \
- nm/shared/adm/../primitives/report.h nm/shared/adm/../primitives/ctrl.h \
- nm/shared/adm/../primitives/../utils/utils.h bp/include/bp.h \
+ nm/contrib/QCBOR/inc/UsefulBuf.h \
+ nm/agent/../shared/adm/../primitives/ari.h \
+ nm/agent/../shared/adm/../primitives/../utils/debug.h \
+ nm/agent/../shared/adm/../primitives/../utils/rhht.h \
+ nm/agent/../shared/adm/../primitives/../utils/vector.h \
+ nm/agent/../shared/adm/../primitives/../primitives/tnv.h \
+ nm/agent/../shared/adm/../primitives/../primitives/../utils/nm_types.h \
+ nm/agent/../shared/adm/../primitives/../primitives/../utils/cbor_utils.h \
+ nm/agent/../shared/adm/../primitives/../primitives/../utils/nm_types.h \
+ nm/agent/../shared/adm/../primitives/../primitives/../utils/vector.h \
+ nm/agent/../shared/adm/../primitives/../primitives/../utils/vector.h \
+ nm/agent/../shared/adm/../primitives/tnv.h \
+ nm/agent/../shared/adm/../primitives/expr.h \
+ nm/agent/../shared/adm/../primitives/../utils/nm_types.h \
+ nm/agent/../shared/adm/../primitives/report.h \
+ nm/agent/../shared/adm/../primitives/ctrl.h \
+ nm/agent/../shared/adm/../primitives/../utils/utils.h bp/include/bp.h \
  ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h nm/shared/adm/../primitives/table.h \
- nm/shared/adm/../utils/utils.h nm/shared/adm/../utils/db.h \
- nm/shared/adm/../primitives/expr.h nm/shared/adm/adm_amp_agent.h \
- nm/shared/adm/adm_bp_agent.h nm/shared/adm/adm_sbsp.h \
- nm/shared/adm/adm_ion_admin.h nm/shared/adm/adm_ion_bp_admin.h \
- nm/shared/adm/adm_ion_ipn_admin.h nm/shared/adm/adm_ionsec_admin.h \
- nm/shared/adm/adm_ion_ltp_admin.h nm/shared/adm/adm_ltp_agent.h \
- nm/shared/adm/adm_ion_bpcp.h nm/shared/adm/adm_ion_bpsource.h \
- nm/shared/adm/adm_kplo_ls.h nm/shared/adm/adm_kplo_telecommand.h
+ ici/include/smlist.h nm/agent/../shared/adm/../primitives/table.h \
+ nm/agent/../shared/utils/utils.h nm/agent/../shared/primitives/report.h \
+ nm/agent/../shared/primitives/blob.h \
+ nm/agent/adm_kplo_telecommand_impl.h \
+ nm/agent/../shared/primitives/ctrl.h \
+ nm/agent/../shared/primitives/table.h \
+ nm/agent/../shared/primitives/tnv.h nm/agent/rda.h \
+ nm/agent/../shared/primitives/rules.h \
+ nm/agent/../shared/primitives/../utils/nm_types.h \
+ nm/agent/../shared/primitives/../utils/db.h \
+ nm/agent/../shared/primitives/../primitives/ctrl.h \
+ nm/agent/../shared/primitives/../primitives/expr.h \
+ nm/agent/../shared/msg/msg.h nm/agent/../shared/msg/../utils/nm_types.h \
+ nm/agent/../shared/msg/../utils/vector.h \
+ nm/agent/../shared/msg/../primitives/ari.h \
+ nm/agent/../shared/msg/../primitives/report.h
 
 /usr/include/stdc-predef.h:
 
@@ -478,25 +490,27 @@ ici/include/zco.h:
 
 ici/include/platform.h:
 
-nm/shared/adm/adm.h:
+nm/agent/../shared/adm/adm_kplo_telecommand.h:
 
-nm/shared/adm/../utils/nm_types.h:
+nm/agent/../shared/adm/../utils/nm_types.h:
 
-nm/shared/adm/../utils/debug.h:
+nm/agent/../shared/adm/../utils/debug.h:
 
-nm/shared/adm/../primitives/edd_var.h:
+nm/agent/../shared/adm/adm.h:
 
-nm/shared/adm/../primitives/../utils/db.h:
+nm/agent/../shared/adm/../primitives/edd_var.h:
+
+nm/agent/../shared/adm/../primitives/../utils/db.h:
 
 ici/include/sdr.h:
 
-nm/shared/adm/../primitives/../utils/nm_types.h:
+nm/agent/../shared/adm/../primitives/../utils/nm_types.h:
 
-nm/shared/adm/../primitives/../utils/rhht.h:
+nm/agent/../shared/adm/../primitives/../utils/rhht.h:
 
-nm/shared/adm/../primitives/../utils/vector.h:
+nm/agent/../shared/adm/../primitives/../utils/vector.h:
 
-nm/shared/adm/../primitives/../utils/../primitives/blob.h:
+nm/agent/../shared/adm/../primitives/../utils/../primitives/blob.h:
 
 nm/contrib/QCBOR/inc/qcbor.h:
 
@@ -504,37 +518,37 @@ nm/contrib/QCBOR/inc/qcbor.h:
 
 nm/contrib/QCBOR/inc/UsefulBuf.h:
 
-nm/shared/adm/../primitives/ari.h:
+nm/agent/../shared/adm/../primitives/ari.h:
 
-nm/shared/adm/../primitives/../utils/debug.h:
+nm/agent/../shared/adm/../primitives/../utils/debug.h:
 
-nm/shared/adm/../primitives/../utils/rhht.h:
+nm/agent/../shared/adm/../primitives/../utils/rhht.h:
 
-nm/shared/adm/../primitives/../utils/vector.h:
+nm/agent/../shared/adm/../primitives/../utils/vector.h:
 
-nm/shared/adm/../primitives/../primitives/tnv.h:
+nm/agent/../shared/adm/../primitives/../primitives/tnv.h:
 
-nm/shared/adm/../primitives/../primitives/../utils/nm_types.h:
+nm/agent/../shared/adm/../primitives/../primitives/../utils/nm_types.h:
 
-nm/shared/adm/../primitives/../primitives/../utils/cbor_utils.h:
+nm/agent/../shared/adm/../primitives/../primitives/../utils/cbor_utils.h:
 
-nm/shared/adm/../primitives/../primitives/../utils/nm_types.h:
+nm/agent/../shared/adm/../primitives/../primitives/../utils/nm_types.h:
 
-nm/shared/adm/../primitives/../primitives/../utils/vector.h:
+nm/agent/../shared/adm/../primitives/../primitives/../utils/vector.h:
 
-nm/shared/adm/../primitives/../primitives/../utils/vector.h:
+nm/agent/../shared/adm/../primitives/../primitives/../utils/vector.h:
 
-nm/shared/adm/../primitives/tnv.h:
+nm/agent/../shared/adm/../primitives/tnv.h:
 
-nm/shared/adm/../primitives/expr.h:
+nm/agent/../shared/adm/../primitives/expr.h:
 
-nm/shared/adm/../primitives/../utils/nm_types.h:
+nm/agent/../shared/adm/../primitives/../utils/nm_types.h:
 
-nm/shared/adm/../primitives/report.h:
+nm/agent/../shared/adm/../primitives/report.h:
 
-nm/shared/adm/../primitives/ctrl.h:
+nm/agent/../shared/adm/../primitives/ctrl.h:
 
-nm/shared/adm/../primitives/../utils/utils.h:
+nm/agent/../shared/adm/../primitives/../utils/utils.h:
 
 bp/include/bp.h:
 
@@ -546,36 +560,40 @@ ici/include/lyst.h:
 
 ici/include/smlist.h:
 
-nm/shared/adm/../primitives/table.h:
+nm/agent/../shared/adm/../primitives/table.h:
 
-nm/shared/adm/../utils/utils.h:
+nm/agent/../shared/utils/utils.h:
 
-nm/shared/adm/../utils/db.h:
+nm/agent/../shared/primitives/report.h:
 
-nm/shared/adm/../primitives/expr.h:
+nm/agent/../shared/primitives/blob.h:
 
-nm/shared/adm/adm_amp_agent.h:
+nm/agent/adm_kplo_telecommand_impl.h:
 
-nm/shared/adm/adm_bp_agent.h:
+nm/agent/../shared/primitives/ctrl.h:
 
-nm/shared/adm/adm_sbsp.h:
+nm/agent/../shared/primitives/table.h:
 
-nm/shared/adm/adm_ion_admin.h:
+nm/agent/../shared/primitives/tnv.h:
 
-nm/shared/adm/adm_ion_bp_admin.h:
+nm/agent/rda.h:
 
-nm/shared/adm/adm_ion_ipn_admin.h:
+nm/agent/../shared/primitives/rules.h:
 
-nm/shared/adm/adm_ionsec_admin.h:
+nm/agent/../shared/primitives/../utils/nm_types.h:
 
-nm/shared/adm/adm_ion_ltp_admin.h:
+nm/agent/../shared/primitives/../utils/db.h:
 
-nm/shared/adm/adm_ltp_agent.h:
+nm/agent/../shared/primitives/../primitives/ctrl.h:
 
-nm/shared/adm/adm_ion_bpcp.h:
+nm/agent/../shared/primitives/../primitives/expr.h:
 
-nm/shared/adm/adm_ion_bpsource.h:
+nm/agent/../shared/msg/msg.h:
 
-nm/shared/adm/adm_kplo_ls.h:
+nm/agent/../shared/msg/../utils/nm_types.h:
 
-nm/shared/adm/adm_kplo_telecommand.h:
+nm/agent/../shared/msg/../utils/vector.h:
+
+nm/agent/../shared/msg/../primitives/ari.h:
+
+nm/agent/../shared/msg/../primitives/report.h:

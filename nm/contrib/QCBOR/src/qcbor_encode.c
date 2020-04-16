@@ -60,7 +60,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  03/15/16           llundbla        Initial Version.
 
  =====================================================================================*/
-
 #include "qcbor.h"
 #include "ieee754.h"
 
