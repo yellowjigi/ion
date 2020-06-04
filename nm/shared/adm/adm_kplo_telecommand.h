@@ -2,7 +2,7 @@
  **
  ** File Name: adm_kplo_telecommand.h
  **
- ** Description: telecommand to execute telecommand on the remote Agent node.
+ ** Description: implement software management on the remote Agent node.
  **
  ** Notes: telecommand test
  **
@@ -11,7 +11,8 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
- **  2020-04-16  jigi             list data model v1.0
+ **  2020-05-18  jigi		  integrated with adm_kplo_ls, adm_kplo_upgrade models
+ **  2020-04-16  jigi             telecommand model v1.0
  **
  ****************************************************************************/
 
@@ -34,7 +35,7 @@ extern vec_idx_t g_dtn_kplo_telecommand_idx[11];
  *
  * ADM ROOT STRING:DTN/KPLO/telecommand
  */
-#define ADM_ENUM_DTN_KPLO_TELECOMMAND 14
+#define ADM_ENUM_DTN_KPLO_TELECOMMAND 13
 /*
  * +-----------------------------------------------------------------------------------------------------------+
  * |                                        AGENT NICKNAME DEFINITIONS                                         +
@@ -109,11 +110,20 @@ extern vec_idx_t g_dtn_kplo_telecommand_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |telecommand          |45c119011900  |Execute local shell commands and repor|       |
- * |                     |              |t following output to Manager.        |       |
+ * |exec                 |45c119010500  |Execute a local command.              |       |
+ * +---------------------+--------------+--------------------------------------+-------+
+ * |kill                 |45c119010501  |Kill (or send a corresponding signal t|       |
+ * |                     |              |o) a process.                         |       |
+ * +---------------------+--------------+--------------------------------------+-------+
+ * |update               |45c119010502  |Install given binary archives using CF|       |
+ * |                     |              |DP via a (local) file server Agent and|       |
+ * |                     |              |restart any applications that need to |       |
+ * |                     |              |be updated.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_KPLO_TELECOMMAND_CTRL 0x00
+#define DTN_KPLO_TELECOMMAND_CTRL_EXEC 0x00
+#define DTN_KPLO_TELECOMMAND_CTRL_KILL 0x01
+#define DTN_KPLO_TELECOMMAND_CTRL_UPDATE 0x02
 
 
 /*

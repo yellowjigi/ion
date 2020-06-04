@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-05-21  jigi		  integrated with adm_kplo_ls_mgr & adm_kplo_upgrade_mgr
  **  2020-04-16  jigi             initial version v1.0 
  **
  ****************************************************************************/
@@ -102,11 +103,33 @@ void dtn_kplo_telecommand_init_ctrl()
 	metadata_t *meta = NULL;
 
 
-	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL);
-	adm_add_ctrldef_ari(id, 1, NULL);
-	meta = meta_add_ctrl(id, ADM_ENUM_DTN_KPLO_TELECOMMAND, "telecommand", "Execute local shell commands and report following output to Manager.");
+	/* EXEC */
 
-	meta_add_parm(meta, "command", AMP_TYPE_STR);
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_EXEC);
+	adm_add_ctrldef_ari(id, 1, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_KPLO_TELECOMMAND, "exec", "Execute a local command.");
+
+	meta_add_parm(meta, "cmd", AMP_TYPE_STR);
+
+	/* KILL */
+
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_KILL);
+	adm_add_ctrldef_ari(id, 2, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_KPLO_TELECOMMAND, "kill", "Terminate (or send a corresponding signal to) a process.");
+
+	meta_add_parm(meta, "application", AMP_TYPE_STR);
+	meta_add_parm(meta, "signum", AMP_TYPE_UINT);
+
+	/* UPDATE */
+
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_UPDATE);
+	adm_add_ctrldef_ari(id, 4, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_KPLO_TELECOMMAND, "update", "Install given binary archives using CFDP via a (local) file server Agent and restart any applications that need to be updated.");
+
+	meta_add_parm(meta, "application_name", AMP_TYPE_STR);
+	meta_add_parm(meta, "file_server_eid", AMP_TYPE_UVAST);
+	meta_add_parm(meta, "file_server_file", AMP_TYPE_STR);
+	meta_add_parm(meta, "install_path", AMP_TYPE_STR);
 }
 
 void dtn_kplo_telecommand_init_mac()

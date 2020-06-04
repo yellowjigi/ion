@@ -6,7 +6,37 @@
  */
 #include "bpcp.h"
 
+
+
+char *remote_path(char *cp);
+int is_dir(char *cp);
+int open_remote_dir(char *host, char *dir);
+char* read_remote_dir(int dir, int index, char* buf, int size);
+int close_remote_dir(int dir);
+void toremote(char *targ, int argc, char **argv);
+void tolocal(int argc, char **argv);
+void ion_cfdp_init();
+int ion_cfdp_put(struct transfer *t);
+int ion_cfdp_get(struct transfer *t);
+int ion_cfdp_rput(struct transfer *t);
+int local_cp(struct transfer* t);
 static int do_local_cmd(char *cmdln);
+void manage_src(struct transfer *t);
+void manage_dest(struct transfer* t);
+void transfer(struct transfer *t);
+void* rcv_msg_thread(void* param);
+void dbgprintf(int level, const char *fmt, ...);
+void usage(void);
+void version();
+void print_parsed(struct transfer* t);
+void exit_nicely(int val);
+void prog_start_cpy(struct transfer *t);
+void prog_end_cpy(struct transfer *t);
+void prog_start_dir(struct transfer *t);
+void prog_end_dir(struct transfer *t);
+int setscreensize(void);
+void parseDirectoryListingResponse(unsigned char *text,
+		int bytesRemaining, CfdpDirListingResponse *opsData);
 #ifdef SIG_HANDLER
 static void handle_sigterm();
 #endif

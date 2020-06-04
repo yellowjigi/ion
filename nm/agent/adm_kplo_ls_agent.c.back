@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-05-18  jigi             integrated into adm_kplo_telecommand_agent
  **  2020-04-07  jigi             initialize ls (list) data model v1.0
  **
  ****************************************************************************/

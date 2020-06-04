@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-05-21  jigi		  integrated into adm_kplo_telecommand_mgr
  **  2020-04-07  jigi             initial version v1.0 
  **
  ****************************************************************************/

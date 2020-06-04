@@ -1,7 +1,8 @@
 nm/agent/nm_agent-adm_ion_bpcp_impl.o: nm/agent/adm_ion_bpcp_impl.c \
- /usr/include/stdc-predef.h config.h cfdp/include/cfdp.h \
- ici/include/ion.h ici/include/platform.h /usr/include/time.h \
- /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ /usr/include/stdc-predef.h config.h nm/agent/../../cfdp/utils/bpcp.h \
+ cfdp/include/cfdp.h ici/include/ion.h ici/include/platform.h \
+ /usr/include/time.h /usr/include/features.h \
+ /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
@@ -120,8 +121,8 @@ nm/agent/nm_agent-adm_ion_bpcp_impl.o: nm/agent/adm_ion_bpcp_impl.c \
  ici/include/zco.h cfdp/include/cfdpops.h cfdp/include/cfdpops.h \
  cfdp/library/bputa.h bp/include/bp.h ici/include/platform.h \
  ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h nm/agent/../../cfdp/utils/bpcp.h \
- nm/agent/../shared/adm/adm.h nm/agent/../shared/adm/../utils/nm_types.h \
+ ici/include/smlist.h nm/agent/../shared/adm/adm.h \
+ nm/agent/../shared/adm/../utils/nm_types.h \
  nm/agent/../shared/adm/../utils/debug.h \
  nm/agent/../shared/adm/../primitives/edd_var.h \
  nm/agent/../shared/adm/../primitives/../utils/db.h \
@@ -157,6 +158,8 @@ nm/agent/nm_agent-adm_ion_bpcp_impl.o: nm/agent/adm_ion_bpcp_impl.c \
 /usr/include/stdc-predef.h:
 
 config.h:
+
+nm/agent/../../cfdp/utils/bpcp.h:
 
 cfdp/include/cfdp.h:
 
@@ -499,8 +502,6 @@ ici/include/zco.h:
 ici/include/lyst.h:
 
 ici/include/smlist.h:
-
-nm/agent/../../cfdp/utils/bpcp.h:
 
 nm/agent/../shared/adm/adm.h:
 

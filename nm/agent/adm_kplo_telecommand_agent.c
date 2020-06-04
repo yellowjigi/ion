@@ -2,7 +2,7 @@
  **
  ** File Name: adm_kplo_telecommand_agent.c
  **
- ** Description: initialize telecommand (list) ADM on the remote Agent node.
+ ** Description: initialize telecommand ADM on the remote Agent node.
  **
  ** Notes: simple telecommand test
  **
@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-05-18  jigi		  integrated with adm_kplo_ls_agent & adm_kplo_upgrade_agent
  **  2020-04-16  jigi             initialize telecommand data model v1.0
  **
  ****************************************************************************/
@@ -84,7 +85,9 @@ void dtn_kplo_telecommand_init_var()
 void dtn_kplo_telecommand_init_ctrl()
 {
 
-	adm_add_ctrldef(g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL, 1, dtn_kplo_telecommand_ctrl);
+	adm_add_ctrldef(g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_EXEC, 1, dtn_kplo_telecommand_ctrl_exec);
+	adm_add_ctrldef(g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_KILL, 1, dtn_kplo_telecommand_ctrl_kill);
+	adm_add_ctrldef(g_dtn_kplo_telecommand_idx[ADM_CTRL_IDX], DTN_KPLO_TELECOMMAND_CTRL_UPDATE, 1, dtn_kplo_telecommand_ctrl_update);
 }
 
 void dtn_kplo_telecommand_init_mac()

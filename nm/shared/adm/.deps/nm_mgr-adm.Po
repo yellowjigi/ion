@@ -150,7 +150,7 @@ nm/shared/adm/nm_mgr-adm.o: nm/shared/adm/adm.c \
  nm/shared/adm/adm_ion_ipn_admin.h nm/shared/adm/adm_ionsec_admin.h \
  nm/shared/adm/adm_ion_ltp_admin.h nm/shared/adm/adm_ltp_agent.h \
  nm/shared/adm/adm_ion_bpcp.h nm/shared/adm/adm_ion_bpsource.h \
- nm/shared/adm/adm_kplo_ls.h nm/shared/adm/adm_kplo_telecommand.h
+ nm/shared/adm/adm_kplo_telecommand.h
 
 /usr/include/stdc-predef.h:
 
@@ -575,7 +575,5 @@ nm/shared/adm/adm_ltp_agent.h:
 nm/shared/adm/adm_ion_bpcp.h:
 
 nm/shared/adm/adm_ion_bpsource.h:
-
-nm/shared/adm/adm_kplo_ls.h:
 
 nm/shared/adm/adm_kplo_telecommand.h:

@@ -401,7 +401,6 @@ int iif_send_grp(iif_t *iif, msg_grp_t *group, char *rx)
 
     /* Information on bitstream we are sending. */
     char *msg_str = utils_hex_to_string(data->value, data->length);
-    //fprintf(stderr, "iif_send Sending %s to %s:", msg_str, rx);//jigi
     AMP_DEBUG_ALWAYS("iif_send","Sending %s to %s:", msg_str, rx);
     SRELEASE(msg_str);
 

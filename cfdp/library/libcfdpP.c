@@ -13,7 +13,7 @@
 #include "lyst.h"
 
 #ifndef CFDPDEBUG
-#define	CFDPDEBUG		0
+#define	CFDPDEBUG		1
 #endif
 
 #ifndef	CFDP_FILLBUF_LIMIT

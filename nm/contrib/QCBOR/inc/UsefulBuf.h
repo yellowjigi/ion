@@ -153,6 +153,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h> // for uint8_t, uint16_t....
 #include <string.h> // for strlen, memcpy, memmove, memset
 #include <stddef.h> // for size_t
+#include <stdio.h>
 
 
 #ifdef USEFULBUF_CONFIG_HTON

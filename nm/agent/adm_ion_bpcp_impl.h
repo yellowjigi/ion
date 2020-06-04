@@ -42,6 +42,8 @@ void name_adm_init_agent();
  */
 /*   START CUSTOM FUNCTIONS HERE */
 
+int cfdp_put_wrapper(int bundle_lifetime, int bp_custody, int class_of_service,
+			char *local_file, uvast remote_host, char *remote_file);
 
 /*   STOP CUSTOM FUNCTIONS HERE  */
 

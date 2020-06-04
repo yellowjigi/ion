@@ -134,7 +134,7 @@ static int ui_print_agents_cb_parse(int idx, int keypress, void* data, char* sta
       {
          if (choice == 1)
          {
-            sprintf(status_msg, "Succcessfully built & sent control to '%s'", agent->eid.name);
+            sprintf(status_msg, "Successfully built & sent control to '%s'", agent->eid.name);
          }
          else
          {

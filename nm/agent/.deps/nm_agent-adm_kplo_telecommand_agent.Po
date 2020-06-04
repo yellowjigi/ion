@@ -150,8 +150,9 @@ nm/agent/nm_agent-adm_kplo_telecommand_agent.o: \
  ici/include/smlist.h nm/agent/../shared/adm/../primitives/table.h \
  nm/agent/../shared/utils/utils.h nm/agent/../shared/primitives/report.h \
  nm/agent/../shared/primitives/blob.h \
- nm/agent/adm_kplo_telecommand_impl.h \
- nm/agent/../shared/primitives/ctrl.h \
+ nm/agent/adm_kplo_telecommand_impl.h nm/agent/../../cfdp/utils/bpcp.h \
+ cfdp/include/cfdp.h cfdp/include/cfdpops.h cfdp/include/cfdpops.h \
+ cfdp/library/bputa.h nm/agent/../shared/primitives/ctrl.h \
  nm/agent/../shared/primitives/table.h \
  nm/agent/../shared/primitives/tnv.h nm/agent/rda.h \
  nm/agent/../shared/primitives/rules.h \
@@ -569,6 +570,16 @@ nm/agent/../shared/primitives/report.h:
 nm/agent/../shared/primitives/blob.h:
 
 nm/agent/adm_kplo_telecommand_impl.h:
+
+nm/agent/../../cfdp/utils/bpcp.h:
+
+cfdp/include/cfdp.h:
+
+cfdp/include/cfdpops.h:
+
+cfdp/include/cfdpops.h:
+
+cfdp/library/bputa.h:
 
 nm/agent/../shared/primitives/ctrl.h:
 

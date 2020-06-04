@@ -31,7 +31,7 @@
 #define	EST_LINK_OHD		16
 
 #ifndef LTPDEBUG
-#define	LTPDEBUG		0
+#define	LTPDEBUG		1
 #endif
 
 #if (!(defined(SIGNAL_REDUNDANCY)) || SIGNAL_REDUNDANCY < 1)
@@ -1099,6 +1099,7 @@ int	ltpStart(char *lsiCmd)
 
 	if (ltpvdb->delivPid == ERROR || sm_TaskExists(ltpvdb->delivPid) == 0)
 	{
+		ltpvdb->deliverySemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);//jigi
 		ltpvdb->delivPid = pseudoshell("ltpdeliv");
 	}
 

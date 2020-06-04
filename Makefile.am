@@ -2042,11 +2042,9 @@ nm_agent_SOURCES =  	$(nm_shared_src)		\
 			nm/agent/adm_ion_bpcp_agent.c	\
 			nm/agent/adm_ion_bpsource_impl.c	\
 			nm/agent/adm_ion_bpsource_agent.c	\
-			nm/agent/adm_kplo_ls_impl.c	\
-			nm/agent/adm_kplo_ls_agent.c	\
 			nm/agent/adm_kplo_telecommand_impl.c	\
 			nm/agent/adm_kplo_telecommand_agent.c
-#last eight lines added by jigi
+#last 6 lines added by jigi
 
 
 nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
@@ -2077,9 +2075,8 @@ nm_mgr_SOURCES =	$(nm_shared_src)		\
 			nm/mgr/adm_ltp_agent_mgr.c	\
 			nm/mgr/adm_ion_bpcp_mgr.c	\
 			nm/mgr/adm_ion_bpsource_mgr.c	\
-			nm/mgr/adm_kplo_ls_mgr.c	\
 			nm/mgr/adm_kplo_telecommand_mgr.c
-#last four lines added by jigi
+#last 3 lines added by jigi
 
 nm_mgr_LDADD = libici.la libbp.la libltp.la $(LIBOBJS) $(PTHREAD_LIBS)
 
