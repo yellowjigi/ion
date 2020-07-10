@@ -108,7 +108,7 @@ host_triplet = @host@
 bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
 	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
-	$(am__EXEEXT_12) $(am__EXEEXT_13)
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14)
 @ENABLE_BPACS_TRUE@am__append_3 = acsadmin \
 @ENABLE_BPACS_TRUE@	acslist
 
@@ -451,6 +451,7 @@ am__EXEEXT_12 = amsd$(EXEEXT) amshello$(EXEEXT) amsshell$(EXEEXT) \
 	ramsgate$(EXEEXT)
 am__EXEEXT_13 = cfdpadmin$(EXEEXT) cfdpclock$(EXEEXT) bputa$(EXEEXT) \
 	cfdptest$(EXEEXT) bpcp$(EXEEXT) bpcpd$(EXEEXT) tcputa$(EXEEXT)
+am__EXEEXT_14 = armur$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__acsadmin_SOURCES_DIST = bp/utils/acsadmin.c
 @ENABLE_BPACS_TRUE@am_acsadmin_OBJECTS =  \
@@ -530,6 +531,14 @@ amsstop_DEPENDENCIES = libams.la libdgr.la libici.la $(LIBOBJS)
 amsstop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(amsstop_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_armur_OBJECTS = nm/utils/armur-armuradmin.$(OBJEXT) \
+	nm/utils/armur-armur.$(OBJEXT)
+armur_OBJECTS = $(am_armur_OBJECTS)
+armur_DEPENDENCIES = libici.la libbp.la libltp.la libcfdp.la \
+	$(LIBOBJS)
+armur_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(armur_CFLAGS) $(CFLAGS) \
+	$(armur_LDFLAGS) $(LDFLAGS) -o $@
 am_beacon_OBJECTS = bp/ipnd/beacon-beacon.$(OBJEXT)
 beacon_OBJECTS = $(am_beacon_OBJECTS)
 beacon_DEPENDENCIES = libbp.la libici.la $(LIBOBJS)
@@ -1096,9 +1105,7 @@ am_nm_agent_OBJECTS = $(am__objects_6) \
 	nm/agent/nm_agent-adm_ion_bpcp_impl.$(OBJEXT) \
 	nm/agent/nm_agent-adm_ion_bpcp_agent.$(OBJEXT) \
 	nm/agent/nm_agent-adm_ion_bpsource_impl.$(OBJEXT) \
-	nm/agent/nm_agent-adm_ion_bpsource_agent.$(OBJEXT) \
-	nm/agent/nm_agent-adm_kplo_telecommand_impl.$(OBJEXT) \
-	nm/agent/nm_agent-adm_kplo_telecommand_agent.$(OBJEXT)
+	nm/agent/nm_agent-adm_ion_bpsource_agent.$(OBJEXT)
 nm_agent_OBJECTS = $(am_nm_agent_OBJECTS)
 nm_agent_DEPENDENCIES = libici.la libbp.la libltp.la libcfdp.la \
 	$(LIBOBJS)
@@ -1415,9 +1422,7 @@ am__objects_11 = $(am__objects_10) \
 	nm/agent/tests_nm_unit_dotest-adm_ion_bpcp_impl.$(OBJEXT) \
 	nm/agent/tests_nm_unit_dotest-adm_ion_bpcp_agent.$(OBJEXT) \
 	nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_impl.$(OBJEXT) \
-	nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_agent.$(OBJEXT) \
-	nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.$(OBJEXT) \
-	nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.$(OBJEXT)
+	nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_agent.$(OBJEXT)
 am_tests_nm_unit_dotest_OBJECTS =  \
 	tests/nm-unit/tests_nm_unit_dotest-dotest.$(OBJEXT) \
 	$(am__objects_11)
@@ -1518,45 +1523,45 @@ SOURCES = $(libams_la_SOURCES) $(libbp_la_SOURCES) \
 	$(acslist_SOURCES) $(amsbenchr_SOURCES) $(amsbenchs_SOURCES) \
 	$(amsd_SOURCES) $(amshello_SOURCES) $(amslog_SOURCES) \
 	$(amslogprt_SOURCES) $(amsmib_SOURCES) $(amsshell_SOURCES) \
-	$(amsstop_SOURCES) $(beacon_SOURCES) $(bibeclo_SOURCES) \
-	$(bpadmin_SOURCES) $(bpcancel_SOURCES) $(bpchat_SOURCES) \
-	$(bpclm_SOURCES) $(bpclock_SOURCES) $(bpcounter_SOURCES) \
-	$(bpcp_SOURCES) $(bpcpd_SOURCES) $(bpcrash_SOURCES) \
-	$(bpdriver_SOURCES) $(bpecho_SOURCES) $(bping_SOURCES) \
-	$(bplist_SOURCES) $(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
-	$(bpsecadmin_SOURCES) $(bpsendfile_SOURCES) $(bpsink_SOURCES) \
-	$(bpsource_SOURCES) $(bpstats_SOURCES) $(bpstats2_SOURCES) \
-	$(bptrace_SOURCES) $(bptransit_SOURCES) $(bputa_SOURCES) \
-	$(brsccla_SOURCES) $(brsscla_SOURCES) \
-	$(bssStreamingApp_SOURCES) $(bsscounter_SOURCES) \
-	$(bssdriver_SOURCES) $(bsspadmin_SOURCES) $(bsspcli_SOURCES) \
-	$(bsspclo_SOURCES) $(bsspclock_SOURCES) $(bssrecv_SOURCES) \
-	$(cfdpadmin_SOURCES) $(cfdpclock_SOURCES) $(cfdptest_SOURCES) \
-	$(cgrfetch_SOURCES) $(dccpcli_SOURCES) $(dccpclo_SOURCES) \
-	$(dccplsi_SOURCES) $(dccplso_SOURCES) $(dgr2file_SOURCES) \
-	$(dgrcli_SOURCES) $(dgrclo_SOURCES) $(dtn2admin_SOURCES) \
-	$(dtn2adminep_SOURCES) $(dtn2fw_SOURCES) $(dtpcadmin_SOURCES) \
-	$(dtpcclock_SOURCES) $(dtpcd_SOURCES) $(dtpcreceive_SOURCES) \
-	$(dtpcsend_SOURCES) $(file2dgr_SOURCES) $(file2sdr_SOURCES) \
-	$(file2sm_SOURCES) $(file2tcp_SOURCES) $(file2udp_SOURCES) \
-	$(hmackeys_SOURCES) $(imcadmin_SOURCES) $(imcfw_SOURCES) \
-	$(ionadmin_SOURCES) $(ionexit_SOURCES) $(ionlog_SOURCES) \
-	$(ionrestart_SOURCES) $(ionsecadmin_SOURCES) \
-	$(ionunlock_SOURCES) $(ionwarn_SOURCES) $(ipnadmin_SOURCES) \
-	$(ipnadminep_SOURCES) $(ipnd_SOURCES) $(ipnfw_SOURCES) \
-	$(lgagent_SOURCES) $(lgsend_SOURCES) $(ltpadmin_SOURCES) \
-	$(ltpcli_SOURCES) $(ltpclo_SOURCES) $(ltpclock_SOURCES) \
-	$(ltpcounter_SOURCES) $(ltpdeliv_SOURCES) $(ltpdriver_SOURCES) \
-	$(ltpmeter_SOURCES) $(ltpsecadmin_SOURCES) $(nm_agent_SOURCES) \
-	$(nm_mgr_SOURCES) $(node_SOURCES) $(owltsim_SOURCES) \
-	$(owlttb_SOURCES) $(psmshell_SOURCES) $(psmwatch_SOURCES) \
-	$(ramsgate_SOURCES) $(rfxclock_SOURCES) $(sdatest_SOURCES) \
-	$(sdr2file_SOURCES) $(sdrmend_SOURCES) $(sdrwatch_SOURCES) \
-	$(sm2file_SOURCES) $(smlistsh_SOURCES) $(smrbtsh_SOURCES) \
-	$(stcpcli_SOURCES) $(stcpclo_SOURCES) $(tcp2file_SOURCES) \
-	$(tcpbsi_SOURCES) $(tcpbso_SOURCES) $(tcpcli_SOURCES) \
-	$(tcpclo_SOURCES) $(tcputa_SOURCES) \
-	$(tests_1000_loopback_dotest_SOURCES) \
+	$(amsstop_SOURCES) $(armur_SOURCES) $(beacon_SOURCES) \
+	$(bibeclo_SOURCES) $(bpadmin_SOURCES) $(bpcancel_SOURCES) \
+	$(bpchat_SOURCES) $(bpclm_SOURCES) $(bpclock_SOURCES) \
+	$(bpcounter_SOURCES) $(bpcp_SOURCES) $(bpcpd_SOURCES) \
+	$(bpcrash_SOURCES) $(bpdriver_SOURCES) $(bpecho_SOURCES) \
+	$(bping_SOURCES) $(bplist_SOURCES) $(bpnmtest_SOURCES) \
+	$(bprecvfile_SOURCES) $(bpsecadmin_SOURCES) \
+	$(bpsendfile_SOURCES) $(bpsink_SOURCES) $(bpsource_SOURCES) \
+	$(bpstats_SOURCES) $(bpstats2_SOURCES) $(bptrace_SOURCES) \
+	$(bptransit_SOURCES) $(bputa_SOURCES) $(brsccla_SOURCES) \
+	$(brsscla_SOURCES) $(bssStreamingApp_SOURCES) \
+	$(bsscounter_SOURCES) $(bssdriver_SOURCES) \
+	$(bsspadmin_SOURCES) $(bsspcli_SOURCES) $(bsspclo_SOURCES) \
+	$(bsspclock_SOURCES) $(bssrecv_SOURCES) $(cfdpadmin_SOURCES) \
+	$(cfdpclock_SOURCES) $(cfdptest_SOURCES) $(cgrfetch_SOURCES) \
+	$(dccpcli_SOURCES) $(dccpclo_SOURCES) $(dccplsi_SOURCES) \
+	$(dccplso_SOURCES) $(dgr2file_SOURCES) $(dgrcli_SOURCES) \
+	$(dgrclo_SOURCES) $(dtn2admin_SOURCES) $(dtn2adminep_SOURCES) \
+	$(dtn2fw_SOURCES) $(dtpcadmin_SOURCES) $(dtpcclock_SOURCES) \
+	$(dtpcd_SOURCES) $(dtpcreceive_SOURCES) $(dtpcsend_SOURCES) \
+	$(file2dgr_SOURCES) $(file2sdr_SOURCES) $(file2sm_SOURCES) \
+	$(file2tcp_SOURCES) $(file2udp_SOURCES) $(hmackeys_SOURCES) \
+	$(imcadmin_SOURCES) $(imcfw_SOURCES) $(ionadmin_SOURCES) \
+	$(ionexit_SOURCES) $(ionlog_SOURCES) $(ionrestart_SOURCES) \
+	$(ionsecadmin_SOURCES) $(ionunlock_SOURCES) $(ionwarn_SOURCES) \
+	$(ipnadmin_SOURCES) $(ipnadminep_SOURCES) $(ipnd_SOURCES) \
+	$(ipnfw_SOURCES) $(lgagent_SOURCES) $(lgsend_SOURCES) \
+	$(ltpadmin_SOURCES) $(ltpcli_SOURCES) $(ltpclo_SOURCES) \
+	$(ltpclock_SOURCES) $(ltpcounter_SOURCES) $(ltpdeliv_SOURCES) \
+	$(ltpdriver_SOURCES) $(ltpmeter_SOURCES) \
+	$(ltpsecadmin_SOURCES) $(nm_agent_SOURCES) $(nm_mgr_SOURCES) \
+	$(node_SOURCES) $(owltsim_SOURCES) $(owlttb_SOURCES) \
+	$(psmshell_SOURCES) $(psmwatch_SOURCES) $(ramsgate_SOURCES) \
+	$(rfxclock_SOURCES) $(sdatest_SOURCES) $(sdr2file_SOURCES) \
+	$(sdrmend_SOURCES) $(sdrwatch_SOURCES) $(sm2file_SOURCES) \
+	$(smlistsh_SOURCES) $(smrbtsh_SOURCES) $(stcpcli_SOURCES) \
+	$(stcpclo_SOURCES) $(tcp2file_SOURCES) $(tcpbsi_SOURCES) \
+	$(tcpbso_SOURCES) $(tcpcli_SOURCES) $(tcpclo_SOURCES) \
+	$(tcputa_SOURCES) $(tests_1000_loopback_dotest_SOURCES) \
 	$(tests_1500_loopback_brs_dotest_SOURCES) \
 	$(tests_bug_0015_tcpclo_bpcp_sig_handling_test_SOURCES) \
 	$(tests_issue_188_common_cos_syntax_dotest_SOURCES) \
@@ -1579,12 +1584,12 @@ DIST_SOURCES = $(libams_la_SOURCES) $(am__libbp_la_SOURCES_DIST) \
 	$(amsbenchr_SOURCES) $(amsbenchs_SOURCES) $(amsd_SOURCES) \
 	$(amshello_SOURCES) $(amslog_SOURCES) $(amslogprt_SOURCES) \
 	$(amsmib_SOURCES) $(amsshell_SOURCES) $(amsstop_SOURCES) \
-	$(beacon_SOURCES) $(bibeclo_SOURCES) $(bpadmin_SOURCES) \
-	$(bpcancel_SOURCES) $(bpchat_SOURCES) $(bpclm_SOURCES) \
-	$(bpclock_SOURCES) $(bpcounter_SOURCES) $(bpcp_SOURCES) \
-	$(bpcpd_SOURCES) $(bpcrash_SOURCES) $(bpdriver_SOURCES) \
-	$(bpecho_SOURCES) $(bping_SOURCES) $(bplist_SOURCES) \
-	$(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
+	$(armur_SOURCES) $(beacon_SOURCES) $(bibeclo_SOURCES) \
+	$(bpadmin_SOURCES) $(bpcancel_SOURCES) $(bpchat_SOURCES) \
+	$(bpclm_SOURCES) $(bpclock_SOURCES) $(bpcounter_SOURCES) \
+	$(bpcp_SOURCES) $(bpcpd_SOURCES) $(bpcrash_SOURCES) \
+	$(bpdriver_SOURCES) $(bpecho_SOURCES) $(bping_SOURCES) \
+	$(bplist_SOURCES) $(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
 	$(bpsecadmin_SOURCES) $(bpsendfile_SOURCES) $(bpsink_SOURCES) \
 	$(bpsource_SOURCES) $(bpstats_SOURCES) $(bpstats2_SOURCES) \
 	$(bptrace_SOURCES) $(bptransit_SOURCES) $(bputa_SOURCES) \
@@ -1903,6 +1908,7 @@ EXTRA_DIST = \
 	$(amsextra) \
 	$(cfdpextra)
 
+#jigi
 lib_LTLIBRARIES = \
 	$(icilib) \
 	$(ltplib) \
@@ -3405,10 +3411,10 @@ nm_agent_SOURCES = $(nm_shared_src)		\
 			nm/agent/adm_ion_bpcp_agent.c	\
 			nm/agent/adm_ion_bpsource_impl.c	\
 			nm/agent/adm_ion_bpsource_agent.c	\
-			nm/agent/adm_kplo_telecommand_impl.c	\
-			nm/agent/adm_kplo_telecommand_agent.c
+			#nm/agent/adm_kplo_telecommand_impl.c	\
+			#nm/agent/adm_kplo_telecommand_agent.c
 
-#last 6 lines added by jigi
+#last 6 lines added by jigi//JIGI
 nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
 nm_agent_LDFLAGS = -L/usr/local/lib -lm -lpthread 
 nm_agent_CFLAGS = -I/usr/include -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm  \
@@ -3456,6 +3462,19 @@ restartbin = ionrestart
 ionrestart_SOURCES = restart/utils/ionrestart.c
 ionrestart_LDADD = libici.la libcgr.la libbp.la libltp.la libcfdp.la $(LIBOBJS)
 ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/ici/library -I$(srcdir)/cfdp/library $(AM_CFLAGS)
+
+##########################
+#
+# ARMUR SECTION //jigi
+#
+##########################
+armurbin = armur
+
+# --- Utility Programs --- #
+armur_SOURCES = nm/utils/armuradmin.c nm/utils/armur.c 
+armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
+armur_LDFLAGS = -L/usr/local/lib -lm -lpthread 
+armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS)
 
 # This library contains utility code that's helpful for tests in C.
 TESTUTILOBJS = tests/library/libtestutil.la
@@ -4224,6 +4243,20 @@ ams/utils/amsstop-amsstop.$(OBJEXT): ams/utils/$(am__dirstamp) \
 amsstop$(EXEEXT): $(amsstop_OBJECTS) $(amsstop_DEPENDENCIES) $(EXTRA_amsstop_DEPENDENCIES) 
 	@rm -f amsstop$(EXEEXT)
 	$(AM_V_CCLD)$(amsstop_LINK) $(amsstop_OBJECTS) $(amsstop_LDADD) $(LIBS)
+nm/utils/$(am__dirstamp):
+	@$(MKDIR_P) nm/utils
+	@: > nm/utils/$(am__dirstamp)
+nm/utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) nm/utils/$(DEPDIR)
+	@: > nm/utils/$(DEPDIR)/$(am__dirstamp)
+nm/utils/armur-armuradmin.$(OBJEXT): nm/utils/$(am__dirstamp) \
+	nm/utils/$(DEPDIR)/$(am__dirstamp)
+nm/utils/armur-armur.$(OBJEXT): nm/utils/$(am__dirstamp) \
+	nm/utils/$(DEPDIR)/$(am__dirstamp)
+
+armur$(EXEEXT): $(armur_OBJECTS) $(armur_DEPENDENCIES) $(EXTRA_armur_DEPENDENCIES) 
+	@rm -f armur$(EXEEXT)
+	$(AM_V_CCLD)$(armur_LINK) $(armur_OBJECTS) $(armur_LDADD) $(LIBS)
 bp/ipnd/beacon-beacon.$(OBJEXT): bp/ipnd/$(am__dirstamp) \
 	bp/ipnd/$(DEPDIR)/$(am__dirstamp)
 
@@ -5050,10 +5083,6 @@ nm/agent/nm_agent-adm_ion_bpsource_impl.$(OBJEXT):  \
 	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
 nm/agent/nm_agent-adm_ion_bpsource_agent.$(OBJEXT):  \
 	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
-nm/agent/nm_agent-adm_kplo_telecommand_impl.$(OBJEXT):  \
-	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
-nm/agent/nm_agent-adm_kplo_telecommand_agent.$(OBJEXT):  \
-	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
 
 nm_agent$(EXEEXT): $(nm_agent_OBJECTS) $(nm_agent_DEPENDENCIES) $(EXTRA_nm_agent_DEPENDENCIES) 
 	@rm -f nm_agent$(EXEEXT)
@@ -5565,10 +5594,6 @@ nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_impl.$(OBJEXT):  \
 	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
 nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_agent.$(OBJEXT):  \
 	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.$(OBJEXT):  \
-	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.$(OBJEXT):  \
-	nm/agent/$(am__dirstamp) nm/agent/$(DEPDIR)/$(am__dirstamp)
 
 tests/nm-unit/dotest$(EXEEXT): $(tests_nm_unit_dotest_OBJECTS) $(tests_nm_unit_dotest_DEPENDENCIES) $(EXTRA_tests_nm_unit_dotest_DEPENDENCIES) tests/nm-unit/$(am__dirstamp)
 	@rm -f tests/nm-unit/dotest$(EXEEXT)
@@ -5770,6 +5795,7 @@ mostlyclean-compile:
 	-rm -f nm/shared/msg/*.$(OBJEXT)
 	-rm -f nm/shared/primitives/*.$(OBJEXT)
 	-rm -f nm/shared/utils/*.$(OBJEXT)
+	-rm -f nm/utils/*.$(OBJEXT)
 	-rm -f restart/utils/*.$(OBJEXT)
 	-rm -f tests/1000.loopback/*.$(OBJEXT)
 	-rm -f tests/1500.loopback-brs/*.$(OBJEXT)
@@ -6022,8 +6048,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_ion_ltp_admin_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_ionsec_admin_agent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_ionsec_admin_impl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_ltp_agent_agent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_ltp_agent_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/nm_agent-adm_sbsp_agent.Po@am__quote@
@@ -6052,8 +6076,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_ion_ltp_admin_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_ionsec_admin_agent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_ionsec_admin_impl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_ltp_agent_agent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_ltp_agent_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_sbsp_agent.Po@am__quote@
@@ -6150,6 +6172,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-rhht.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-vector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/utils/$(DEPDIR)/armur-armur.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/utils/$(DEPDIR)/armur-armuradmin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@restart/utils/$(DEPDIR)/ionrestart-ionrestart.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/1000.loopback/$(DEPDIR)/tests_1000_loopback_dotest-dotest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/1500.loopback-brs/$(DEPDIR)/tests_1500_loopback_brs_dotest-dotest.Po@am__quote@
@@ -7056,6 +7080,34 @@ ams/utils/amsstop-amsstop.obj: ams/utils/amsstop.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ams/utils/amsstop.c' object='ams/utils/amsstop-amsstop.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(amsstop_CFLAGS) $(CFLAGS) -c -o ams/utils/amsstop-amsstop.obj `if test -f 'ams/utils/amsstop.c'; then $(CYGPATH_W) 'ams/utils/amsstop.c'; else $(CYGPATH_W) '$(srcdir)/ams/utils/amsstop.c'; fi`
+
+nm/utils/armur-armuradmin.o: nm/utils/armuradmin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armuradmin.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armuradmin.Tpo -c -o nm/utils/armur-armuradmin.o `test -f 'nm/utils/armuradmin.c' || echo '$(srcdir)/'`nm/utils/armuradmin.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armuradmin.Tpo nm/utils/$(DEPDIR)/armur-armuradmin.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/utils/armuradmin.c' object='nm/utils/armur-armuradmin.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armuradmin.o `test -f 'nm/utils/armuradmin.c' || echo '$(srcdir)/'`nm/utils/armuradmin.c
+
+nm/utils/armur-armuradmin.obj: nm/utils/armuradmin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armuradmin.obj -MD -MP -MF nm/utils/$(DEPDIR)/armur-armuradmin.Tpo -c -o nm/utils/armur-armuradmin.obj `if test -f 'nm/utils/armuradmin.c'; then $(CYGPATH_W) 'nm/utils/armuradmin.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armuradmin.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armuradmin.Tpo nm/utils/$(DEPDIR)/armur-armuradmin.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/utils/armuradmin.c' object='nm/utils/armur-armuradmin.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armuradmin.obj `if test -f 'nm/utils/armuradmin.c'; then $(CYGPATH_W) 'nm/utils/armuradmin.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armuradmin.c'; fi`
+
+nm/utils/armur-armur.o: nm/utils/armur.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur.Tpo -c -o nm/utils/armur-armur.o `test -f 'nm/utils/armur.c' || echo '$(srcdir)/'`nm/utils/armur.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur.Tpo nm/utils/$(DEPDIR)/armur-armur.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/utils/armur.c' object='nm/utils/armur-armur.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur.o `test -f 'nm/utils/armur.c' || echo '$(srcdir)/'`nm/utils/armur.c
+
+nm/utils/armur-armur.obj: nm/utils/armur.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur.obj -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur.Tpo -c -o nm/utils/armur-armur.obj `if test -f 'nm/utils/armur.c'; then $(CYGPATH_W) 'nm/utils/armur.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur.Tpo nm/utils/$(DEPDIR)/armur-armur.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/utils/armur.c' object='nm/utils/armur-armur.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur.obj `if test -f 'nm/utils/armur.c'; then $(CYGPATH_W) 'nm/utils/armur.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur.c'; fi`
 
 bp/ipnd/beacon-beacon.o: bp/ipnd/beacon.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(beacon_CFLAGS) $(CFLAGS) -MT bp/ipnd/beacon-beacon.o -MD -MP -MF bp/ipnd/$(DEPDIR)/beacon-beacon.Tpo -c -o bp/ipnd/beacon-beacon.o `test -f 'bp/ipnd/beacon.c' || echo '$(srcdir)/'`bp/ipnd/beacon.c
@@ -8947,34 +8999,6 @@ nm/agent/nm_agent-adm_ion_bpsource_agent.obj: nm/agent/adm_ion_bpsource_agent.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/agent/nm_agent-adm_ion_bpsource_agent.obj `if test -f 'nm/agent/adm_ion_bpsource_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_ion_bpsource_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_ion_bpsource_agent.c'; fi`
 
-nm/agent/nm_agent-adm_kplo_telecommand_impl.o: nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/agent/nm_agent-adm_kplo_telecommand_impl.o -MD -MP -MF nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Tpo -c -o nm/agent/nm_agent-adm_kplo_telecommand_impl.o `test -f 'nm/agent/adm_kplo_telecommand_impl.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Tpo nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_impl.c' object='nm/agent/nm_agent-adm_kplo_telecommand_impl.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/agent/nm_agent-adm_kplo_telecommand_impl.o `test -f 'nm/agent/adm_kplo_telecommand_impl.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_impl.c
-
-nm/agent/nm_agent-adm_kplo_telecommand_impl.obj: nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/agent/nm_agent-adm_kplo_telecommand_impl.obj -MD -MP -MF nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Tpo -c -o nm/agent/nm_agent-adm_kplo_telecommand_impl.obj `if test -f 'nm/agent/adm_kplo_telecommand_impl.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_impl.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_impl.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Tpo nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_impl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_impl.c' object='nm/agent/nm_agent-adm_kplo_telecommand_impl.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/agent/nm_agent-adm_kplo_telecommand_impl.obj `if test -f 'nm/agent/adm_kplo_telecommand_impl.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_impl.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_impl.c'; fi`
-
-nm/agent/nm_agent-adm_kplo_telecommand_agent.o: nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/agent/nm_agent-adm_kplo_telecommand_agent.o -MD -MP -MF nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Tpo -c -o nm/agent/nm_agent-adm_kplo_telecommand_agent.o `test -f 'nm/agent/adm_kplo_telecommand_agent.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Tpo nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_agent.c' object='nm/agent/nm_agent-adm_kplo_telecommand_agent.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/agent/nm_agent-adm_kplo_telecommand_agent.o `test -f 'nm/agent/adm_kplo_telecommand_agent.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_agent.c
-
-nm/agent/nm_agent-adm_kplo_telecommand_agent.obj: nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/agent/nm_agent-adm_kplo_telecommand_agent.obj -MD -MP -MF nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Tpo -c -o nm/agent/nm_agent-adm_kplo_telecommand_agent.obj `if test -f 'nm/agent/adm_kplo_telecommand_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_agent.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Tpo nm/agent/$(DEPDIR)/nm_agent-adm_kplo_telecommand_agent.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_agent.c' object='nm/agent/nm_agent-adm_kplo_telecommand_agent.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/agent/nm_agent-adm_kplo_telecommand_agent.obj `if test -f 'nm/agent/adm_kplo_telecommand_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_agent.c'; fi`
-
 nm/shared/adm/nm_mgr-adm.o: nm/shared/adm/adm.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -MT nm/shared/adm/nm_mgr-adm.o -MD -MP -MF nm/shared/adm/$(DEPDIR)/nm_mgr-adm.Tpo -c -o nm/shared/adm/nm_mgr-adm.o `test -f 'nm/shared/adm/adm.c' || echo '$(srcdir)/'`nm/shared/adm/adm.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/adm/$(DEPDIR)/nm_mgr-adm.Tpo nm/shared/adm/$(DEPDIR)/nm_mgr-adm.Po
@@ -10725,34 +10749,6 @@ nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_agent.obj: nm/agent/adm_ion_bpsou
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/agent/tests_nm_unit_dotest-adm_ion_bpsource_agent.obj `if test -f 'nm/agent/adm_ion_bpsource_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_ion_bpsource_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_ion_bpsource_agent.c'; fi`
 
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.o: nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.o -MD -MP -MF nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Tpo -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.o `test -f 'nm/agent/adm_kplo_telecommand_impl.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Tpo nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_impl.c' object='nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.o `test -f 'nm/agent/adm_kplo_telecommand_impl.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_impl.c
-
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.obj: nm/agent/adm_kplo_telecommand_impl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.obj -MD -MP -MF nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Tpo -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.obj `if test -f 'nm/agent/adm_kplo_telecommand_impl.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_impl.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_impl.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Tpo nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_impl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_impl.c' object='nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_impl.obj `if test -f 'nm/agent/adm_kplo_telecommand_impl.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_impl.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_impl.c'; fi`
-
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.o: nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.o -MD -MP -MF nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Tpo -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.o `test -f 'nm/agent/adm_kplo_telecommand_agent.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Tpo nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_agent.c' object='nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.o `test -f 'nm/agent/adm_kplo_telecommand_agent.c' || echo '$(srcdir)/'`nm/agent/adm_kplo_telecommand_agent.c
-
-nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.obj: nm/agent/adm_kplo_telecommand_agent.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.obj -MD -MP -MF nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Tpo -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.obj `if test -f 'nm/agent/adm_kplo_telecommand_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_agent.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Tpo nm/agent/$(DEPDIR)/tests_nm_unit_dotest-adm_kplo_telecommand_agent.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/agent/adm_kplo_telecommand_agent.c' object='nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/agent/tests_nm_unit_dotest-adm_kplo_telecommand_agent.obj `if test -f 'nm/agent/adm_kplo_telecommand_agent.c'; then $(CYGPATH_W) 'nm/agent/adm_kplo_telecommand_agent.c'; else $(CYGPATH_W) '$(srcdir)/nm/agent/adm_kplo_telecommand_agent.c'; fi`
-
 dgr/test/udp2file-udp2file.o: dgr/test/udp2file.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(udp2file_CFLAGS) $(CFLAGS) -MT dgr/test/udp2file-udp2file.o -MD -MP -MF dgr/test/$(DEPDIR)/udp2file-udp2file.Tpo -c -o dgr/test/udp2file-udp2file.o `test -f 'dgr/test/udp2file.c' || echo '$(srcdir)/'`dgr/test/udp2file.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) dgr/test/$(DEPDIR)/udp2file-udp2file.Tpo dgr/test/$(DEPDIR)/udp2file-udp2file.Po
@@ -11698,6 +11694,8 @@ distclean-generic:
 	-rm -f nm/shared/primitives/$(am__dirstamp)
 	-rm -f nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 	-rm -f nm/shared/utils/$(am__dirstamp)
+	-rm -f nm/utils/$(DEPDIR)/$(am__dirstamp)
+	-rm -f nm/utils/$(am__dirstamp)
 	-rm -f restart/utils/$(DEPDIR)/$(am__dirstamp)
 	-rm -f restart/utils/$(am__dirstamp)
 	-rm -f tests/1000.loopback/$(DEPDIR)/$(am__dirstamp)
@@ -11732,7 +11730,7 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-checkPROGRAMS \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ams/library/$(DEPDIR) ams/rams/$(DEPDIR) ams/test/$(DEPDIR) ams/utils/$(DEPDIR) bp/bibe/$(DEPDIR) bp/brs/$(DEPDIR) bp/bssp/$(DEPDIR) bp/cgr/$(DEPDIR) bp/daemon/$(DEPDIR) bp/dccp/$(DEPDIR) bp/dgr/$(DEPDIR) bp/dtn2/$(DEPDIR) bp/imc/$(DEPDIR) bp/ipn/$(DEPDIR) bp/ipnd/$(DEPDIR) bp/library/$(DEPDIR) bp/library/acs/$(DEPDIR) bp/library/ext/bae/$(DEPDIR) bp/library/ext/cteb/$(DEPDIR) bp/library/ext/ecos/$(DEPDIR) bp/library/ext/meb/$(DEPDIR) bp/library/ext/phn/$(DEPDIR) bp/library/ext/sbsp/$(DEPDIR) bp/library/ext/snid/$(DEPDIR) bp/library/ext/snw/$(DEPDIR) bp/ltp/$(DEPDIR) bp/stcp/$(DEPDIR) bp/tcp/$(DEPDIR) bp/test/$(DEPDIR) bp/udp/$(DEPDIR) bp/utils/$(DEPDIR) bss/library/$(DEPDIR) bss/test/$(DEPDIR) bssp/daemon/$(DEPDIR) bssp/library/$(DEPDIR) bssp/tcp/$(DEPDIR) bssp/udp/$(DEPDIR) bssp/utils/$(DEPDIR) cfdp/bp/$(DEPDIR) cfdp/daemon/$(DEPDIR) cfdp/library/$(DEPDIR) cfdp/tcp/$(DEPDIR) cfdp/test/$(DEPDIR) cfdp/utils/$(DEPDIR) dgr/library/$(DEPDIR) dgr/test/$(DEPDIR) dtpc/daemon/$(DEPDIR) dtpc/library/$(DEPDIR) dtpc/test/$(DEPDIR) dtpc/utils/$(DEPDIR) ici/bulk/STUB_BULK/$(DEPDIR) ici/crypto/NULL_SUITES/$(DEPDIR) ici/daemon/$(DEPDIR) ici/libbloom-master/$(DEPDIR) ici/libbloom-master/murmur2/$(DEPDIR) ici/library/$(DEPDIR) ici/sdr/$(DEPDIR) ici/test/$(DEPDIR) ici/utils/$(DEPDIR) ltp/daemon/$(DEPDIR) ltp/dccp/$(DEPDIR) ltp/library/$(DEPDIR) ltp/sda/$(DEPDIR) ltp/test/$(DEPDIR) ltp/udp/$(DEPDIR) ltp/utils/$(DEPDIR) nm/agent/$(DEPDIR) nm/contrib/QCBOR/src/$(DEPDIR) nm/mgr/$(DEPDIR) nm/shared/adm/$(DEPDIR) nm/shared/msg/$(DEPDIR) nm/shared/primitives/$(DEPDIR) nm/shared/utils/$(DEPDIR) restart/utils/$(DEPDIR) tests/1000.loopback/$(DEPDIR) tests/1500.loopback-brs/$(DEPDIR) tests/bug-0015-tcpclo-bpcp-sig-handling/$(DEPDIR) tests/issue-188-common-cos-syntax/$(DEPDIR) tests/issue-260-teach-valgrind-mtake/$(DEPDIR) tests/issue-279-bpMemo-timeline/$(DEPDIR) tests/issue-330-cfdpclock-FDU-removal/$(DEPDIR) tests/issue-334-cfdp-transaction-id/$(DEPDIR) tests/library/$(DEPDIR) tests/nm-unit/$(DEPDIR)
+	-rm -rf ams/library/$(DEPDIR) ams/rams/$(DEPDIR) ams/test/$(DEPDIR) ams/utils/$(DEPDIR) bp/bibe/$(DEPDIR) bp/brs/$(DEPDIR) bp/bssp/$(DEPDIR) bp/cgr/$(DEPDIR) bp/daemon/$(DEPDIR) bp/dccp/$(DEPDIR) bp/dgr/$(DEPDIR) bp/dtn2/$(DEPDIR) bp/imc/$(DEPDIR) bp/ipn/$(DEPDIR) bp/ipnd/$(DEPDIR) bp/library/$(DEPDIR) bp/library/acs/$(DEPDIR) bp/library/ext/bae/$(DEPDIR) bp/library/ext/cteb/$(DEPDIR) bp/library/ext/ecos/$(DEPDIR) bp/library/ext/meb/$(DEPDIR) bp/library/ext/phn/$(DEPDIR) bp/library/ext/sbsp/$(DEPDIR) bp/library/ext/snid/$(DEPDIR) bp/library/ext/snw/$(DEPDIR) bp/ltp/$(DEPDIR) bp/stcp/$(DEPDIR) bp/tcp/$(DEPDIR) bp/test/$(DEPDIR) bp/udp/$(DEPDIR) bp/utils/$(DEPDIR) bss/library/$(DEPDIR) bss/test/$(DEPDIR) bssp/daemon/$(DEPDIR) bssp/library/$(DEPDIR) bssp/tcp/$(DEPDIR) bssp/udp/$(DEPDIR) bssp/utils/$(DEPDIR) cfdp/bp/$(DEPDIR) cfdp/daemon/$(DEPDIR) cfdp/library/$(DEPDIR) cfdp/tcp/$(DEPDIR) cfdp/test/$(DEPDIR) cfdp/utils/$(DEPDIR) dgr/library/$(DEPDIR) dgr/test/$(DEPDIR) dtpc/daemon/$(DEPDIR) dtpc/library/$(DEPDIR) dtpc/test/$(DEPDIR) dtpc/utils/$(DEPDIR) ici/bulk/STUB_BULK/$(DEPDIR) ici/crypto/NULL_SUITES/$(DEPDIR) ici/daemon/$(DEPDIR) ici/libbloom-master/$(DEPDIR) ici/libbloom-master/murmur2/$(DEPDIR) ici/library/$(DEPDIR) ici/sdr/$(DEPDIR) ici/test/$(DEPDIR) ici/utils/$(DEPDIR) ltp/daemon/$(DEPDIR) ltp/dccp/$(DEPDIR) ltp/library/$(DEPDIR) ltp/sda/$(DEPDIR) ltp/test/$(DEPDIR) ltp/udp/$(DEPDIR) ltp/utils/$(DEPDIR) nm/agent/$(DEPDIR) nm/contrib/QCBOR/src/$(DEPDIR) nm/mgr/$(DEPDIR) nm/shared/adm/$(DEPDIR) nm/shared/msg/$(DEPDIR) nm/shared/primitives/$(DEPDIR) nm/shared/utils/$(DEPDIR) nm/utils/$(DEPDIR) restart/utils/$(DEPDIR) tests/1000.loopback/$(DEPDIR) tests/1500.loopback-brs/$(DEPDIR) tests/bug-0015-tcpclo-bpcp-sig-handling/$(DEPDIR) tests/issue-188-common-cos-syntax/$(DEPDIR) tests/issue-260-teach-valgrind-mtake/$(DEPDIR) tests/issue-279-bpMemo-timeline/$(DEPDIR) tests/issue-330-cfdpclock-FDU-removal/$(DEPDIR) tests/issue-334-cfdp-transaction-id/$(DEPDIR) tests/library/$(DEPDIR) tests/nm-unit/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -11786,7 +11784,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ams/library/$(DEPDIR) ams/rams/$(DEPDIR) ams/test/$(DEPDIR) ams/utils/$(DEPDIR) bp/bibe/$(DEPDIR) bp/brs/$(DEPDIR) bp/bssp/$(DEPDIR) bp/cgr/$(DEPDIR) bp/daemon/$(DEPDIR) bp/dccp/$(DEPDIR) bp/dgr/$(DEPDIR) bp/dtn2/$(DEPDIR) bp/imc/$(DEPDIR) bp/ipn/$(DEPDIR) bp/ipnd/$(DEPDIR) bp/library/$(DEPDIR) bp/library/acs/$(DEPDIR) bp/library/ext/bae/$(DEPDIR) bp/library/ext/cteb/$(DEPDIR) bp/library/ext/ecos/$(DEPDIR) bp/library/ext/meb/$(DEPDIR) bp/library/ext/phn/$(DEPDIR) bp/library/ext/sbsp/$(DEPDIR) bp/library/ext/snid/$(DEPDIR) bp/library/ext/snw/$(DEPDIR) bp/ltp/$(DEPDIR) bp/stcp/$(DEPDIR) bp/tcp/$(DEPDIR) bp/test/$(DEPDIR) bp/udp/$(DEPDIR) bp/utils/$(DEPDIR) bss/library/$(DEPDIR) bss/test/$(DEPDIR) bssp/daemon/$(DEPDIR) bssp/library/$(DEPDIR) bssp/tcp/$(DEPDIR) bssp/udp/$(DEPDIR) bssp/utils/$(DEPDIR) cfdp/bp/$(DEPDIR) cfdp/daemon/$(DEPDIR) cfdp/library/$(DEPDIR) cfdp/tcp/$(DEPDIR) cfdp/test/$(DEPDIR) cfdp/utils/$(DEPDIR) dgr/library/$(DEPDIR) dgr/test/$(DEPDIR) dtpc/daemon/$(DEPDIR) dtpc/library/$(DEPDIR) dtpc/test/$(DEPDIR) dtpc/utils/$(DEPDIR) ici/bulk/STUB_BULK/$(DEPDIR) ici/crypto/NULL_SUITES/$(DEPDIR) ici/daemon/$(DEPDIR) ici/libbloom-master/$(DEPDIR) ici/libbloom-master/murmur2/$(DEPDIR) ici/library/$(DEPDIR) ici/sdr/$(DEPDIR) ici/test/$(DEPDIR) ici/utils/$(DEPDIR) ltp/daemon/$(DEPDIR) ltp/dccp/$(DEPDIR) ltp/library/$(DEPDIR) ltp/sda/$(DEPDIR) ltp/test/$(DEPDIR) ltp/udp/$(DEPDIR) ltp/utils/$(DEPDIR) nm/agent/$(DEPDIR) nm/contrib/QCBOR/src/$(DEPDIR) nm/mgr/$(DEPDIR) nm/shared/adm/$(DEPDIR) nm/shared/msg/$(DEPDIR) nm/shared/primitives/$(DEPDIR) nm/shared/utils/$(DEPDIR) restart/utils/$(DEPDIR) tests/1000.loopback/$(DEPDIR) tests/1500.loopback-brs/$(DEPDIR) tests/bug-0015-tcpclo-bpcp-sig-handling/$(DEPDIR) tests/issue-188-common-cos-syntax/$(DEPDIR) tests/issue-260-teach-valgrind-mtake/$(DEPDIR) tests/issue-279-bpMemo-timeline/$(DEPDIR) tests/issue-330-cfdpclock-FDU-removal/$(DEPDIR) tests/issue-334-cfdp-transaction-id/$(DEPDIR) tests/library/$(DEPDIR) tests/nm-unit/$(DEPDIR)
+	-rm -rf ams/library/$(DEPDIR) ams/rams/$(DEPDIR) ams/test/$(DEPDIR) ams/utils/$(DEPDIR) bp/bibe/$(DEPDIR) bp/brs/$(DEPDIR) bp/bssp/$(DEPDIR) bp/cgr/$(DEPDIR) bp/daemon/$(DEPDIR) bp/dccp/$(DEPDIR) bp/dgr/$(DEPDIR) bp/dtn2/$(DEPDIR) bp/imc/$(DEPDIR) bp/ipn/$(DEPDIR) bp/ipnd/$(DEPDIR) bp/library/$(DEPDIR) bp/library/acs/$(DEPDIR) bp/library/ext/bae/$(DEPDIR) bp/library/ext/cteb/$(DEPDIR) bp/library/ext/ecos/$(DEPDIR) bp/library/ext/meb/$(DEPDIR) bp/library/ext/phn/$(DEPDIR) bp/library/ext/sbsp/$(DEPDIR) bp/library/ext/snid/$(DEPDIR) bp/library/ext/snw/$(DEPDIR) bp/ltp/$(DEPDIR) bp/stcp/$(DEPDIR) bp/tcp/$(DEPDIR) bp/test/$(DEPDIR) bp/udp/$(DEPDIR) bp/utils/$(DEPDIR) bss/library/$(DEPDIR) bss/test/$(DEPDIR) bssp/daemon/$(DEPDIR) bssp/library/$(DEPDIR) bssp/tcp/$(DEPDIR) bssp/udp/$(DEPDIR) bssp/utils/$(DEPDIR) cfdp/bp/$(DEPDIR) cfdp/daemon/$(DEPDIR) cfdp/library/$(DEPDIR) cfdp/tcp/$(DEPDIR) cfdp/test/$(DEPDIR) cfdp/utils/$(DEPDIR) dgr/library/$(DEPDIR) dgr/test/$(DEPDIR) dtpc/daemon/$(DEPDIR) dtpc/library/$(DEPDIR) dtpc/test/$(DEPDIR) dtpc/utils/$(DEPDIR) ici/bulk/STUB_BULK/$(DEPDIR) ici/crypto/NULL_SUITES/$(DEPDIR) ici/daemon/$(DEPDIR) ici/libbloom-master/$(DEPDIR) ici/libbloom-master/murmur2/$(DEPDIR) ici/library/$(DEPDIR) ici/sdr/$(DEPDIR) ici/test/$(DEPDIR) ici/utils/$(DEPDIR) ltp/daemon/$(DEPDIR) ltp/dccp/$(DEPDIR) ltp/library/$(DEPDIR) ltp/sda/$(DEPDIR) ltp/test/$(DEPDIR) ltp/udp/$(DEPDIR) ltp/utils/$(DEPDIR) nm/agent/$(DEPDIR) nm/contrib/QCBOR/src/$(DEPDIR) nm/mgr/$(DEPDIR) nm/shared/adm/$(DEPDIR) nm/shared/msg/$(DEPDIR) nm/shared/primitives/$(DEPDIR) nm/shared/utils/$(DEPDIR) nm/utils/$(DEPDIR) restart/utils/$(DEPDIR) tests/1000.loopback/$(DEPDIR) tests/1500.loopback-brs/$(DEPDIR) tests/bug-0015-tcpclo-bpcp-sig-handling/$(DEPDIR) tests/issue-188-common-cos-syntax/$(DEPDIR) tests/issue-260-teach-valgrind-mtake/$(DEPDIR) tests/issue-279-bpMemo-timeline/$(DEPDIR) tests/issue-330-cfdpclock-FDU-removal/$(DEPDIR) tests/issue-334-cfdp-transaction-id/$(DEPDIR) tests/library/$(DEPDIR) tests/nm-unit/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

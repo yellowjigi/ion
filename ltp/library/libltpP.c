@@ -31,7 +31,7 @@
 #define	EST_LINK_OHD		16
 
 #ifndef LTPDEBUG
-#define	LTPDEBUG		1
+#define	LTPDEBUG		0
 #endif
 
 #if (!(defined(SIGNAL_REDUNDANCY)) || SIGNAL_REDUNDANCY < 1)
@@ -823,6 +823,10 @@ static LtpVdb		*_ltpvdb(char **name)
 			return NULL;
 		}
 
+		/*	CODE ADDED	jigi			*/
+		/*	REASON	: to lock the semaphore		*/
+		sm_SemTake(vdb->deliverySemaphore);
+
 		/*	Raise all clients.				*/
 
 		for (i = 0, client = vdb->clients; i < LTP_MAX_NBR_OF_CLIENTS;
@@ -1099,7 +1103,6 @@ int	ltpStart(char *lsiCmd)
 
 	if (ltpvdb->delivPid == ERROR || sm_TaskExists(ltpvdb->delivPid) == 0)
 	{
-		ltpvdb->deliverySemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);//jigi
 		ltpvdb->delivPid = pseudoshell("ltpdeliv");
 	}
 
@@ -1128,7 +1131,14 @@ void	ltpStop()		/*	Reverses ltpStart.		*/
 	/*	Tell all LTP processes to stop.				*/
 
 	CHKVOID(sdr_begin_xn(sdr));	/*	Just to lock memory.	*/
-	sm_SemEnd(ltpvdb->deliverySemaphore);
+	/*	CODE MODIFIED FROM HERE		jigi	*/
+	/*	WHAT	: encapsulate in if statement	*/
+	/*	REASON	: for better stability		*/
+	if (ltpvdb->deliverySemaphore != SM_SEM_NONE)
+	{
+		sm_SemEnd(ltpvdb->deliverySemaphore);
+	}
+	/*	CODE MODIFIED UNTIL HERE	jigi	*/
 	for (i = 0, client = ltpvdb->clients; i < LTP_MAX_NBR_OF_CLIENTS;
 			i++, client++)
 	{
@@ -1196,6 +1206,19 @@ void	ltpStop()		/*	Reverses ltpStart.		*/
 	ltpvdb->lsiPid = ERROR;
 	ltpvdb->clockPid = ERROR;
 	ltpvdb->delivPid = ERROR;
+	/*	CODE ADDED FROM HERE	jigi	*/
+	/*	REASON: resetting delivery semaphore has been missing	*/
+	if (ltpvdb->deliverySemaphore == SM_SEM_NONE)
+	{
+		ltpvdb->deliverySemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
+	}
+	else
+	{
+		sm_SemUnend(ltpvdb->deliverySemaphore);
+		sm_SemGive(ltpvdb->deliverySemaphore);
+	}
+	sm_SemTake(ltpvdb->deliverySemaphore);
+	/*	CODE ADDED UNTIL HERE	jigi	*/
 	for (i = 0, client = ltpvdb->clients; i < LTP_MAX_NBR_OF_CLIENTS;
 			i++, client++)
 	{

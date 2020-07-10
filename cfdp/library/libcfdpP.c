@@ -13,7 +13,7 @@
 #include "lyst.h"
 
 #ifndef CFDPDEBUG
-#define	CFDPDEBUG		1
+#define	CFDPDEBUG		0
 #endif
 
 #ifndef	CFDP_FILLBUF_LIMIT
@@ -462,6 +462,9 @@ static CfdpVdb	*_cfdpvdb(char **name)
 
 		sm_SemTake(vdb->eventSemaphore);/*	Lock.		*/
 		sm_SemTake(vdb->fduSemaphore);	/*	Lock.		*/
+		/*	CODE ADDED	jigi	*/
+		/*	REASON	: to lock the semaphore		*/
+		sm_SemTake(vdb->attendant.semaphore);
 		vdb->currentFile = -1;		/*	Nothing open.	*/
 		corruptionModulusString = getenv("CFDP_CORRUPTION_MODULUS");
 		if (corruptionModulusString)
@@ -706,7 +709,14 @@ void	_cfdpStop()		/*	Reverses cfdpStart.		*/
 
 	/*	Disable blocking ZCO buffer space access.		*/
 
-	ionPauseAttendant(&(cfdpvdb->attendant));
+	/*	CODE MODIFIED FROM HERE		jigi	*/
+	/*	WHAT	: encapsulate in if statement	*/
+	/*	REASON	: for better stability		*/
+	if (cfdpvdb->attendant.semaphore != SM_SEM_NONE)
+	{
+		ionPauseAttendant(&(cfdpvdb->attendant));
+	}
+	/*	CODE MODIFIED UNTIL HERE	jigi	*/
 
 	/*	Stop user application input thread.			*/
 
@@ -729,7 +739,9 @@ void	_cfdpStop()		/*	Reverses cfdpStart.		*/
 		sm_TaskKill(cfdpvdb->clockPid, SIGTERM);
 	}
 
-	ionStopAttendant(&(cfdpvdb->attendant));
+	/*	CODE COMMENTED OUT	jigi		*/
+	/*	REASON	: bug fix test			*/
+	//ionStopAttendant(&(cfdpvdb->attendant));
 	sdr_exit_xn(sdr);	/*	Unlock memory.			*/
 
 	/*	Wait until all CFDP processes have stopped.		*/
@@ -784,6 +796,19 @@ void	_cfdpStop()		/*	Reverses cfdpStart.		*/
 	}
 
 	cfdpvdb->currentFdu = 0;
+	/*	CODE ADDED FROM HERE		jigi	*/
+	/*	WHAT	: reset attendant		*/
+	/*	REASON	: to support restart		*/
+	if (cfdpvdb->attendant.semaphore == SM_SEM_NONE)
+	{
+		oK(ionStartAttendant(&(cfdpvdb->attendant)));
+	}
+	else
+	{
+		ionResumeAttendant(&(cfdpvdb->attendant));
+	}
+	sm_SemTake(cfdpvdb->attendant.semaphore);
+	/*	CODE ADDED UNTIL HERE	jigi		*/
 	sdr_exit_xn(sdr);	/*	Unlock memory.			*/
 }
 

@@ -144,7 +144,9 @@ bin_PROGRAMS = \
 	$(restartbin) \
 	$(nmbin) \
 	$(amsbin) \
-	$(cfdpbin)
+	$(cfdpbin) \
+	$(armurbin)
+#jigi
 
 
 lib_LTLIBRARIES = \
@@ -2042,9 +2044,9 @@ nm_agent_SOURCES =  	$(nm_shared_src)		\
 			nm/agent/adm_ion_bpcp_agent.c	\
 			nm/agent/adm_ion_bpsource_impl.c	\
 			nm/agent/adm_ion_bpsource_agent.c	\
-			nm/agent/adm_kplo_telecommand_impl.c	\
-			nm/agent/adm_kplo_telecommand_agent.c
-#last 6 lines added by jigi
+			#nm/agent/adm_kplo_telecommand_impl.c	\
+			#nm/agent/adm_kplo_telecommand_agent.c
+#last 6 lines added by jigi//JIGI
 
 
 nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
@@ -2098,6 +2100,19 @@ ionrestart_SOURCES = restart/utils/ionrestart.c
 ionrestart_LDADD = libici.la libcgr.la libbp.la libltp.la libcfdp.la $(LIBOBJS)
 ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/ici/library -I$(srcdir)/cfdp/library $(AM_CFLAGS)
 
+##########################
+#
+# ARMUR SECTION //jigi
+#
+##########################
+
+armurbin = armur
+
+# --- Utility Programs --- #
+armur_SOURCES = nm/utils/armuradmin.c nm/utils/armur.c 
+armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
+armur_LDFLAGS = -L/usr/local/lib -lm -lpthread 
+armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS)
 
 ##########################
 #

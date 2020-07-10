@@ -46,9 +46,10 @@ void name_adm_init_agent();
 
 #define LINELEN_MAX		1024
 #define USRMSGLEN_MAX		256
-#define PATHLEN_MAX		128
-#define CMDLEN_MAX		64
-#define APPLEN_MAX		32
+#define CMDLEN_MAX		128
+#define PATHLEN_MAX		64
+#define NAMELEN_MAX		32
+#define FILECNT_MAX		32
 #define PROCCNT_MAX		16
 
 #define BUF_DEFAULT_ENC_SIZE	(TNVC_DEFAULT_ENC_SIZE - 10)
@@ -193,19 +194,21 @@ void name_adm_init_agent();
 #endif /* ION_OPEN_SOURCE */
 
 int kplo_exec(char *cmd, char *out);
-void kplo_add_parms(ari_t *id, tnvc_t *parms);
-void kplo_gen_rpt(eid_t mgr, ari_t *id, tnv_t *val);
+int kplo_args_get(char *application, char (*args)[CMDLEN_MAX]);
 int kplo_pid_get(char *application);
 int kplo_kill(char *application, int signum);
-int kplo_get_full_path_name(char *application_name, char *install_path, char *full_path_out);
-void kplo_cfdp_init(CfdpReqParms *parms);
+char *kplo_cut_filename(char *full_path_filename);
 int kplo_cfdp_get_wrapper(int bundle_lifetime, BpCustodySwitch bp_custody, int class_of_service,
 				uvast remote_host, char *remote_file, char *local_file);
 int kplo_cfdp_get_event_wrapper(CfdpTransactionId orig_xn_id);
-int kplo_replace(char *dest_filename, char *src_filename);
-int kplo_install(char *application, uvast file_server_eid, char *file_server_file, char *install_path);
+int kplo_prepend_path(char *filename);
+int kplo_extract_archive(char *archive_name, char (*filename)[PATHLEN_MAX],
+				char (*filename_tmp)[PATHLEN_MAX + 4], int *file_count);
+int kplo_replace(char *filename_dest, char *filename_src, char *filename_back);
+int kplo_install(uvast file_server_eid, char *file_server_file);
 int kplo_restart(char *application);
-int kplo_args_get(char *application, char (*args)[CMDLEN_MAX]);
+void kplo_add_parms(ari_t *id, tnvc_t *parms);
+void kplo_gen_rpt(eid_t mgr, ari_t *id, tnv_t *val);
 
 /*   STOP CUSTOM FUNCTIONS HERE  */
 

@@ -411,7 +411,7 @@ int	takeSdr(SdrState *sdr)
 {
 	CHKERR(sdr);
 	if (sdr->sdrSemaphore == -1 || sm_SemEnded(sdr->sdrSemaphore))
-	{
+	{	
 		return -1;		/*	Can't be taken.		*/
 	}
 
