@@ -2,6 +2,9 @@
 // jigi
 
 #include "armur.h"
+#include <archive.h>
+#include <archive_entry.h>
+#define	TMP_EXT	".tmp"
 
 /*	*	*	Restart functions	*	*	*/
 
@@ -1062,11 +1065,10 @@ static ARMUR_VDB *_armurvdb(char **name)
 		}
 
 		vdb = (ARMUR_VDB *)psp(wm, vdbAddress);
+		/*	restartMask is always initialized to 0 in volatile database.
+		 *	This enables no restart when unexpected system reboot occurs.	*/
 		vdb->restartMask = 0;
-		if ((vdb->restartQueue[ARMUR_RESTART_LV0] = sm_list_create(wm)) == 0
-		|| (vdb->restartQueue[ARMUR_RESTART_LV1] = sm_list_create(wm)) == 0
-		|| (vdb->restartQueue[ARMUR_RESTART_LV2] = sm_list_create(wm)) == 0
-		|| psm_catlg(wm, *name, vdbAddress) < 0)
+		if (psm_catlg(wm, *name, vdbAddress) < 0)
 		{
 			psm_free(wm, vdbAddress);
 			sdr_exit_xn(sdr);
@@ -1090,10 +1092,11 @@ int armurInit()
 	Sdr		sdr;
 	Object		armurdbObject;
 	ARMUR_DB	armurdbBuf;
-	char 		*armurvdbName = _armurvdbName();
 	ARMUR_Image	armurImageBuf;
 	Object		elt;
 	Object		obj;
+	ARMUR_CfdpInfo	cfdpInfoInit;
+	char 		*armurvdbName = _armurvdbName();
 
 	if (ionAttach() < 0)
 	{
@@ -1144,7 +1147,7 @@ int armurInit()
 		/*	ION core library	*/
 		istrcpy(armurImageBuf.name, "libici.so", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ionRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_ALL;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1161,7 +1164,7 @@ int armurInit()
 		/*	BP library	*/
 		istrcpy(armurImageBuf.name, "libbp.so", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &bpRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1178,7 +1181,7 @@ int armurInit()
 		/*	LTP library	*/
 		istrcpy(armurImageBuf.name, "libltp.so", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1195,7 +1198,7 @@ int armurInit()
 		/*	CFDP library	*/
 		istrcpy(armurImageBuf.name, "libcfdp.so", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &cfdpRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_CFDP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1216,7 +1219,7 @@ int armurInit()
 		/*	ION daemons	*/
 		istrcpy(armurImageBuf.name, "rfxclock", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &rfxclockRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_ION;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1233,7 +1236,7 @@ int armurInit()
 		/*	BP daemons	*/
 		istrcpy(armurImageBuf.name, "bpclock", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &bpclockRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1248,7 +1251,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "bptransit", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &bptransitRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1263,7 +1266,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ipnfw", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ipnfwRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1278,7 +1281,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ipnadminep", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ipnadminepRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1293,7 +1296,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "bpclm", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &bpclmRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1308,7 +1311,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ltpcli", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpcliRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1323,7 +1326,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ltpclo", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpcloRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_BP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1340,7 +1343,7 @@ int armurInit()
 		/*	LTP daemons	*/
 		istrcpy(armurImageBuf.name, "ltpclock", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpclockRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1355,7 +1358,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ltpdeliv", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpdelivRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1370,7 +1373,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "ltpmeter", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &ltpmeterRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1385,7 +1388,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "udplsi", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &udplsiRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1400,7 +1403,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "udplso", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &udplsoRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_LTP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1417,7 +1420,7 @@ int armurInit()
 		/*	CFDP daemons	*/
 		istrcpy(armurImageBuf.name, "cfdpclock", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &cfdpclockRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_CFDP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1432,7 +1435,7 @@ int armurInit()
 		}
 		istrcpy(armurImageBuf.name, "bputa", sizeof armurImageBuf.name);
 		armurImageBuf.restart = &bputaRestart;
-		armurImageBuf.installedTime = getCtime();
+		armurImageBuf.installedTime = 0;
 		armurImageBuf.protocol = ARMUR_CFDP;
 		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
 		if (obj)
@@ -1444,6 +1447,18 @@ int armurInit()
 				putErrmsg("No space for database.", NULL);
 			}
 			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
+		}
+
+		/*	Prepare queues to retain references of pending images		*/
+		armurdbBuf.queue[ARMUR_LV0] = sdr_list_create(sdr);
+		armurdbBuf.queue[ARMUR_LV1] = sdr_list_create(sdr);
+		armurdbBuf.queue[ARMUR_LV2] = sdr_list_create(sdr);
+		armurdbBuf.cfdpInfo = sdr_malloc(sdr, sizeof(ARMUR_CfdpInfo));
+		if (armurdbBuf.cfdpInfo)
+		{
+			memset((char *)&cfdpInfoInit, 0, sizeof(ARMUR_CfdpInfo));
+			sdr_write(sdr, armurdbBuf.cfdpInfo,
+					(char *)&cfdpInfoInit, sizeof(ARMUR_CfdpInfo));
 		}
 
 		/*	Write to SDR and catalogue it	*/
@@ -1491,30 +1506,107 @@ ARMUR_VDB *getArmurVdb()
 	return _armurvdb(NULL);
 }
 
-//int armurStart()
-//{
-//	Sdr		sdr = getIonsdr();
-//	PsmPartition	wm = getIonwm();
-//	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
-//	Object		armurdbobj = _armurdbObject(NULL);
-//	ARMUR_DB	armurdb;
-//	PsmAddress	elt;
-//
-//	CHKERR(sdr_begin_xn(sdr));
-//	sdr_exit_xn(sdr);
-//
-//	return 0;
-//}
+int	armurStart(char *ampTrigger)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_DB	armurdbBuf;
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	ARMUR_DB	*armurdb = _armurConstants();
+	Object		armurdbObject = _armurdbObject(NULL);
+
+	switch (armurdb->stat)
+	{
+	case ARMUR_STAT_IDLE:
+		if (ampTrigger == NULL)
+		{
+			break;
+		}
+
+		/*	ARMUR start has been triggerred by a network manager.
+		 *	Update the ARMUR stat and go to the next step.			*/
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		armurdbBuf.stat = ARMUR_STAT_DOWNLOADING;
+		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+
+	case ARMUR_STAT_DOWNLOADING:
+		/*	Archive is being downloaded.	*/
+
+		if (armurWait() < 0)
+		{
+			putErrmsg("ARMUR wait failed.", NULL);
+			return -1;
+		}
+		/*	Download has been finished.	*/
+
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		armurdbBuf.stat = ARMUR_STAT_DOWNLOADED;
+		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+
+		sdr_stage(sdr, (char *)&cfdpInfoBuf,
+				armurdbBuf.cfdpInfo, sizeof(ARMUR_CfdpInfo));
+		cfdpInfoBuf.srcNbr = 0;
+		cfdpInfoBuf.txnNbr = 0;
+		sdr_write(sdr, armurdbBuf.cfdpInfo,
+				(char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+
+	case ARMUR_STAT_DOWNLOADED:
+		/*	Start install procedure.	*/
+
+		if (armurInstall() < 0)
+		{
+			putErrmsg("ARMUR install failed.", NULL);
+			return -1;
+		}
+		/*	Install has been finished.	*/
+
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		armurdbBuf.stat = ARMUR_STAT_RESTART_PENDING;
+		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+
+		sdr_stage(sdr, (char *)&cfdpInfoBuf,
+				armurdbBuf.cfdpInfo, sizeof(ARMUR_CfdpInfo));
+		sdr_free(sdr, cfdpInfoBuf.archiveName);
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+
+	case ARMUR_STAT_RESTART_PENDING:
+		/*	Start restart procedure.	*/
+
+		if (armurRestart() < 0)
+		{
+			putErrmsg("ARMUR restart failed.", NULL);
+			return -1;
+		}
+		/*	Restart has been finished.	*/
+
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		armurdbBuf.stat = ARMUR_STAT_IDLE;
+		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+	}
+
+	return 0;
+}
 
 //void armurStop()
 //{
-//	Sdr		sdr = getIonsdr();
-//	PsmPartition	wm = getIonwm();
-//	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
-//	PsmAddress	elt;
-//
-//	CHKVOID(sdr_begin_xn(sdr));
-//	sdr_exit_xn(sdr);
 //}
 
 int armurAttach()
@@ -1575,6 +1667,21 @@ void armurDetach()
 	oK(_armurvdb(&stop));
 }
 
+static int	armurParseImageName(char *imageName)
+{
+	if (strcmp(imageName + strlen(imageName) - 3, ".so") == 0)
+	{
+		if (strcmp(imageName, "libici.so") == 0)
+		{
+			return ARMUR_CORE_LIBRARY;
+		}
+
+		return ARMUR_PROTOCOL_LIBRARY;
+	}
+
+	return ARMUR_APPLICATION;
+}
+
 static Object	locateImage(char *imageName, int imageType)
 {
 	Sdr		sdr = getIonsdr();
@@ -1598,33 +1705,19 @@ static Object	locateImage(char *imageName, int imageType)
 	return elt;
 }
 
-int	armurParseImageName(char *imageName)
-{
-	if (strcmp(imageName + strlen(imageName) - 3, ".so") == 0)
-	{
-		if (strcmp(imageName, "libici.so") == 0)
-		{
-			return ARMUR_CORE_LIBRARY;
-		}
-
-		return ARMUR_PROTOCOL_LIBRARY;
-	}
-
-	return ARMUR_APPLICATION;
-}
-
 int	armurFindImage(char *imageName, Object *imageObj, Object *imageElt)
 {
 	Sdr	sdr = getIonsdr();
 	Object	elt = 0;
 	int	imageType;
 
-	CHKERR(ionLocked());
 	CHKERR(imageName);
 	CHKERR(imageObj);
 	CHKERR(imageElt);
 
 	imageType = armurParseImageName(imageName);
+
+	CHKERR(sdr_begin_xn(sdr));
 	switch (imageType)
 	{
 	case ARMUR_CORE_LIBRARY:
@@ -1638,83 +1731,56 @@ int	armurFindImage(char *imageName, Object *imageObj, Object *imageElt)
 
 	if (elt == 0)
 	{
+		sdr_exit_xn(sdr);
 		*imageElt = 0;
 		return -1;
 	}
 
 	*imageObj = sdr_list_data(sdr, elt);
 	*imageElt = elt;
+
+	sdr_exit_xn(sdr);
 	return imageType;
 }
 
-int	armurEnqueue(char *imageName)
+static int	enqueueImage(Object imageObj, int imageType)
 {
 	Sdr		sdr = getIonsdr();
-	PsmPartition	ionwm = getIonwm();
+	Object		imageRefObj;
+	Object		imageRefElt;
 			OBJ_POINTER(ARMUR_Image, image);
-	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
-	Object		imageObj;
-	Object		imageElt;
-	PsmAddress	imageRefElt = 0;
-	PsmAddress	imageRefAddr;
-	ARMUR_ImageRef	*imageRef;
-	int		imageType;
+	ARMUR_ImageRef	imageRef;
 
-	CHKERR(imageName);
+	CHKERR(imageObj);
+	CHKERR(imageType == ARMUR_LV0 || imageType == ARMUR_LV1 || imageType == ARMUR_LV2);
 
-	if (*imageName == '\0')
-	{
-		writeMemoNote("[?] Invalid image name", imageName);
-		return 0;
-	}
+	imageRef.obj = imageObj;
 
 	CHKERR(sdr_begin_xn(sdr));
-	imageType = armurFindImage(imageName, &imageObj, &imageElt);
-	if (imageElt == 0)
+	if ((imageRefObj = sdr_malloc(sdr, sizeof(ARMUR_ImageRef))) == 0)
 	{
-		sdr_exit_xn(sdr);
-		putErrmsg("Can't find image.", imageName);
-		return 0;
+		sdr_cancel_xn(sdr);
+		putErrmsg("Not enough space for database.", NULL);
+		return -1;
 	}
-
-	if ((imageRefAddr = psm_zalloc(ionwm, sizeof(ARMUR_ImageRef))) == 0)
+	sdr_write(sdr, imageRefObj, (char *)&imageRef, sizeof(ARMUR_ImageRef));
+	if ((imageRefElt = sdr_list_insert_last(sdr,
+		(_armurConstants())->queue[imageType], imageRefObj)) == 0)
 	{
-		sdr_exit_xn(sdr);
-		putErrmsg("Not enough working memory.", NULL);
+		sdr_cancel_xn(sdr);
+		putErrmsg("No space for database.", NULL);
 		return -1;
 	}
 
-	switch (imageType)
-	{
-	case ARMUR_CORE_LIBRARY:
-		imageRefElt = sm_list_insert_last(ionwm,
-			armurvdb->restartQueue[ARMUR_RESTART_LV0], imageRefAddr);
-		break;
-	
-	case ARMUR_PROTOCOL_LIBRARY:
-		imageRefElt = sm_list_insert_last(ionwm,
-			armurvdb->restartQueue[ARMUR_RESTART_LV1], imageRefAddr);
-		break;
-
-	case ARMUR_APPLICATION:
-		imageRefElt = sm_list_insert_last(ionwm,
-			armurvdb->restartQueue[ARMUR_RESTART_LV2], imageRefAddr);
-	}
-
-	if (imageRefElt == 0)
-	{
-		psm_free(ionwm, imageRefAddr);
-		sdr_exit_xn(sdr);
-		putErrmsg("Not enough working memory.", NULL);
-		return -1;
-	}
-
-	imageRef = (ARMUR_ImageRef *)psp(ionwm, imageRefAddr);
-	imageRef->obj = imageObj;
 	GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageObj);
-	armurvdb->restartMask |= image->protocol;
+	(_armurvdb(NULL))->restartMask |= image->protocol;
 
-	sdr_exit_xn(sdr);
+	if (sdr_end_xn(sdr))
+	{
+		putErrmsg("Can't enqueue images.", NULL);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -1756,75 +1822,367 @@ int	armurEnqueue(char *imageName)
 //	sdr_exit_xn(sdr);
 //}
 
+static void	setInstallTimestamp(Object imageObj, time_t installedTime)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_Image	imageBuf;
+
+	CHKVOID(imageObj);
+	CHKVOID(installedTime);
+
+	CHKVOID(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *)&imageBuf, imageObj, sizeof(ARMUR_Image));
+	imageBuf.installedTime = installedTime;
+	sdr_write(sdr, imageObj, (char *)&imageBuf, sizeof(ARMUR_Image));
+	oK(sdr_end_xn(sdr));
+}
+
+static void	getInstallDir(int imageType, char *installDir)
+{
+	Sdr	sdr = getIonsdr();
+	char	buf[SDRSTRING_BUFSZ];
+
+	CHKVOID(imageType);
+	CHKVOID(installDir);
+
+	CHKVOID(sdr_begin_xn(sdr));
+	switch (imageType)
+	{
+	case ARMUR_LV0:
+	case ARMUR_LV1:
+		sdr_string_read(sdr, buf, (_armurConstants())->installPath[ARMUR_LIBS]);
+		break;
+
+	case ARMUR_LV2:
+		sdr_string_read(sdr, buf, (_armurConstants())->installPath[ARMUR_APPS]);
+	}
+	sdr_exit_xn(sdr);
+
+	istrcpy(installDir, buf, PATHNAME_LEN_MAX);
+}
+
+int	armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	Object		cfdpInfoObj;
+	
+	CHKERR(sdr_begin_xn(sdr));
+
+	cfdpInfoObj = (_armurConstants())->cfdpInfo;
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
+	cfdpInfoBuf.srcNbr = cfdpSrcNbr;
+	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+
+	return sdr_end_xn(sdr);
+}
+
+int	armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	Object		cfdpInfoObj;
+	
+	CHKERR(sdr_begin_xn(sdr));
+
+	cfdpInfoObj = (_armurConstants())->cfdpInfo;
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
+	cfdpInfoBuf.txnNbr = cfdpTxnNbr;
+	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+
+	return sdr_end_xn(sdr);
+}
+
+int	armurUpdateCfdpArchiveName(char *archiveName)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	Object		cfdpInfoObj;
+	
+	CHKERR(sdr_begin_xn(sdr));
+
+	cfdpInfoObj = (_armurConstants())->cfdpInfo;
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
+	cfdpInfoBuf.archiveName = sdr_string_create(sdr, archiveName);
+	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+
+	return sdr_end_xn(sdr);
+}
+
+int	armurWait()
+{
+	CfdpEventType		type;
+	time_t			time;
+	int			reqNbr;
+	CfdpTransactionId	transactionId;
+	char			sourceFileNameBuf[256];
+	char			destFileNameBuf[256];
+	uvast			fileSize;
+	MetadataList		messagesToUser;
+	uvast			offset;
+	unsigned int		length;
+	unsigned int		recordBoundsRespected;
+	CfdpContinuationState	continuationState;
+	unsigned int		segMetadataLength;
+	char			segMetadata[63];
+	CfdpCondition		condition;
+	uvast			progress;
+	CfdpFileStatus		fileStatus;
+	CfdpDeliveryCode	deliveryCode;
+	CfdpTransactionId	originatingTransactionId;
+	char			statusReportBuf[256];
+	MetadataList		filestoreResponses;
+	uvast			srcNbr;
+	uvast			txnNbr;
+	Sdr			sdr = getIonsdr();
+				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
+
+	if (cfdpAttach() < 0)
+	{
+		return -1;
+	}
+
+	while (1)
+	{
+		CHKERR(sdr_begin_xn(sdr));
+		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
+				sourceFileNameBuf, destFileNameBuf,
+				&fileSize, &messagesToUser, &offset, &length,
+				&recordBoundsRespected, &continuationState,
+				&segMetadataLength, segMetadata,
+				&condition, &progress, &fileStatus,
+				&deliveryCode, &originatingTransactionId,
+				statusReportBuf, &filestoreResponses) < 0)
+		{
+			return -1;
+		}
+
+		/* TODO: we need to check if any file data have been corrupted
+		 * or something that might cause the cfdp_get_event to block infinitely
+		 * implement it as a thread ? */
+
+		cfdp_decompress_number(&srcNbr, &transactionId.sourceEntityNbr);
+		cfdp_decompress_number(&txnNbr, &transactionId.transactionNbr);
+
+		GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (_armurConstants())->cfdpInfo);
+		if (type == CfdpTransactionFinishedInd
+			&& srcNbr == cfdpInfo->srcNbr)
+			//&& txnNbr == cfdpInfo->txnNbr)//JIGI
+		{
+			/*	Now the download has been finished.
+			 *	Let's store the file name for later use.	*/
+			armurUpdateCfdpArchiveName(destFileNameBuf);
+			if (sdr_end_xn(sdr))
+			{
+				return -1;
+			}
+			break;
+		}
+
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+//int	armurInstall()
+int	armurInstall(char *aname)//JIGI
+{
+	Object			imageObj;
+	Object			imageElt;
+	char			archiveNameBuf[SDRSTRING_BUFSZ];
+	char			imageName[FILENAME_LEN_MAX];
+	char			pathName[PATHNAME_LEN_MAX];
+	char			pathNameTmp[PATHNAME_LEN_MAX];
+	char			installDir[PATHNAME_LEN_MAX];
+	int			imageType;
+	struct archive		*a;
+	struct archive_entry	*entry;
+	int			result;
+	time_t			installedTime = getCtime();
+
+	//CHKERR(sdr_begin_xn(sdr));
+	//sdr_string_read(sdr, archiveNameBuf, (_armurConstants())->cfdpInfo.archiveName);
+	//sdr_exit_xn(sdr);
+	istrcpy(archiveNameBuf, aname, sizeof archiveNameBuf);//JIGI
+
+	/*	LIBARCHIVE APIs			*/
+	if ((a = archive_read_new()) == NULL)
+	{
+		return -1;
+	}
+
+	if (archive_read_support_filter_gzip(a) != ARCHIVE_OK
+	|| archive_read_support_format_tar(a) != ARCHIVE_OK)
+	{
+		archive_read_free(a);
+		return -1;
+	}
+
+	if (archive_read_open_filename(a, archiveNameBuf, 0) != ARCHIVE_OK)
+	{
+		archive_read_free(a);
+		return -1;
+	}
+
+	while ((result = archive_read_next_header(a, &entry)) != ARCHIVE_EOF)
+	{
+		if (result != ARCHIVE_OK)
+		{
+			archive_read_free(a);
+			return -1;
+		}
+
+		istrcpy(imageName, archive_entry_pathname(entry), sizeof imageName);
+		imageType = armurFindImage(imageName, &imageObj, &imageElt);
+		if (imageElt == 0)
+		{
+			/*	TODO: Append error message	*/
+			archive_read_free(a);
+			return -1;
+		}
+
+		/*	Retain the image reference in the queue of ARMUR DB.	*/
+		if (enqueueImage(imageObj, imageType) < 0)
+		{
+			/*	TODO: Append error message	*/
+			//putErrmsg("Can't enqueue image", imageName);
+			archive_read_free(a);
+			return -1;
+		}
+
+		getInstallDir(imageType, installDir);
+		isprintf(pathName, sizeof pathName, "%s/%s", installDir, imageName);
+		isprintf(pathNameTmp, sizeof pathNameTmp, "%s/%s" TMP_EXT,
+				installDir, imageName);
+		archive_entry_set_pathname(entry, pathNameTmp);
+
+		/*	Extract the file.					*/
+		if (archive_read_extract(a, entry, 0) != ARCHIVE_OK)
+		{
+			archive_read_free(a);
+			return -1;
+		}
+
+		/*	Lastly, replace each file.
+		 *	(rename in C supports atomic operation.)		*/
+		if (rename(pathNameTmp, pathName) != 0)
+		{
+			archive_read_free(a);
+			return -1;
+		}
+		/*	Replace is successfully finished with this file.
+		 *	Now let's update the installedTime of the image.	*/
+		setInstallTimestamp(imageObj, installedTime);
+
+		if (archive_read_data_skip(a) != ARCHIVE_OK)
+		{
+			archive_read_free(a);
+			return -1;
+		}
+	}
+	archive_read_free(a);
+	oK(remove(archiveNameBuf));
+
+	return 0;
+}
+
 int	armurRestart()
 {
 	Sdr		sdr = getIonsdr();
-	PsmPartition	wm = getIonwm();
-	ARMUR_VDB	*vdb = _armurvdb(NULL);
+	ARMUR_DB	*armurdb = _armurConstants();
+	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 			OBJ_POINTER(ARMUR_Image, image);
-	PsmAddress	elt;
-	ARMUR_ImageRef	*imageRef;
-	int level;
+	Object		imageRefAddr;
+	Object		imageRefElt;
+	ARMUR_ImageRef	imageRef;
+	int		level;
 
 	for (level = 0; level < 3; level++)
 	{
-		while ((elt = sm_list_first(wm, vdb->restartQueue[level])) != 0)
+		CHKERR(sdr_begin_xn(sdr));
+		while ((imageRefElt = sdr_list_first(sdr, armurdb->queue[level])) != 0)
 		{
-			CHKERR(sdr_begin_xn(sdr));
-
 			/*	Item was found. Let's get the image.			*/
-			imageRef = (ARMUR_ImageRef *)psp(wm, sm_list_data(wm, elt));
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef->obj);
+			imageRefAddr = sdr_list_data(sdr, imageRefElt);
+			sdr_read(sdr, (char *)&imageRef, imageRefAddr,
+					sizeof(ARMUR_ImageRef));
+			GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef.obj);
 
-			printf("%s\n", image->name);//dbg
-			/*	Now that we know the image address in SDR,
-			 *	we will delete the element from the restart queue.	*/
-			psm_free(wm, sm_list_data(wm, elt));
-			oK(sm_list_delete(wm, elt, NULL, NULL));
-
-			/*	We will restart protocols & applications only if the
-			 *	restart mask is not zero.				*/
-			if (vdb->restartMask == 0)
+			/*	We will restart applications only if the restart mask
+			 *	is not zero, i.e., the items are not already restarted
+			 *	(which might have been restarted because of some
+			 *	unexpected system reboot)				*/
+			if (armurvdb->restartMask == 0)
 			{
-				sdr_exit_xn(sdr);
+				/*	Delete the element from the queue.		*/
+				sdr_free(sdr, imageRefAddr);
+				oK(sdr_list_delete(sdr, imageRefElt, NULL, NULL));
+				if (sdr_end_xn(sdr))
+				{
+					return -1;
+				}
+				CHKERR(sdr_begin_xn(sdr));	/*	For next loop	*/
 				continue;
 			}
 
 			switch (level)
 			{
-			case ARMUR_RESTART_LV0:
+			case ARMUR_LV0:
 			/*	Items in level 0 will set the restart mask to 0.	*/
-				vdb->restartMask = 0;
+				armurvdb->restartMask = 0;
 				break;
 
-			case ARMUR_RESTART_LV1:
+			case ARMUR_LV1:
 			/*	Items in level 1 will xor the restart mask.
 			 *	(i.e., will turn off corresponding bit flags.)		*/
-				vdb->restartMask ^= image->protocol;
+				armurvdb->restartMask ^= image->protocol;
 				break;
 
-			case ARMUR_RESTART_LV2:
+			case ARMUR_LV2:
 			/*	Items in level 2 will be restarted only if
 			 *	it has not been restarted by the upper level.
 			 *	(i.e., if the bit has not yet been turned off.		*/
-				if ((vdb->restartMask & image->protocol) == 0)
+				if ((armurvdb->restartMask & image->protocol) == 0)
 				{
-					sdr_exit_xn(sdr);
+					sdr_free(sdr, imageRefAddr);
+					oK(sdr_list_delete(sdr, imageRefElt, NULL, NULL));
+					if (sdr_end_xn(sdr))
+					{
+						return -1;
+					}
+					CHKERR(sdr_begin_xn(sdr));/*	For next loop	*/
 					continue;
 				}
 			}
 
 			sdr_exit_xn(sdr);
-			printf("vdb->restartMask: %hhd\n", vdb->restartMask);//dbg
 			printf("%s will restart\n", image->name);//dbg
 			if (image->restart() < 0)
 			{
 				return -1;
 			}
+
+			/*	Delete the element from the queue.			*/
+			CHKERR(sdr_begin_xn(sdr));
+			sdr_free(sdr, imageRefAddr);
+			oK(sdr_list_delete(sdr, imageRefElt, NULL, NULL));
+			if (sdr_end_xn(sdr))
+			{
+				return -1;
+			}
+
+			CHKERR(sdr_begin_xn(sdr));	/*	For next loop		*/
 		}
+		sdr_exit_xn(sdr);
 	}
 
-	vdb->restartMask = 0;
+	CHKERR(sdr_begin_xn(sdr));
+	armurvdb->restartMask = 0;
+	sdr_exit_xn(sdr);
 
 	return 0;
 }

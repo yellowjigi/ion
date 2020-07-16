@@ -761,8 +761,10 @@ int	ionInitialize(IonParms *parms, uvast ownNodeNbr)
 
 	default:		/*	Found DB in the SDR.		*/
 		sdr_exit_xn(ionsdr);
-		writeMemo("[?] Attempting duplicate node initialization.");
-		return -1;
+		/*	CODE COMMENTED OUT	jigi			*/
+		/*	REASON	: to fix SDR_IN_FILE not working	*/
+		//writeMemo("[?] Attempting duplicate node initialization.");
+		//return -1;
 	}
 
 	oK(_iondbObject(&iondbObject));

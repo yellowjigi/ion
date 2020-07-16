@@ -2111,7 +2111,7 @@ armurbin = armur
 # --- Utility Programs --- #
 armur_SOURCES = nm/utils/armuradmin.c nm/utils/armur.c 
 armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
-armur_LDFLAGS = -L/usr/local/lib -lm -lpthread 
+armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
 armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS)
 
 ##########################

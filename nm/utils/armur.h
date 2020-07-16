@@ -13,22 +13,23 @@
 
 #define	ARMUR_LIBS	0
 #define	ARMUR_APPS	1
-#define ARMUR_LIBPATH_DEFAULT	"/usr/local/lib/"
-#define ARMUR_APPPATH_DEFAULT	"/usr/local/bin/"
+#define ARMUR_LIBPATH_DEFAULT	"/usr/local/lib"
+#define ARMUR_APPPATH_DEFAULT	"/usr/local/bin"
 
 /*	ARMUR states		*/
 #define	ARMUR_STAT_IDLE		0
 #define	ARMUR_STAT_DOWNLOADING	1
 #define	ARMUR_STAT_DOWNLOADED	2
-#define	ARMUR_STAT_INSTALLING	3
-#define	ARMUR_STAT_LV0_PENDING	4
-#define ARMUR_STAT_LV1_PENDING	5
-#define ARMUR_STAT_LV2_PENDING	6
+#define	ARMUR_STAT_RESTART_PENDING	3
+//#define	ARMUR_STAT_INSTALLING	3
+//#define	ARMUR_STAT_LV0_PENDING	4
+//#define ARMUR_STAT_LV1_PENDING	5
+//#define ARMUR_STAT_LV2_PENDING	6
 
-/*	For restart queues	*/
-#define	ARMUR_RESTART_LV0	0		/*	Core library		*/
-#define	ARMUR_RESTART_LV1	1		/*	Protocol library	*/
-#define	ARMUR_RESTART_LV2	2		/*	Daemon applications	*/
+/*	For retention queues	*/
+#define	ARMUR_LV0	0		/*	Core library		*/
+#define	ARMUR_LV1	1		/*	Protocol library	*/
+#define	ARMUR_LV2	2		/*	Daemon applications	*/
 
 /*	For restart mask	*/
 #define	ARMUR_ALL	15
@@ -37,10 +38,17 @@
 #define ARMUR_LTP	2
 #define ARMUR_CFDP	1
 
+/*	Buffer size		*/
+#define	PATHNAME_LEN_MAX	64
+#define	FILENAME_LEN_MAX	16
+
+/*	Others			*/
+#define	TMP_EXT		".tmp"
+
 typedef int		(*restartFn)();
 
 typedef struct {
-	char		name[16];
+	char		name[FILENAME_LEN_MAX];
 	restartFn	restart;
 	char		protocol;
 	time_t		installedTime;
@@ -51,15 +59,22 @@ typedef struct {
 } ARMUR_ImageRef;
 
 typedef struct {
+	uvast		srcNbr;
+	uvast		txnNbr;
+	Object		archiveName;		/*	SDR string		*/
+} ARMUR_CfdpInfo;
+
+typedef struct {
 	char		stat;
 	char		numInstalled[2];
 	Object		installPath[2];		/*	SDR strings		*/
-	Object		images[2];		/*	SDR lists		*/
+	Object		images[2];		/*	SDR lists of Image	*/
+	Object		queue[3];		/*	SDR lists of ImageRef	*/
+	Object		cfdpInfo;		/*	SDR address of CfdpInfo	*/
 } ARMUR_DB;
 
 typedef struct {
 	char		restartMask;
-	PsmAddress	restartQueue[3];	/*	SM lists of ImageRef	*/
 } ARMUR_VDB;
 
 extern int		armurInit();
@@ -68,8 +83,12 @@ extern void		armurDetach();
 extern Object		getArmurDbObject();
 extern ARMUR_DB		*getArmurConstants();
 extern ARMUR_VDB	*getArmurVdb();
-extern int		armurParseImageName(char *imageName);
+extern int		armurStart(char *ampTrigger);
 extern int		armurFindImage(char *imageName, Object *imageObj, Object *imageElt);
-int			armurEnqueue(char *imageName);
-int			armurRestart();
+extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
+extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
+extern int		armurUpdateCfdpArchiveName(char *archiveName);
+extern int		armurWait();
+extern int		armurInstall();
+extern int		armurRestart();
 //void			armurResetVdb();

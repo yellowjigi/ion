@@ -52,6 +52,29 @@ static int	attachToArmur()
 	return 0;
 }
 
+static void	addCfdpInfo(char *token, char *info)
+{
+	if (strcmp(token, "src") == 0)
+	{
+		armurUpdateCfdpSrcNbr(strtouvast(info));
+		return;
+	}
+	
+	if (strcmp(token, "txn") == 0)
+	{
+		armurUpdateCfdpTxnNbr(strtouvast(info));
+		return;
+	}
+
+	if (strcmp(token, "ar") == 0)
+	{
+		armurUpdateCfdpArchiveName(info);
+		return;
+	}
+
+	SYNTAX_ERROR;
+}
+
 static void	executeAdd(int tokenCount, char **tokens)
 {
 	if (tokenCount < 2)
@@ -60,15 +83,15 @@ static void	executeAdd(int tokenCount, char **tokens)
 		return;
 	}
 
-	if (strcmp(tokens[1], "queue") == 0)
+	if (strcmp(tokens[1], "cfdp") == 0)
 	{
-		if (tokenCount != 3)
+		if (tokenCount != 4)
 		{
 			SYNTAX_ERROR;
 			return;
 		}
 
-		oK(armurEnqueue(tokens[2]));
+		addCfdpInfo(tokens[2], tokens[3]);
 		return;
 	}
 
@@ -100,6 +123,18 @@ static void	executeAdd(int tokenCount, char **tokens)
 //	SYNTAX_ERROR;
 //}
 
+static void	executeWait(int tokenCount, char **tokens)
+{
+	if (tokenCount != 1)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	oK(armurWait());
+	return;
+}
+
 static void	executeInstall(int tokenCount, char **tokens)
 {
 	if (tokenCount < 2)
@@ -130,50 +165,56 @@ static void	executeRestart(int tokenCount, char **tokens)
 	return;
 }
 
-static void	printPath(char *token)
+static void	printStat(char stat)
 {
-	Sdr		sdr = getIonsdr();
-	ARMUR_DB	*armurdb = getArmurConstants();
-	char		pathBuffer[SDRSTRING_BUFSZ];
-	char		*path;
+	char	*buffer;
 
-	if (strcmp(token, "lib") == 0)
+	switch (stat)
 	{
-		if (sdr_string_read(sdr, pathBuffer, armurdb->installPath[ARMUR_LIBS]) < 0)
-		{
-			path = "?";
-		}
-		else
-		{
-			path = pathBuffer;
-		}
-		printText(path);
-		return;
+	case ARMUR_STAT_IDLE:
+		buffer = "idle";
+		break;
+
+	case ARMUR_STAT_DOWNLOADING:
+		buffer = "downloading";
+		break;
+
+	case ARMUR_STAT_DOWNLOADED:
+		buffer = "downloaded";
+		break;
+	//JIGI
+	//case ARMUR_STAT_INSTALLING:
+	//	buffer = "installing";
+	//	break;
+
+	case ARMUR_STAT_RESTART_PENDING:
+		buffer = "restart queue pending";
+		break;
+
+	//case ARMUR_STAT_LV0_PENDING:
+	//	buffer = "lv0 restart queue pending";
+	//	break;
+
+	//case ARMUR_STAT_LV1_PENDING:
+	//	buffer = "lv1 restart queue pending";
+	//	break;
+
+	//case ARMUR_STAT_LV2_PENDING:
+	//	buffer = "lv2 restart queue pending";
+	//	break;
+
+	default:
+		buffer = "unknown";
 	}
 
-	if (strcmp(token, "app") == 0)
-	{
-		if (sdr_string_read(sdr, pathBuffer, armurdb->installPath[ARMUR_APPS]) < 0)
-		{
-			path = "?";
-		}
-		else
-		{
-			path = pathBuffer;
-		}
-		printText(path);
-		return;
-	}
-
-	SYNTAX_ERROR;
-	return;
+	printText(buffer);
 }
 
-static void	infoPath(int tokenCount, char **tokens)
+static void	infoStat(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
 
-	if (tokenCount != 3)
+	if (tokenCount != 2)
 	{
 		SYNTAX_ERROR;
 		return;
@@ -181,7 +222,57 @@ static void	infoPath(int tokenCount, char **tokens)
 
 	CHKVOID(sdr_begin_xn(sdr));
 
-	printPath(tokens[2]);
+	printStat((getArmurConstants())->stat);
+
+	sdr_exit_xn(sdr);
+}
+
+static void	printPath(int type)
+{
+	Sdr		sdr = getIonsdr();
+	char		pathBuffer[SDRSTRING_BUFSZ];
+	char		*path;
+
+	if (sdr_string_read(sdr, pathBuffer, (getArmurConstants())->installPath[type]) < 0)
+	{
+		path = "?";
+	}
+	else
+	{
+		path = pathBuffer;
+	}
+
+	printText(path);
+}
+
+static void	infoPath(int tokenCount, char **tokens)
+{
+	Sdr	sdr = getIonsdr();
+	int	type;
+
+	if (tokenCount != 3)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	if (strcmp(tokens[2], "lib") == 0)
+	{
+		type = ARMUR_LIBS;
+	}
+	else if (strcmp(tokens[2], "app") == 0)
+	{
+		type = ARMUR_APPS;
+	}
+	else
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	CHKVOID(sdr_begin_xn(sdr));
+
+	printPath(type);
 
 	sdr_exit_xn(sdr);
 }
@@ -222,8 +313,10 @@ static void	printImage(ARMUR_Image *image)
 
 	writeTimestampUTC(image->installedTime, installedTimeBuffer);
 
-	isprintf(buffer, sizeof buffer, "Name: %s\tRestart: %s\tProtocol:%s\t\
-Installed Time:%s", nameBuffer, restartBuffer, protocolBuffer, installedTimeBuffer);
+	isprintf(buffer, sizeof buffer,
+			"--------------------\n"
+			"Name: %s\nRestart: %s\nProtocol:%s\nInstalled Time:%s",
+			nameBuffer, restartBuffer, protocolBuffer, installedTimeBuffer);
 	printText(buffer);
 }
 
@@ -240,65 +333,45 @@ static void	infoImage(int tokenCount, char **tokens)
 		return;
 	}
 
-	CHKVOID(sdr_begin_xn(sdr));
 	armurFindImage(tokens[2], &addr, &elt);
 	if (elt == 0)
 	{
 		printText("Unknown image.");
 	}
-	else
-	{
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, addr);
-		printImage(image);
-	}
 
+	CHKVOID(sdr_begin_xn(sdr));
+	GET_OBJ_POINTER(sdr, ARMUR_Image, image, addr);
 	sdr_exit_xn(sdr);
+
+	printImage(image);
 }
 
-static void	printStat()
+static void	printCfdp(ARMUR_CfdpInfo *cfdpInfo)
 {
-	char	*buffer;
+	Sdr	sdr = getIonsdr();
+	char	archiveNameBuf[SDRSTRING_BUFSZ];
+	char	*archiveName;
+	char	buffer[1024];
 
-	switch ((getArmurConstants())->stat)
+	if (sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName) < 0)
 	{
-	case ARMUR_STAT_IDLE:
-		buffer = "idle";
-		break;
-
-	case ARMUR_STAT_DOWNLOADING:
-		buffer = "downloading";
-		break;
-
-	case ARMUR_STAT_DOWNLOADED:
-		buffer = "downloaded";
-		break;
-
-	case ARMUR_STAT_INSTALLING:
-		buffer = "installing";
-		break;
-
-	case ARMUR_STAT_LV0_PENDING:
-		buffer = "lv0 restart queue pending";
-		break;
-
-	case ARMUR_STAT_LV1_PENDING:
-		buffer = "lv1 restart queue pending";
-		break;
-
-	case ARMUR_STAT_LV2_PENDING:
-		buffer = "lv2 restart queue pending";
-		break;
-
-	default:
-		buffer = "unknown";
+		archiveName = "unknown";
+	}
+	else
+	{
+		archiveName = archiveNameBuf;
 	}
 
+	isprintf(buffer, sizeof buffer,
+			"Source number: %lu\nTransaction number: %lu\nArchive name: %s",
+			cfdpInfo->srcNbr, cfdpInfo->txnNbr, archiveName);
 	printText(buffer);
 }
 
-static void	infoStat(int tokenCount, char **tokens)
+static void	infoCfdp(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
+		OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
 
 	if (tokenCount != 2)
 	{
@@ -308,7 +381,8 @@ static void	infoStat(int tokenCount, char **tokens)
 
 	CHKVOID(sdr_begin_xn(sdr));
 
-	printStat();
+	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (getArmurConstants())->cfdpInfo);
+	printCfdp(cfdpInfo);
 
 	sdr_exit_xn(sdr);
 }
@@ -318,6 +392,12 @@ static void	executeInfo(int tokenCount, char **tokens)
 	if (tokenCount < 2)
 	{
 		printText("Information on what?");
+		return;
+	}
+
+	if (strcmp(tokens[1], "stat") == 0)
+	{
+		infoStat(tokenCount, tokens);
 		return;
 	}
 
@@ -333,9 +413,9 @@ static void	executeInfo(int tokenCount, char **tokens)
 		return;
 	}
 
-	if (strcmp(tokens[1], "stat") == 0)
+	if (strcmp(tokens[1], "cfdp") == 0)
 	{
-		infoStat(tokenCount, tokens);
+		infoCfdp(tokenCount, tokens);
 		return;
 	}
 
@@ -470,13 +550,13 @@ static void	listImages(int tokenCount, char **tokens)
 	sdr_exit_xn(sdr);
 }
 
-static void	listRestartImagesForLevel(int level)
+static void	listQueuesForLevel(int level)
 {
 	Sdr		sdr = getIonsdr();
-	PsmPartition	ionwm = getIonwm();
-	PsmAddress	elt;
+	Object		imageRefObj;
+	Object		imageRefElt;
 			OBJ_POINTER(ARMUR_Image, image);
-	ARMUR_ImageRef	*imageRef;
+	ARMUR_ImageRef	imageRef;
 
 	if (level < 0 || level > 2)
 	{
@@ -484,16 +564,17 @@ static void	listRestartImagesForLevel(int level)
 		return;
 	}
 
-	for (elt = sm_list_first(ionwm, (getArmurVdb())->restartQueue[level]); elt;
-			elt = sm_list_next(ionwm, elt))
+	for (imageRefElt = sdr_list_first(sdr, (getArmurConstants())->queue[level]);
+		imageRefElt; imageRefElt = sdr_list_next(sdr, imageRefElt))
 	{
-		imageRef = (ARMUR_ImageRef *)psp(ionwm, sm_list_data(ionwm, elt));
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef->obj);
+		imageRefObj = sdr_list_data(sdr, imageRefElt);
+		sdr_read(sdr, (char *)&imageRef, imageRefObj, sizeof(ARMUR_ImageRef));
+		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef.obj);
 		printImage(image);
 	}
 }
 
-static void	listRestartImages(int tokenCount, char **tokens)
+static void	listQueues(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
 
@@ -501,13 +582,13 @@ static void	listRestartImages(int tokenCount, char **tokens)
 	switch (tokenCount)
 	{
 	case 2:
-		listRestartImagesForLevel(ARMUR_RESTART_LV0);
-		listRestartImagesForLevel(ARMUR_RESTART_LV1);
-		listRestartImagesForLevel(ARMUR_RESTART_LV2);
+		listQueuesForLevel(ARMUR_LV0);
+		listQueuesForLevel(ARMUR_LV1);
+		listQueuesForLevel(ARMUR_LV2);
 		break;
 	
 	case 3:
-		listRestartImagesForLevel(atoi(tokens[2]));
+		listQueuesForLevel(atoi(tokens[2]));
 		break;
 
 	default:
@@ -537,9 +618,9 @@ static void	executeList(int tokenCount, char **tokens)
 		return;
 	}
 
-	if (strcmp(tokens[1], "restart") == 0)
+	if (strcmp(tokens[1], "queue") == 0)
 	{
-		listRestartImages(tokenCount, tokens);
+		listQueues(tokenCount, tokens);
 		return;
 	}
 
@@ -627,6 +708,13 @@ static int	processLine(char *line, int lineLength, int *rc)
 			if (attachToArmur() == 0)
 			{
 				executeList(tokenCount, tokens);
+			}
+			return 0;
+
+		case 'w':
+			if (attachToArmur() == 0)
+			{
+				executeWait(tokenCount, tokens);
 			}
 			return 0;
 
