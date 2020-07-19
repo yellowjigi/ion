@@ -123,48 +123,6 @@ static void	executeAdd(int tokenCount, char **tokens)
 //	SYNTAX_ERROR;
 //}
 
-static void	executeWait(int tokenCount, char **tokens)
-{
-	if (tokenCount != 1)
-	{
-		SYNTAX_ERROR;
-		return;
-	}
-
-	oK(armurWait());
-	return;
-}
-
-static void	executeInstall(int tokenCount, char **tokens)
-{
-	if (tokenCount < 2)
-	{
-		printText("Install what?");
-		return;
-	}
-
-	if (tokenCount > 2)
-	{
-		SYNTAX_ERROR;
-		return;
-	}
-
-	oK(armurInstall(tokens[1]));
-	return;
-}
-
-static void	executeRestart(int tokenCount, char **tokens)
-{
-	if (tokenCount != 1)
-	{
-		SYNTAX_ERROR;
-		return;
-	}
-
-	oK(armurRestart());
-	return;
-}
-
 static void	printStat(char stat)
 {
 	char	*buffer;
@@ -188,7 +146,7 @@ static void	printStat(char stat)
 	//	break;
 
 	case ARMUR_STAT_RESTART_PENDING:
-		buffer = "restart queue pending";
+		buffer = "restart pending";
 		break;
 
 	//case ARMUR_STAT_LV0_PENDING:
@@ -230,16 +188,18 @@ static void	infoStat(int tokenCount, char **tokens)
 static void	printPath(int type)
 {
 	Sdr		sdr = getIonsdr();
+	ARMUR_DB	*armurdb = getArmurConstants();
 	char		pathBuffer[SDRSTRING_BUFSZ];
 	char		*path;
 
-	if (sdr_string_read(sdr, pathBuffer, (getArmurConstants())->installPath[type]) < 0)
+	if (armurdb->installPath[type])
 	{
-		path = "?";
+		sdr_string_read(sdr, pathBuffer, armurdb->installPath[type]);
+		path = pathBuffer;
 	}
 	else
 	{
-		path = pathBuffer;
+		path = "?";
 	}
 
 	printText(path);
@@ -353,13 +313,14 @@ static void	printCfdp(ARMUR_CfdpInfo *cfdpInfo)
 	char	*archiveName;
 	char	buffer[1024];
 
-	if (sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName) < 0)
+	if (cfdpInfo->archiveName)
 	{
-		archiveName = "unknown";
+		sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName);
+		archiveName = archiveNameBuf;
 	}
 	else
 	{
-		archiveName = archiveNameBuf;
+		archiveName = "unknown";
 	}
 
 	isprintf(buffer, sizeof buffer,
@@ -439,21 +400,24 @@ static void	listPaths(int tokenCount, char **tokens)
 	}
 
 	CHKVOID(sdr_begin_xn(sdr));
-	if (sdr_string_read(sdr, libPathBuffer, armurdb->installPath[ARMUR_LIBS]) < 0)
+	if (armurdb->installPath[ARMUR_LIBS])
+	{
+		sdr_string_read(sdr, libPathBuffer, armurdb->installPath[ARMUR_LIBS]);
+		libPath = libPathBuffer;
+	}
+	else
 	{
 		libPath = "?";
 	}
-	else
+	
+	if (armurdb->installPath[ARMUR_APPS])
 	{
-		libPath = libPathBuffer;
+		sdr_string_read(sdr, appPathBuffer, armurdb->installPath[ARMUR_APPS]);
+		appPath = appPathBuffer;
 	}
-	if (sdr_string_read(sdr, appPathBuffer, armurdb->installPath[ARMUR_APPS]) < 0)
+	else
 	{
 		appPath = "?";
-	}
-	else
-	{
-		appPath = appPathBuffer;
 	}
 
 	isprintf(buffer, sizeof buffer, "libPath: %s\nappPath: %s", libPath, appPath);
@@ -627,6 +591,44 @@ static void	executeList(int tokenCount, char **tokens)
 	SYNTAX_ERROR;
 }
 
+//static void	executeStart(int tokenCount, char **tokens)
+//{
+//	if (tokenCount != 2)
+//	{
+//		SYNTAX_ERROR;
+//		return;
+//	}
+//
+//	if (strcmp(tokens[1], "wait") == 0)
+//	{
+//		if (armurWait() < 0)
+//		{
+//			putErrmsg("armurWait failed.", NULL);
+//		}
+//		return;
+//	}
+//
+//	if (strcmp(tokens[1], "install") == 0)
+//	{
+//		if (armurInstall() < 0)
+//		{
+//			putErrmsg("armurInstall failed.", NULL);
+//		}
+//		return;
+//	}
+//
+//	if (strcmp(tokens[1], "restart") == 0)
+//	{
+//		if (armurRestart() < 0)
+//		{
+//			putErrmsg("armurRestart failed.", NULL);
+//		}
+//		return;
+//	}
+//
+//	SYNTAX_ERROR;
+//}
+
 static int	processLine(char *line, int lineLength, int *rc)
 {
 	int		tokenCount;
@@ -711,24 +713,20 @@ static int	processLine(char *line, int lineLength, int *rc)
 			}
 			return 0;
 
-		case 'w':
-			if (attachToArmur() == 0)
-			{
-				executeWait(tokenCount, tokens);
-			}
-			return 0;
-
 		case 's':
 			if (attachToArmur() == 0)
 			{
-				executeInstall(tokenCount, tokens);
-			}
-			return 0;
-
-		case 'r':
-			if (attachToArmur() == 0)
-			{
-				executeRestart(tokenCount, tokens);
+				if (tokenCount < 2)
+				{
+					printText("Can't start ARMUR: no nm_agent command.");
+				}
+				else
+				{
+					if (armurStart(tokens[1]) < 0)
+					{
+						putErrmsg("Can't start ARMUR.", NULL);
+					}
+				}
 			}
 			return 0;
 

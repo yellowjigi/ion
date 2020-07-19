@@ -45,11 +45,11 @@
 /*	Others			*/
 #define	TMP_EXT		".tmp"
 
-typedef int		(*restartFn)();
+typedef int		(*ARMUR_RestartFn)();
 
 typedef struct {
 	char		name[FILENAME_LEN_MAX];
-	restartFn	restart;
+	ARMUR_RestartFn	restart;
 	char		protocol;
 	time_t		installedTime;
 } ARMUR_Image;
@@ -70,11 +70,13 @@ typedef struct {
 	Object		installPath[2];		/*	SDR strings		*/
 	Object		images[2];		/*	SDR lists of Image	*/
 	Object		queue[3];		/*	SDR lists of ImageRef	*/
+	Object		nmagentCmd;		/*	SDR string		*/
 	Object		cfdpInfo;		/*	SDR address of CfdpInfo	*/
 } ARMUR_DB;
 
 typedef struct {
 	char		restartMask;
+	//pid_t		nmagentPid;
 } ARMUR_VDB;
 
 extern int		armurInit();
@@ -85,6 +87,8 @@ extern ARMUR_DB		*getArmurConstants();
 extern ARMUR_VDB	*getArmurVdb();
 extern int		armurStart(char *ampTrigger);
 extern int		armurFindImage(char *imageName, Object *imageObj, Object *imageElt);
+extern int		armurAddImage(char *imageName, ARMUR_RestartFn restartFn,
+					int protocol, Object imageList);
 extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
 extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
 extern int		armurUpdateCfdpArchiveName(char *archiveName);

@@ -4,7 +4,6 @@
 #include "armur.h"
 #include <archive.h>
 #include <archive_entry.h>
-#define	TMP_EXT	".tmp"
 
 /*	*	*	Restart functions	*	*	*/
 
@@ -965,6 +964,60 @@ static int bputaRestart()
 	return 0;
 }
 
+/*------------------------------*
+ *		NM		*
+ *------------------------------*/
+
+/*	nm_agent	*/
+//static int nmagentRestart()
+//{
+//	Sdr	sdr = getIonsdr();
+//	CfdpVdb	*cfdpvdb;
+//	pid_t	pid;
+//
+//	if (cfdpAttach() < 0)
+//	{
+//		return -1;
+//	}
+//
+//	CHKERR(sdr_begin_xn(sdr));
+//	cfdpvdb = getCfdpVdb();
+//
+//	/*	Stop	*/
+//	if (cfdpvdb->fduSemaphore != SM_SEM_NONE)
+//	{
+//		sm_SemEnd(cfdpvdb->fduSemaphore);
+//	}
+//	if ((pid = cfdpvdb->utaPid) != ERROR)
+//	{
+//		cfdpvdb->utaPid = ERROR;
+//	}
+//	sdr_exit_xn(sdr);
+//
+//	while (sm_TaskExists(pid));
+//
+//	CHKERR(sdr_begin_xn(sdr));
+//
+//	/*	Start	*/
+//	if (cfdpvdb->fduSemaphore == SM_SEM_NONE)
+//	{
+//		cfdpvdb->fduSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
+//	}
+//	else
+//	{
+//		sm_SemUnend(cfdpvdb->fduSemaphore);
+//		sm_SemGive(cfdpvdb->fduSemaphore);
+//	}
+//	sm_SemTake(cfdpvdb->fduSemaphore);
+//	if (cfdpvdb->utaPid == ERROR || !sm_TaskExists(cfdpvdb->utaPid))
+//	{
+//		cfdpvdb->utaPid = pseudoshell("bputa");
+//	}
+//	sdr_exit_xn(sdr);
+//
+//	return 0;
+//}
+
 /*	*	*	Utility functions	*	*	*/
 
 static Object _armurdbObject(Object *newDbObj)
@@ -1087,14 +1140,13 @@ static char *_armurdbName()
 	return "armurdb";
 }
 
-int armurInit()
+
+int	armurInit()
 {
 	Sdr		sdr;
-	Object		armurdbObject;
 	ARMUR_DB	armurdbBuf;
-	ARMUR_Image	armurImageBuf;
-	Object		elt;
-	Object		obj;
+	Object		armurdbObject;
+	Object		imageList;
 	ARMUR_CfdpInfo	cfdpInfoInit;
 	char 		*armurvdbName = _armurvdbName();
 
@@ -1141,312 +1193,36 @@ int armurInit()
 			sdr_string_create(sdr, ARMUR_APPPATH_DEFAULT);
 
 		/*			Default libraries			*/
-
-		armurdbBuf.images[ARMUR_LIBS] = sdr_list_create(sdr);
-
-		/*	ION core library	*/
-		istrcpy(armurImageBuf.name, "libici.so", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ionRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_ALL;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
+		imageList = armurdbBuf.images[ARMUR_LIBS] = sdr_list_create(sdr);
+		if (armurAddImage("libici.so",	ionRestart, ARMUR_ALL, imageList)	< 0
+		|| armurAddImage("libbp.so",	bpRestart, ARMUR_BP, imageList)		< 0
+		|| armurAddImage("libltp.so",	ltpRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("libcfdp.so",	cfdpRestart, ARMUR_CFDP, imageList)	< 0)
 		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_LIBS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	BP library	*/
-		istrcpy(armurImageBuf.name, "libbp.so", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &bpRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_LIBS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	LTP library	*/
-		istrcpy(armurImageBuf.name, "libltp.so", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_LIBS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	CFDP library	*/
-		istrcpy(armurImageBuf.name, "libcfdp.so", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &cfdpRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_CFDP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_LIBS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
+			sdr_cancel_xn(sdr);
+			putErrmsg("No space for database.", NULL);
 		}
 
 		/*		Default daemon applications			*/
-
-		armurdbBuf.images[ARMUR_APPS] = sdr_list_create(sdr);
-		
-		/*	ION daemons	*/
-		istrcpy(armurImageBuf.name, "rfxclock", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &rfxclockRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_ION;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
+		imageList = armurdbBuf.images[ARMUR_APPS] = sdr_list_create(sdr);
+		if (armurAddImage("rfxclock", rfxclockRestart, ARMUR_ION, imageList)	< 0
+		|| armurAddImage("bpclock", bpclockRestart, ARMUR_BP, imageList)	< 0
+		|| armurAddImage("bptransit", bptransitRestart, ARMUR_BP, imageList)	< 0
+		|| armurAddImage("ipnfw",	ipnfwRestart, ARMUR_BP, imageList)	< 0
+		|| armurAddImage("ipnadminep", ipnadminepRestart, ARMUR_BP, imageList)	< 0
+		|| armurAddImage("bpclm",	bpclmRestart, ARMUR_BP, imageList)	< 0
+		|| armurAddImage("ltpcli", ltpcliRestart, ARMUR_BP|ARMUR_LTP, imageList)< 0
+		|| armurAddImage("ltpclo", ltpcloRestart, ARMUR_BP|ARMUR_LTP, imageList)< 0
+		|| armurAddImage("ltpclock", ltpclockRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("ltpdeliv", ltpdelivRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("ltpmeter", ltpmeterRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("udplsi",	udplsiRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("udplso",	udplsoRestart, ARMUR_LTP, imageList)	< 0
+		|| armurAddImage("cfdpclock", cfdpclockRestart, ARMUR_CFDP, imageList)	< 0
+		|| armurAddImage("bputa", bputaRestart, ARMUR_BP|ARMUR_CFDP, imageList)	< 0)
 		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	BP daemons	*/
-		istrcpy(armurImageBuf.name, "bpclock", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &bpclockRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "bptransit", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &bptransitRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ipnfw", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ipnfwRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ipnadminep", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ipnadminepRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "bpclm", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &bpclmRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ltpcli", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpcliRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ltpclo", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpcloRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_BP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	LTP daemons	*/
-		istrcpy(armurImageBuf.name, "ltpclock", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpclockRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ltpdeliv", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpdelivRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "ltpmeter", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &ltpmeterRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "udplsi", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &udplsiRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "udplso", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &udplsoRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_LTP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-
-		/*	CFDP daemons	*/
-		istrcpy(armurImageBuf.name, "cfdpclock", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &cfdpclockRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_CFDP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
-		}
-		istrcpy(armurImageBuf.name, "bputa", sizeof armurImageBuf.name);
-		armurImageBuf.restart = &bputaRestart;
-		armurImageBuf.installedTime = 0;
-		armurImageBuf.protocol = ARMUR_CFDP;
-		obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-		if (obj)
-		{
-			elt = sdr_list_insert_last(sdr, armurdbBuf.images[ARMUR_APPS], obj);
-			if (elt == 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("No space for database.", NULL);
-			}
-			sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
+			sdr_cancel_xn(sdr);
+			putErrmsg("No space for database.", NULL);
 		}
 
 		/*	Prepare queues to retain references of pending images		*/
@@ -1506,28 +1282,50 @@ ARMUR_VDB *getArmurVdb()
 	return _armurvdb(NULL);
 }
 
-int	armurStart(char *ampTrigger)
+int	armurStart(char *nmagentCmd)
 {
 	Sdr		sdr = getIonsdr();
+	Object		armurdbObj = _armurdbObject(NULL);
 	ARMUR_DB	armurdbBuf;
 	ARMUR_CfdpInfo	cfdpInfoBuf;
-	ARMUR_DB	*armurdb = _armurConstants();
-	Object		armurdbObject = _armurdbObject(NULL);
 
-	switch (armurdb->stat)
+	if (nmagentCmd)
+	{
+		if (strlen(nmagentCmd) > MAX_SDRSTRING)
+		{
+			return -1;
+		}
+
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+		armurdbBuf.nmagentCmd = sdr_string_create(sdr, nmagentCmd);
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		if (sdr_end_xn(sdr))
+		{
+			return -1;
+		}
+
+		if (armurdbBuf.nmagentCmd == 0)
+		{
+			return -1;
+		}
+	}
+		
+	switch ((_armurConstants())->stat)
 	{
 	case ARMUR_STAT_IDLE:
-		if (ampTrigger == NULL)
-		{
-			break;
-		}
+		break;
+		//if (ampTrigger == NULL)
+		//{
+		//	break;
+		//}
 
 		/*	ARMUR start has been triggerred by a network manager.
 		 *	Update the ARMUR stat and go to the next step.			*/
 		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 		armurdbBuf.stat = ARMUR_STAT_DOWNLOADING;
-		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 		if (sdr_end_xn(sdr))
 		{
 			return -1;
@@ -1544,9 +1342,9 @@ int	armurStart(char *ampTrigger)
 		/*	Download has been finished.	*/
 
 		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 		armurdbBuf.stat = ARMUR_STAT_DOWNLOADED;
-		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 
 		sdr_stage(sdr, (char *)&cfdpInfoBuf,
 				armurdbBuf.cfdpInfo, sizeof(ARMUR_CfdpInfo));
@@ -1570,13 +1368,16 @@ int	armurStart(char *ampTrigger)
 		/*	Install has been finished.	*/
 
 		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 		armurdbBuf.stat = ARMUR_STAT_RESTART_PENDING;
-		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 
 		sdr_stage(sdr, (char *)&cfdpInfoBuf,
 				armurdbBuf.cfdpInfo, sizeof(ARMUR_CfdpInfo));
 		sdr_free(sdr, cfdpInfoBuf.archiveName);
+		cfdpInfoBuf.archiveName = 0;
+		sdr_write(sdr, armurdbBuf.cfdpInfo,
+				(char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
 		if (sdr_end_xn(sdr))
 		{
 			return -1;
@@ -1593,14 +1394,32 @@ int	armurStart(char *ampTrigger)
 		/*	Restart has been finished.	*/
 
 		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObject, sizeof(ARMUR_DB));
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 		armurdbBuf.stat = ARMUR_STAT_IDLE;
-		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 		if (sdr_end_xn(sdr))
 		{
 			return -1;
 		}
 	}
+
+	//nmagentRestart(nmagentCmd);
+	//CHKERR(sdr_begin_xn(sdr));
+	//if ((pid = armurvdb->nmagentPid) != ERROR)
+	//{
+	//	sm_TaskKill(pid, SIGTERM);
+	//	armurvdb->nmagentPid = ERROR;
+	//}
+	//sdr_exit_xn(sdr);
+
+	//while (sm_TaskExists(pid));
+
+	//CHKERR(sdr_begin_xn(sdr));
+	//if (armurvdb->nmagentPid == ERROR || !sm_TaskExists(armurvdb->nmagentPid))
+	//{
+	//	armurvdb->nmagentPid = pseudoshell(nmagentCmd);
+	//}
+	//sdr_exit_xn(sdr);
 
 	return 0;
 }
@@ -1784,6 +1603,36 @@ static int	enqueueImage(Object imageObj, int imageType)
 	return 0;
 }
 
+int	armurAddImage(char *imageName, ARMUR_RestartFn restartFn,
+				int protocol, Object imageList)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_Image	armurImageBuf;
+	Object		obj;
+	Object		elt;
+
+	istrcpy(armurImageBuf.name, imageName, sizeof armurImageBuf.name);
+	armurImageBuf.restart = restartFn;
+	armurImageBuf.installedTime = 0;
+	armurImageBuf.protocol = protocol;
+	obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
+	if (obj)
+	{
+		elt = sdr_list_insert_last(sdr, imageList, obj);
+		if (elt == 0)
+		{
+			return -1;
+		}
+		sdr_write(sdr, obj, (char *)&armurImageBuf, sizeof(ARMUR_Image));
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
 //static void resetRestartMask()
 //{
 //	ARMUR_VDB	*vdb = _armurvdb(NULL);
@@ -1935,16 +1784,34 @@ int	armurWait()
 	uvast			srcNbr;
 	uvast			txnNbr;
 	Sdr			sdr = getIonsdr();
+	CfdpDB			*cfdpdb;
+	Object			elt;
 				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
+
+	/*	Check first to see if cfdpInfo has been stored in the ARMUR DB.		*/
+	CHKERR(sdr_begin_xn(sdr));
+	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (_armurConstants())->cfdpInfo);
+	sdr_exit_xn(sdr);
+
+	CHKERR(cfdpInfo->srcNbr);
+	//CHKERR(cfdpInfo->txnNbr);//JIGI
 
 	if (cfdpAttach() < 0)
 	{
 		return -1;
 	}
 
+	cfdpdb = getCfdpConstants();
+
 	while (1)
 	{
 		CHKERR(sdr_begin_xn(sdr));
+		elt = sdr_list_first(sdr, cfdpdb->events);
+		if (elt == 0)
+		{
+			sdr_exit_xn(sdr);
+			continue;
+		}
 		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
 				sourceFileNameBuf, destFileNameBuf,
 				&fileSize, &messagesToUser, &offset, &length,
@@ -1964,14 +1831,12 @@ int	armurWait()
 		cfdp_decompress_number(&srcNbr, &transactionId.sourceEntityNbr);
 		cfdp_decompress_number(&txnNbr, &transactionId.transactionNbr);
 
-		GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (_armurConstants())->cfdpInfo);
 		if (type == CfdpTransactionFinishedInd
 			&& srcNbr == cfdpInfo->srcNbr)
 			//&& txnNbr == cfdpInfo->txnNbr)//JIGI
 		{
-			/*	Now the download has been finished.
-			 *	Let's store the file name for later use.	*/
-			armurUpdateCfdpArchiveName(destFileNameBuf);
+			/*	Now the download has been finished.	*/
+			printf("Download has been finished.\n");//JIGI
 			if (sdr_end_xn(sdr))
 			{
 				return -1;
@@ -1988,11 +1853,12 @@ int	armurWait()
 	return 0;
 }
 
-//int	armurInstall()
-int	armurInstall(char *aname)//JIGI
+int	armurInstall()
 {
+	Sdr			sdr = getIonsdr();
 	Object			imageObj;
 	Object			imageElt;
+				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
 	char			archiveNameBuf[SDRSTRING_BUFSZ];
 	char			imageName[FILENAME_LEN_MAX];
 	char			pathName[PATHNAME_LEN_MAX];
@@ -2004,10 +1870,10 @@ int	armurInstall(char *aname)//JIGI
 	int			result;
 	time_t			installedTime = getCtime();
 
-	//CHKERR(sdr_begin_xn(sdr));
-	//sdr_string_read(sdr, archiveNameBuf, (_armurConstants())->cfdpInfo.archiveName);
-	//sdr_exit_xn(sdr);
-	istrcpy(archiveNameBuf, aname, sizeof archiveNameBuf);//JIGI
+	CHKERR(sdr_begin_xn(sdr));
+	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (_armurConstants())->cfdpInfo);
+	sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName);
+	sdr_exit_xn(sdr);
 
 	/*	LIBARCHIVE APIs			*/
 	if ((a = archive_read_new()) == NULL)
