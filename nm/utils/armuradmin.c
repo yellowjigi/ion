@@ -77,6 +77,9 @@ static void	addCfdpInfo(char *token, char *info)
 
 static void	executeAdd(int tokenCount, char **tokens)
 {
+	char	*protocol;
+	char	protocolFlag = 0;
+
 	if (tokenCount < 2)
 	{
 		printText("Add what?");
@@ -92,6 +95,44 @@ static void	executeAdd(int tokenCount, char **tokens)
 		}
 
 		addCfdpInfo(tokens[2], tokens[3]);
+		return;
+	}
+
+	if (strcmp(tokens[1], "lib") == 0 || strcmp(tokens[1], "app") == 0)
+	{
+		if (tokenCount != 4)
+		{
+			SYNTAX_ERROR;
+			return;
+		}
+
+		while ((protocol = strtok(tokens[3], ",")) != NULL)
+		{
+			if (strcmp(protocol, "core") == 0)
+			{
+				protocolFlag |= ARMUR_CORE;
+			}
+			else if (strcmp(protocol, "ltp") == 0)
+			{
+				protocolFlag |= ARMUR_LTP;
+			}
+			else if (strcmp(protocol, "bp") == 0)
+			{
+				protocolFlag |= ARMUR_BP;
+			}
+			else if (strcmp(protocol, "cfdp") == 0)
+			{
+				protocolFlag |= ARMUR_CFDP;
+			}
+			else
+			{
+				SYNTAX_ERROR;
+				return;
+			}
+			tokens[3] = NULL;
+		}
+
+		armurAddImage(tokens[2], protocolFlag);
 		return;
 	}
 
@@ -140,26 +181,10 @@ static void	printStat(char stat)
 	case ARMUR_STAT_DOWNLOADED:
 		buffer = "downloaded";
 		break;
-	//JIGI
-	//case ARMUR_STAT_INSTALLING:
-	//	buffer = "installing";
-	//	break;
 
-	case ARMUR_STAT_RESTART_PENDING:
-		buffer = "restart pending";
+	case ARMUR_STAT_INSTALLED:
+		buffer = "installed";
 		break;
-
-	//case ARMUR_STAT_LV0_PENDING:
-	//	buffer = "lv0 restart queue pending";
-	//	break;
-
-	//case ARMUR_STAT_LV1_PENDING:
-	//	buffer = "lv1 restart queue pending";
-	//	break;
-
-	//case ARMUR_STAT_LV2_PENDING:
-	//	buffer = "lv2 restart queue pending";
-	//	break;
 
 	default:
 		buffer = "unknown";
@@ -189,20 +214,20 @@ static void	printPath(int type)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	*armurdb = getArmurConstants();
-	char		pathBuffer[SDRSTRING_BUFSZ];
-	char		*path;
+	char		buf[SDRSTRING_BUFSZ];
+	char		*pathBuf;
 
 	if (armurdb->installPath[type])
 	{
-		sdr_string_read(sdr, pathBuffer, armurdb->installPath[type]);
-		path = pathBuffer;
+		sdr_string_read(sdr, buf, armurdb->installPath[type]);
+		pathBuf = buf;
 	}
 	else
 	{
-		path = "?";
+		pathBuf = "?";
 	}
 
-	printText(path);
+	printText(pathBuf);
 }
 
 static void	infoPath(int tokenCount, char **tokens)
@@ -218,11 +243,11 @@ static void	infoPath(int tokenCount, char **tokens)
 
 	if (strcmp(tokens[2], "lib") == 0)
 	{
-		type = ARMUR_LIBS;
+		type = ARMUR_LIB;
 	}
 	else if (strcmp(tokens[2], "app") == 0)
 	{
-		type = ARMUR_APPS;
+		type = ARMUR_APP;
 	}
 	else
 	{
@@ -239,44 +264,75 @@ static void	infoPath(int tokenCount, char **tokens)
 
 static void	printImage(ARMUR_Image *image)
 {
-	char	*nameBuffer;
-	char	*restartBuffer;
-	char	*protocolBuffer;
-	char	installedTimeBuffer[TIMESTAMPBUFSZ];
+	char	*nameBuf;
+	char	*typeBuf;
+	char	*protocolBuf;
+	char	protocolStr[32] = { 0 };
+	char	*restartBuf;
+	char	installedTimeBuf[TIMESTAMPBUFSZ];
 	char	buffer[1024];
+	int	p;
 
-	nameBuffer = image->name ? image->name : "unknown";
-	restartBuffer = image->restart ? "configured" : "not configured";
+	nameBuf = image->name ? image->name : "unknown";
 
-	switch (image->protocol)
+	if (image->type == ARMUR_LIB)
 	{
-	case ARMUR_ALL:
-	case ARMUR_ION:
-		protocolBuffer = "ION";
-		break;
-
-	case ARMUR_BP:
-		protocolBuffer = "BP";
-		break;
-
-	case ARMUR_LTP:
-		protocolBuffer = "LTP";
-		break;
-	
-	case ARMUR_CFDP:
-		protocolBuffer = "CFDP";
-		break;
-	
-	default:
-		protocolBuffer = "unknown";
+		typeBuf = "library";
+	}
+	else if (image->type == ARMUR_APP)
+	{
+		typeBuf = "daemon application";
+	}
+	else
+	{
+		typeBuf = "unknown";
 	}
 
-	writeTimestampUTC(image->installedTime, installedTimeBuffer);
+	if (image->protocol < ARMUR_RESERVED)
+	{
+		for (p = ARMUR_CORE; p < ARMUR_RESERVED; p <<= 1)
+		{
+			if (p & image->protocol)
+			{
+				switch (p)
+				{
+				case ARMUR_CORE:
+					strcat(protocolStr, "CORE,");
+					break;
+
+				case ARMUR_LTP:
+					strcat(protocolStr, "LTP,");
+					break;
+				
+				case ARMUR_BP:
+					strcat(protocolStr, "BP,");
+					break;
+
+				case ARMUR_CFDP:
+					strcat(protocolStr, "CFDP,");
+					break;
+				}
+			}
+		}
+		protocolStr[strlen(protocolStr) - 1] = '\0';
+		protocolBuf = protocolStr;
+	}
+	else
+	{
+		protocolBuf = "unknown";
+	}
+
+	restartBuf = image->restartFnObj ? "configured" : "unknown";
+	writeTimestampUTC(image->installedTime, installedTimeBuf);
 
 	isprintf(buffer, sizeof buffer,
 			"--------------------\n"
-			"Name: %s\nRestart: %s\nProtocol:%s\nInstalled Time:%s",
-			nameBuffer, restartBuffer, protocolBuffer, installedTimeBuffer);
+			"Name: %s\n"
+			"Type: %s\n"
+			"Protocol: %s\n"
+			"RestartFn: %s\n"
+			"Installed: %s",
+			nameBuf, typeBuf, protocolBuf, restartBuf, installedTimeBuf);
 	printText(buffer);
 }
 
@@ -284,8 +340,9 @@ static void	infoImage(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
 		OBJ_POINTER(ARMUR_Image, image);
-	Object	addr;
+	Object	obj;
 	Object	elt;
+	int	imageType;
 
 	if (tokenCount != 3)
 	{
@@ -293,39 +350,42 @@ static void	infoImage(int tokenCount, char **tokens)
 		return;
 	}
 
-	armurFindImage(tokens[2], &addr, &elt);
+	CHKVOID(sdr_begin_xn(sdr));
+
+	armurParseImageName(tokens[2], &imageType, NULL);
+	armurFindImage(tokens[2], imageType, &obj, &elt);
 	if (elt == 0)
 	{
+		sdr_exit_xn(sdr);
 		printText("Unknown image.");
+		return;
 	}
-
-	CHKVOID(sdr_begin_xn(sdr));
-	GET_OBJ_POINTER(sdr, ARMUR_Image, image, addr);
-	sdr_exit_xn(sdr);
-
+	GET_OBJ_POINTER(sdr, ARMUR_Image, image, obj);
 	printImage(image);
+
+	sdr_exit_xn(sdr);
 }
 
 static void	printCfdp(ARMUR_CfdpInfo *cfdpInfo)
 {
 	Sdr	sdr = getIonsdr();
-	char	archiveNameBuf[SDRSTRING_BUFSZ];
-	char	*archiveName;
+	char	buf[SDRSTRING_BUFSZ];
+	char	*archiveNameBuf;
 	char	buffer[1024];
 
 	if (cfdpInfo->archiveName)
 	{
-		sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName);
-		archiveName = archiveNameBuf;
+		sdr_string_read(sdr, buf, cfdpInfo->archiveName);
+		archiveNameBuf = buf;
 	}
 	else
 	{
-		archiveName = "unknown";
+		archiveNameBuf = "unknown";
 	}
 
 	isprintf(buffer, sizeof buffer,
 			"Source number: %lu\nTransaction number: %lu\nArchive name: %s",
-			cfdpInfo->srcNbr, cfdpInfo->txnNbr, archiveName);
+			cfdpInfo->srcNbr, cfdpInfo->txnNbr, archiveNameBuf);
 	printText(buffer);
 }
 
@@ -342,7 +402,7 @@ static void	infoCfdp(int tokenCount, char **tokens)
 
 	CHKVOID(sdr_begin_xn(sdr));
 
-	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (getArmurConstants())->cfdpInfo);
+	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (getArmurVdb())->cfdpInfo);
 	printCfdp(cfdpInfo);
 
 	sdr_exit_xn(sdr);
@@ -387,10 +447,10 @@ static void	listPaths(int tokenCount, char **tokens)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	*armurdb = getArmurConstants();
-	char		libPathBuffer[SDRSTRING_BUFSZ];
-	char		*libPath;
-	char		appPathBuffer[SDRSTRING_BUFSZ];
-	char		*appPath;
+	char		buf1[SDRSTRING_BUFSZ];
+	char		*libPathBuf;
+	char		buf2[SDRSTRING_BUFSZ];
+	char		*appPathBuf;
 	char		buffer[1024];
 
 	if (tokenCount != 2)
@@ -400,43 +460,53 @@ static void	listPaths(int tokenCount, char **tokens)
 	}
 
 	CHKVOID(sdr_begin_xn(sdr));
-	if (armurdb->installPath[ARMUR_LIBS])
+	if (armurdb->installPath[ARMUR_LIB])
 	{
-		sdr_string_read(sdr, libPathBuffer, armurdb->installPath[ARMUR_LIBS]);
-		libPath = libPathBuffer;
+		sdr_string_read(sdr, buf1, armurdb->installPath[ARMUR_LIB]);
+		libPathBuf = buf1;
 	}
 	else
 	{
-		libPath = "?";
+		libPathBuf = "?";
 	}
 	
-	if (armurdb->installPath[ARMUR_APPS])
+	if (armurdb->installPath[ARMUR_APP])
 	{
-		sdr_string_read(sdr, appPathBuffer, armurdb->installPath[ARMUR_APPS]);
-		appPath = appPathBuffer;
+		sdr_string_read(sdr, buf2, armurdb->installPath[ARMUR_APP]);
+		appPathBuf = buf2;
 	}
 	else
 	{
-		appPath = "?";
+		appPathBuf = "?";
 	}
+	sdr_exit_xn(sdr);
 
-	isprintf(buffer, sizeof buffer, "libPath: %s\nappPath: %s", libPath, appPath);
+	isprintf(buffer, sizeof buffer, "libPath: %s\nappPath: %s", libPathBuf, appPathBuf);
 	printText(buffer);
 }
 
-static void	listImagesForType(int type, char mask)
+static void	listImagesForProtocol(int type, int protocolMask)
 {
-	Sdr	sdr = getIonsdr();
-		OBJ_POINTER(ARMUR_Image, image);
-	Object	elt;
+	Sdr		sdr = getIonsdr();
+	ARMUR_DB	*armurdb = getArmurConstants();
+			OBJ_POINTER(ARMUR_Image, image);
+	Object		obj;
+	Object		elt;
+	int		p;
+	int		i;
 
-	for (elt = sdr_list_first(sdr, (getArmurConstants())->images[type]); elt;
-			elt = sdr_list_next(sdr, elt))
+	for (p = ARMUR_CORE; p < ARMUR_RESERVED; p <<= 1)
 	{
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, sdr_list_data(sdr, elt));
-		if (image->protocol & mask)
+		if (p & protocolMask)
 		{
-			printImage(image);
+			i = armurGetProtocolIndex(p);
+			for (elt = sdr_list_first(sdr, armurdb->images[type][i]);
+				elt; elt = sdr_list_next(sdr, elt))
+			{
+				obj = sdr_list_data(sdr, elt);
+				GET_OBJ_POINTER(sdr, ARMUR_Image, image, obj);
+				printImage(image);
+			}
 		}
 	}
 }
@@ -444,8 +514,8 @@ static void	listImagesForType(int type, char mask)
 static void	listImages(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
-	char	type;
-	char	mask;
+	int	type;
+	int	protocolMask;
 
 	if (tokenCount > 4)
 	{
@@ -456,8 +526,8 @@ static void	listImages(int tokenCount, char **tokens)
 	CHKVOID(sdr_begin_xn(sdr));
 	if (tokenCount == 2)
 	{
-		listImagesForType(ARMUR_LIBS, ARMUR_ALL);
-		listImagesForType(ARMUR_APPS, ARMUR_ALL);
+		listImagesForProtocol(ARMUR_LIB, ARMUR_ALL);
+		listImagesForProtocol(ARMUR_APP, ARMUR_ALL);
 		sdr_exit_xn(sdr);
 		return;
 	}
@@ -465,11 +535,11 @@ static void	listImages(int tokenCount, char **tokens)
 	/*	tokenCount is 3 or 4	*/
 	if (strcmp(tokens[2], "lib") == 0)
 	{
-		type = ARMUR_LIBS;
+		type = ARMUR_LIB;
 	}
 	else if (strcmp(tokens[2], "app") == 0)
 	{
-		type = ARMUR_APPS;
+		type = ARMUR_APP;
 	}
 	else
 	{
@@ -481,25 +551,25 @@ static void	listImages(int tokenCount, char **tokens)
 	switch (tokenCount)
 	{
 	case 3:
-		mask = ARMUR_ALL;
+		protocolMask = ARMUR_ALL;
 		break;
 	
 	case 4:
 		if (strcmp(tokens[3], "core") == 0)
 		{
-			mask = ARMUR_ION;
-		}
-		else if (strcmp(tokens[3], "bp") == 0)
-		{
-			mask = ARMUR_BP;
+			protocolMask = ARMUR_CORE;
 		}
 		else if (strcmp(tokens[3], "ltp") == 0)
 		{
-			mask = ARMUR_LTP;
+			protocolMask = ARMUR_LTP;
+		}
+		else if (strcmp(tokens[3], "bp") == 0)
+		{
+			protocolMask = ARMUR_BP;
 		}
 		else if (strcmp(tokens[3], "cfdp") == 0)
 		{
-			mask = ARMUR_CFDP;
+			protocolMask = ARMUR_CFDP;
 		}
 		else
 		{
@@ -509,7 +579,7 @@ static void	listImages(int tokenCount, char **tokens)
 		}
 	}
 
-	listImagesForType(type, mask);
+	listImagesForProtocol(type, protocolMask);
 	
 	sdr_exit_xn(sdr);
 }
@@ -517,10 +587,10 @@ static void	listImages(int tokenCount, char **tokens)
 static void	listQueuesForLevel(int level)
 {
 	Sdr		sdr = getIonsdr();
-	Object		imageRefObj;
-	Object		imageRefElt;
 			OBJ_POINTER(ARMUR_Image, image);
-	ARMUR_ImageRef	imageRef;
+	PsmPartition	wm = getIonwm();
+	ARMUR_ImageRef	*imageRef;
+	PsmAddress	elt;
 
 	if (level < 0 || level > 2)
 	{
@@ -528,12 +598,11 @@ static void	listQueuesForLevel(int level)
 		return;
 	}
 
-	for (imageRefElt = sdr_list_first(sdr, (getArmurConstants())->queue[level]);
-		imageRefElt; imageRefElt = sdr_list_next(sdr, imageRefElt))
+	for (elt = sm_list_first(wm, (getArmurVdb())->restartQueue[level]);
+		elt; elt = sm_list_next(wm, elt))
 	{
-		imageRefObj = sdr_list_data(sdr, imageRefElt);
-		sdr_read(sdr, (char *)&imageRef, imageRefObj, sizeof(ARMUR_ImageRef));
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef.obj);
+		imageRef = (ARMUR_ImageRef *)psp(wm, sm_list_data(wm, elt));
+		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef->imageObj);
 		printImage(image);
 	}
 }

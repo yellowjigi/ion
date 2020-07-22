@@ -1,5 +1,6 @@
-nm/utils/armur-armur.o: nm/utils/armur.c /usr/include/stdc-predef.h \
- config.h nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
+nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
+ /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
+ nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
  ici/include/platform.h /usr/include/time.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -122,13 +123,13 @@ nm/utils/armur-armur.o: nm/utils/armur.c /usr/include/stdc-predef.h \
  ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
  ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_restart.h /usr/include/archive.h /usr/include/inttypes.h \
- /usr/include/archive_entry.h
+ cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
+
+nm/utils/armur_restart.h:
 
 nm/utils/armur.h:
 
@@ -489,11 +490,3 @@ cfdp/library/cfdpP.h:
 cfdp/include/cfdp.h:
 
 cfdp/include/cfdpops.h:
-
-nm/utils/armur_restart.h:
-
-/usr/include/archive.h:
-
-/usr/include/inttypes.h:
-
-/usr/include/archive_entry.h:
