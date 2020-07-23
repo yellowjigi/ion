@@ -150,22 +150,32 @@ static char *_armurdbName()
 	return "armurdb";
 }
 
+static void	padHashKey(char *destPtr, char basePattern, int bufLen)
+{
+	int	i;
+	char	pad = basePattern;
+
+	for (i = strlen(destPtr); i < bufLen; i++)
+	{
+		*(destPtr + i) = pad;
+	}
+}
+
 static int	constructRestartFnHashKey(char *buffer, char *imageName)
 {
 	memset(buffer, 0, ARMUR_RESTARTFN_HASH_KEY_BUFLEN);
 	isprintf(buffer, ARMUR_RESTARTFN_HASH_KEY_BUFLEN, "%s", imageName);
-	return strlen(buffer);
+	padHashKey(buffer, 0x7F, ARMUR_RESTARTFN_HASH_KEY_LEN);
+	return istrlen(buffer, ARMUR_RESTARTFN_HASH_KEY_LEN);
 }
 
 static int	catalogueRestartFn(Object restartFns,
 			ARMUR_RestartFn *restartFn, Object restartFnObj)
 {
-	Sdr			sdr = getIonsdr();
-	char			restartFnKey[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
-	Address			restartFnSetObj;
-	ARMUR_RestartFnSet	restartFnSet;
-	Object			hashElt;
-	int			result = 0;
+	Sdr		sdr = getIonsdr();
+	char		restartFnKey[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
+	Address		obj;
+	Object		hashElt;
 
 	if (constructRestartFnHashKey(restartFnKey, restartFn->imageName)
 		> ARMUR_RESTARTFN_HASH_KEY_LEN)
@@ -174,53 +184,25 @@ static int	catalogueRestartFn(Object restartFns,
 		return -1;
 	}
 
-	/*	If a hash table entry for this key already exists,
-	 *	then we've got a non-unique key and no single restartFn
-	 *	address can be associated with this key. So our first
-	 *	step is to retrieve that entry if it exists. If we
-	 *	find it, we set its restartFnObj to zero and add 1
-	 *	to its count. If not, we insert a new entry.		*/
-
-	switch (sdr_hash_retrieve(sdr, restartFns, restartFnKey,
-			&restartFnSetObj, &hashElt))
+	switch (sdr_hash_retrieve(sdr, restartFns, restartFnKey, &obj, &hashElt))
 	{
 	case -1:
 		putErrmsg("Can't revise hash table entry.", NULL);
-		result = -1;
-		break;
+		return -1;
 
 	case 1:		/*	Retrieval succeeded, non-unique key.	*/
-		sdr_stage(sdr, (char *)&restartFnSet, restartFnSetObj,
-				sizeof(ARMUR_RestartFnSet));
-		restartFnSet.restartFnObj = 0;
-		restartFnSet.count++;
-		sdr_write(sdr, restartFnSetObj, (char *)&restartFnSet,
-				sizeof(ARMUR_RestartFnSet));
-		restartFn->hashEntry = hashElt;
-		break;
+		putErrmsg("Duplicate key.", NULL);
+		return -1;
 
 	default:	/*	No such pre-existing entry.		*/
-		restartFnSetObj = sdr_malloc(sdr, sizeof(ARMUR_RestartFnSet));
-		if (restartFnSetObj == 0)
-		{
-			putErrmsg("Can't create hash table entry.", NULL);
-			result = -1;
-			break;
-		}
-
-		restartFnSet.restartFnObj = restartFnObj;
-		restartFnSet.count = 1;
-		sdr_write(sdr, restartFnSetObj, (char *)&restartFnSet,
-				sizeof(ARMUR_RestartFnSet));
 		if (sdr_hash_insert(sdr, restartFns, restartFnKey,
-			restartFnSetObj, &(restartFn->hashEntry)) < 0)
+			restartFnObj, &(restartFn->hashEntry)) < 0)
 		{
 			putErrmsg("Can't insert into hash table.", NULL);
-			result = -1;
+			return -1;
 		}
+		return 0;
 	}
-
-	return result;
 }
 
 static int	restartFnInit(Object hashTable, char *imageName, RestartFn restartFn)
@@ -700,11 +682,9 @@ int	armurGetProtocolIndex(char protocolFlag)
 
 int	armurFindRestartFn(char *imageName, Object *restartFnObj)
 {
-	Sdr			sdr = getIonsdr();
-	char			key[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
-	Address			restartFnSetObj;
-	ARMUR_RestartFnSet	restartFnSet;
-	Object			hashElt;
+	Sdr		sdr = getIonsdr();
+	char		key[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
+	Object		hashElt;
 
 	CHKERR(imageName);
 	CHKERR(restartFnObj);
@@ -716,22 +696,14 @@ int	armurFindRestartFn(char *imageName, Object *restartFnObj)
 		return 0;	/*	Can't be in hash table.		*/
 	}
 
-	switch (sdr_hash_retrieve(sdr, (_armurConstants())->restartFns, key,
-			&restartFnSetObj, &hashElt))
+	if (sdr_hash_retrieve(sdr, (_armurConstants())->restartFns, key,
+		restartFnObj, &hashElt) < 0)
 	{
-	case -1:
 		putErrmsg("Failed locating restart function in hash table.", NULL);
 		return -1;
-
-	case 0:
-		return 0;	/*	No such entry in hash table.	*/
-
-	default:
-		sdr_read(sdr, (char *)&restartFnSet, restartFnSetObj,
-				sizeof(ARMUR_RestartFnSet));
-		*restartFnObj = restartFnSet.restartFnObj;
-		return restartFnSet.count;
 	}
+
+	return 0;
 }
 
 static Object	locateImage(char *imageName, int imageType)
@@ -875,7 +847,10 @@ int	armurAddImage(char *imageName, int protocol)
 	imageBuf.type = imageType;
 	imageBuf.protocol = protocol;
 
-	oK(armurFindRestartFn(imageName, &restartFnObj));
+	if (armurFindRestartFn(imageName, &restartFnObj) < 0)
+	{
+		return -1;
+	}
 	if (restartFnObj)
 	{
 		imageBuf.restartFnObj = restartFnObj;

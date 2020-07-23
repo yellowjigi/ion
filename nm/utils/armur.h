@@ -58,11 +58,6 @@ typedef struct {
 } ARMUR_RestartFn;
 
 typedef struct {
-	Object		restartFnObj;		/*	RestartFn address		*/
-	unsigned int	count;
-} ARMUR_RestartFnSet;
-
-typedef struct {
 	char		name[ARMUR_FILENAME_LEN_MAX];
 	char		type;
 	char		protocol;
@@ -84,7 +79,7 @@ typedef struct {
 	char		stat;
 	char		numInstalled[2];
 	Object		installPath[2];		/*	SDR strings			*/
-	Object		restartFns;		/*	SDR hash of RestartFnSets	*/
+	Object		restartFns;		/*	SDR hash of RestartFns		*/
 	Object		images[2][8];		/*	SDR lists of Images		*/
 	Object		nmagentCmd;		/*	SDR string			*/
 	Object		cfdpInfo;		/*	CfdpInfo address		*/
