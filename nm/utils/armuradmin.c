@@ -1,6 +1,6 @@
 /*
  *
- *	umadmin.c:	Update Manager for ARMUR
+ *	armuradmin.c:	Update Manager for ARMUR
  *	*** referring to the bp/utils/bpadmin.c ***
  *
  *	Author: jigi
@@ -19,7 +19,7 @@ static void	printSyntaxError(int lineNbr)
 {
 	char	buffer[80];
 
-	isprintf(buffer, sizeof buffer, "Syntax error at line %d of umadmin.c",
+	isprintf(buffer, sizeof buffer, "Syntax error at line %d of armuradmin.c",
 			lineNbr);
 	printText(buffer);
 }
@@ -60,11 +60,11 @@ static void	addCfdpInfo(char *token, char *info)
 		return;
 	}
 	
-	if (strcmp(token, "txn") == 0)
-	{
-		armurUpdateCfdpTxnNbr(strtouvast(info));
-		return;
-	}
+	//if (strcmp(token, "txn") == 0)
+	//{
+	//	armurUpdateCfdpTxnNbr(strtouvast(info));
+	//	return;
+	//}
 
 	if (strcmp(token, "ar") == 0)
 	{
@@ -77,8 +77,8 @@ static void	addCfdpInfo(char *token, char *info)
 
 static void	executeAdd(int tokenCount, char **tokens)
 {
-	char	*protocol;
-	char	protocolFlag = 0;
+	int	layer;
+	int	apptype;
 
 	if (tokenCount < 2)
 	{
@@ -98,41 +98,84 @@ static void	executeAdd(int tokenCount, char **tokens)
 		return;
 	}
 
-	if (strcmp(tokens[1], "lib") == 0 || strcmp(tokens[1], "app") == 0)
+	if (strcmp(tokens[1], "image") == 0)
 	{
-		if (tokenCount != 4)
+		if (tokenCount < 5)
 		{
 			SYNTAX_ERROR;
 			return;
 		}
 
-		while ((protocol = strtok(tokens[3], ",")) != NULL)
+		switch (*(tokens[2]))
 		{
-			if (strcmp(protocol, "core") == 0)
-			{
-				protocolFlag |= ARMUR_CORE;
-			}
-			else if (strcmp(protocol, "ltp") == 0)
-			{
-				protocolFlag |= ARMUR_LTP;
-			}
-			else if (strcmp(protocol, "bp") == 0)
-			{
-				protocolFlag |= ARMUR_BP;
-			}
-			else if (strcmp(protocol, "cfdp") == 0)
-			{
-				protocolFlag |= ARMUR_CFDP;
-			}
-			else
+		case '0':
+			if (tokenCount != 5)
 			{
 				SYNTAX_ERROR;
 				return;
 			}
-			tokens[3] = NULL;
+
+			armurAddImageLv0(tokens[3], tokens[4]);
+			break;
+
+		case '1':
+			if (tokenCount != 6)
+			{
+				SYNTAX_ERROR;
+				return;
+			}
+
+			switch (*(tokens[5]))
+			{
+			case 'a':
+				layer = ARMUR_LAYER_APPLICATION;
+				break;
+
+			case 'b':
+				layer = ARMUR_LAYER_BUNDLE;
+				break;
+
+			case 'c':
+				layer = ARMUR_LAYER_CONVERGENCE;
+				break;
+
+			default:
+				SYNTAX_ERROR;
+				return;
+			}
+
+			armurAddImageLv1(tokens[3], tokens[4], layer);
+			break;
+
+		case '2':
+			if (tokenCount != 6)
+			{
+				SYNTAX_ERROR;
+				return;
+			}
+
+			switch (*(tokens[5]))
+			{
+			case 'd':
+				apptype = ARMUR_APPTYPE_DAEMON;
+				break;
+
+			case 'n':
+				apptype = ARMUR_APPTYPE_DAEMON;
+				break;
+
+			default:
+				SYNTAX_ERROR;
+				return;
+			}
+
+			armurAddImageLv2(tokens[3], tokens[4], apptype);
+			break;
+
+		default:
+			SYNTAX_ERROR;
 		}
 
-		armurAddImage(tokens[2], protocolFlag);
 		return;
 	}
 
@@ -175,15 +218,15 @@ static void	printStat(char stat)
 		break;
 
 	case ARMUR_STAT_DOWNLOADING:
-		buffer = "downloading";
+		buffer = "downloading...";
 		break;
 
 	case ARMUR_STAT_DOWNLOADED:
-		buffer = "downloaded";
+		buffer = "installing...";
 		break;
 
 	case ARMUR_STAT_INSTALLED:
-		buffer = "installed";
+		buffer = "restarting...";
 		break;
 
 	default:
@@ -243,11 +286,11 @@ static void	infoPath(int tokenCount, char **tokens)
 
 	if (strcmp(tokens[2], "lib") == 0)
 	{
-		type = ARMUR_LIB;
+		type = ARMUR_IMAGETYPE_LIB;
 	}
 	else if (strcmp(tokens[2], "app") == 0)
 	{
-		type = ARMUR_APP;
+		type = ARMUR_IMAGETYPE_APP;
 	}
 	else
 	{
@@ -265,84 +308,67 @@ static void	infoPath(int tokenCount, char **tokens)
 static void	printImage(ARMUR_Image *image)
 {
 	char	*nameBuf;
-	char	*typeBuf;
-	char	*protocolBuf;
-	char	protocolStr[32] = { 0 };
-	char	*restartBuf;
+	char	*typeBuf = NULL;
+	char	*packageNameBuf;
 	char	installedTimeBuf[TIMESTAMPBUFSZ];
 	char	buffer[1024];
-	int	p;
 
 	nameBuf = image->name ? image->name : "unknown";
 
-	if (image->type == ARMUR_LIB)
+	switch (image->level)
 	{
-		typeBuf = "library";
-	}
-	else if (image->type == ARMUR_APP)
-	{
-		typeBuf = "daemon application";
-	}
-	else
-	{
-		typeBuf = "unknown";
-	}
+	case ARMUR_LEVEL_0:
+		typeBuf = "core library";
+		break;
 
-	if (image->protocol < ARMUR_RESERVED)
-	{
-		for (p = ARMUR_CORE; p < ARMUR_RESERVED; p <<= 1)
+	case ARMUR_LEVEL_1:
+		switch (image->tag)
 		{
-			if (p & image->protocol)
-			{
-				switch (p)
-				{
-				case ARMUR_CORE:
-					strcat(protocolStr, "CORE,");
-					break;
+		case ARMUR_LAYER_APPLICATION:
+			typeBuf = "application-layer library";
+			break;
 
-				case ARMUR_LTP:
-					strcat(protocolStr, "LTP,");
-					break;
-				
-				case ARMUR_BP:
-					strcat(protocolStr, "BP,");
-					break;
+		case ARMUR_LAYER_BUNDLE:
+			typeBuf = "bundle-layer library";
+			break;
 
-				case ARMUR_CFDP:
-					strcat(protocolStr, "CFDP,");
-					break;
-				}
-			}
+		case ARMUR_LAYER_CONVERGENCE:
+			typeBuf = "convergence-layer library";
 		}
-		protocolStr[strlen(protocolStr) - 1] = '\0';
-		protocolBuf = protocolStr;
-	}
-	else
-	{
-		protocolBuf = "unknown";
+		break;
+
+	case ARMUR_LEVEL_2:
+		switch (image->tag)
+		{
+		case ARMUR_APPTYPE_DAEMON:
+			typeBuf = "daemon application";
+			break;
+
+		case ARMUR_APPTYPE_NORMAL:
+			typeBuf = "application";
+		}
 	}
 
-	restartBuf = image->restartFnObj ? "configured" : "unknown";
+	packageNameBuf = image->packageName ? image->packageName : "unknown";
+
 	writeTimestampUTC(image->installedTime, installedTimeBuf);
 
 	isprintf(buffer, sizeof buffer,
 			"--------------------\n"
 			"Name: %s\n"
 			"Type: %s\n"
-			"Protocol: %s\n"
-			"RestartFn: %s\n"
+			"Package: %s\n"
 			"Installed: %s",
-			nameBuf, typeBuf, protocolBuf, restartBuf, installedTimeBuf);
+			nameBuf, typeBuf, packageNameBuf, installedTimeBuf);
 	printText(buffer);
 }
 
 static void	infoImage(int tokenCount, char **tokens)
 {
-	Sdr	sdr = getIonsdr();
-		OBJ_POINTER(ARMUR_Image, image);
-	Object	obj;
-	Object	elt;
-	int	imageType;
+	Sdr		sdr = getIonsdr();
+			OBJ_POINTER(ARMUR_Image, image);
+	ARMUR_VImage	*vimage;
+	PsmAddress	addr;
 
 	if (tokenCount != 3)
 	{
@@ -352,15 +378,14 @@ static void	infoImage(int tokenCount, char **tokens)
 
 	CHKVOID(sdr_begin_xn(sdr));
 
-	armurParseImageName(tokens[2], &imageType, NULL);
-	armurFindImage(tokens[2], imageType, &obj, &elt);
-	if (elt == 0)
+	armurFindImage(tokens[2], &vimage, &addr);
+	if (addr == 0)
 	{
 		sdr_exit_xn(sdr);
 		printText("Unknown image.");
 		return;
 	}
-	GET_OBJ_POINTER(sdr, ARMUR_Image, image, obj);
+	GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);
 	printImage(image);
 
 	sdr_exit_xn(sdr);
@@ -383,9 +408,8 @@ static void	printCfdp(ARMUR_CfdpInfo *cfdpInfo)
 		archiveNameBuf = "unknown";
 	}
 
-	isprintf(buffer, sizeof buffer,
-			"Source number: %lu\nTransaction number: %lu\nArchive name: %s",
-			cfdpInfo->srcNbr, cfdpInfo->txnNbr, archiveNameBuf);
+	isprintf(buffer, sizeof buffer, "Source number: %lu\nArchive name: %s",
+			cfdpInfo->srcNbr, archiveNameBuf);
 	printText(buffer);
 }
 
@@ -446,12 +470,6 @@ static void	executeInfo(int tokenCount, char **tokens)
 static void	listPaths(int tokenCount, char **tokens)
 {
 	Sdr		sdr = getIonsdr();
-	ARMUR_DB	*armurdb = getArmurConstants();
-	char		buf1[SDRSTRING_BUFSZ];
-	char		*libPathBuf;
-	char		buf2[SDRSTRING_BUFSZ];
-	char		*appPathBuf;
-	char		buffer[1024];
 
 	if (tokenCount != 2)
 	{
@@ -460,53 +478,42 @@ static void	listPaths(int tokenCount, char **tokens)
 	}
 
 	CHKVOID(sdr_begin_xn(sdr));
-	if (armurdb->installPath[ARMUR_LIB])
-	{
-		sdr_string_read(sdr, buf1, armurdb->installPath[ARMUR_LIB]);
-		libPathBuf = buf1;
-	}
-	else
-	{
-		libPathBuf = "?";
-	}
-	
-	if (armurdb->installPath[ARMUR_APP])
-	{
-		sdr_string_read(sdr, buf2, armurdb->installPath[ARMUR_APP]);
-		appPathBuf = buf2;
-	}
-	else
-	{
-		appPathBuf = "?";
-	}
-	sdr_exit_xn(sdr);
 
-	isprintf(buffer, sizeof buffer, "libPath: %s\nappPath: %s", libPathBuf, appPathBuf);
-	printText(buffer);
+	printf("libPath: ");
+	printPath(ARMUR_IMAGETYPE_LIB);
+	printf("appPath: ");
+	printPath(ARMUR_IMAGETYPE_APP);
+
+	sdr_exit_xn(sdr);
 }
 
-static void	listImagesForProtocol(int type, int protocolMask)
+static void	listImagesForLevel(int level, char *packageName)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	*armurdb = getArmurConstants();
 			OBJ_POINTER(ARMUR_Image, image);
-	Object		obj;
 	Object		elt;
-	int		p;
-	int		i;
 
-	for (p = ARMUR_CORE; p < ARMUR_RESERVED; p <<= 1)
+	if (!(level == ARMUR_LEVEL_0 || level == ARMUR_LEVEL_1 || level == ARMUR_LEVEL_2))
 	{
-		if (p & protocolMask)
+		printText("Unknown level.");
+		return;
+	}
+
+	for (elt = sdr_list_first(sdr, armurdb->images[level]); elt;
+		elt = sdr_list_next(sdr, elt))
+	{
+		GET_OBJ_POINTER(sdr, ARMUR_Image, image, sdr_list_data(sdr, elt));
+		if (packageName)
 		{
-			i = armurGetProtocolIndex(p);
-			for (elt = sdr_list_first(sdr, armurdb->images[type][i]);
-				elt; elt = sdr_list_next(sdr, elt))
+			if (strstr(image->packageName, packageName))
 			{
-				obj = sdr_list_data(sdr, elt);
-				GET_OBJ_POINTER(sdr, ARMUR_Image, image, obj);
 				printImage(image);
 			}
+		}
+		else
+		{
+			printImage(image);
 		}
 	}
 }
@@ -514,95 +521,72 @@ static void	listImagesForProtocol(int type, int protocolMask)
 static void	listImages(int tokenCount, char **tokens)
 {
 	Sdr	sdr = getIonsdr();
-	int	type;
-	int	protocolMask;
+	int	level;
 
-	if (tokenCount > 4)
+	if (tokenCount == 2)
+	{
+		CHKVOID(sdr_begin_xn(sdr));
+		listImagesForLevel(ARMUR_LEVEL_0, NULL);
+		listImagesForLevel(ARMUR_LEVEL_1, NULL);
+		listImagesForLevel(ARMUR_LEVEL_2, NULL);
+		sdr_exit_xn(sdr);
+		return;
+	}
+
+	/*	tokenCount >= 3		*/
+	if (strcmp(tokens[2], "0") == 0)
+	{
+		level = ARMUR_LEVEL_0;
+	}
+	else if (strcmp(tokens[2], "1") == 0)
+	{
+		level = ARMUR_LEVEL_1;
+	}
+	else if (strcmp(tokens[2], "2") == 0)
+	{
+		level = ARMUR_LEVEL_2;
+	}
+	else
 	{
 		SYNTAX_ERROR;
 		return;
 	}
 
 	CHKVOID(sdr_begin_xn(sdr));
-	if (tokenCount == 2)
+	if (tokenCount == 3)
 	{
-		listImagesForProtocol(ARMUR_LIB, ARMUR_ALL);
-		listImagesForProtocol(ARMUR_APP, ARMUR_ALL);
-		sdr_exit_xn(sdr);
-		return;
+		listImagesForLevel(level, NULL);
 	}
-
-	/*	tokenCount is 3 or 4	*/
-	if (strcmp(tokens[2], "lib") == 0)
+	else if (tokenCount == 4)
 	{
-		type = ARMUR_LIB;
-	}
-	else if (strcmp(tokens[2], "app") == 0)
-	{
-		type = ARMUR_APP;
+		listImagesForLevel(level, tokens[3]);
 	}
 	else
 	{
 		SYNTAX_ERROR;
-		sdr_exit_xn(sdr);
-		return;
 	}
-
-	switch (tokenCount)
-	{
-	case 3:
-		protocolMask = ARMUR_ALL;
-		break;
-	
-	case 4:
-		if (strcmp(tokens[3], "core") == 0)
-		{
-			protocolMask = ARMUR_CORE;
-		}
-		else if (strcmp(tokens[3], "ltp") == 0)
-		{
-			protocolMask = ARMUR_LTP;
-		}
-		else if (strcmp(tokens[3], "bp") == 0)
-		{
-			protocolMask = ARMUR_BP;
-		}
-		else if (strcmp(tokens[3], "cfdp") == 0)
-		{
-			protocolMask = ARMUR_CFDP;
-		}
-		else
-		{
-			SYNTAX_ERROR;
-			sdr_exit_xn(sdr);
-			return;
-		}
-	}
-
-	listImagesForProtocol(type, protocolMask);
-	
 	sdr_exit_xn(sdr);
 }
 
 static void	listQueuesForLevel(int level)
 {
 	Sdr		sdr = getIonsdr();
-			OBJ_POINTER(ARMUR_Image, image);
 	PsmPartition	wm = getIonwm();
-	ARMUR_ImageRef	*imageRef;
+			OBJ_POINTER(ARMUR_Image, image);
+	ARMUR_VImage	*vimage;
 	PsmAddress	elt;
 
-	if (level < 0 || level > 2)
+	if (!(level == ARMUR_LEVEL_0 || level == ARMUR_LEVEL_1 || level == ARMUR_LEVEL_2))
 	{
-		SYNTAX_ERROR;
+		printText("Unknown level.");
 		return;
 	}
 
-	for (elt = sm_list_first(wm, (getArmurVdb())->restartQueue[level]);
-		elt; elt = sm_list_next(wm, elt))
+	for (elt = sm_list_first(wm, (getArmurVdb())->restartQueue[level]); elt;
+		elt = sm_list_next(wm, elt))
 	{
-		imageRef = (ARMUR_ImageRef *)psp(wm, sm_list_data(wm, elt));
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef->imageObj);
+		vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+		GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);
 		printImage(image);
 	}
 }
@@ -615,9 +599,9 @@ static void	listQueues(int tokenCount, char **tokens)
 	switch (tokenCount)
 	{
 	case 2:
-		listQueuesForLevel(ARMUR_LV0);
-		listQueuesForLevel(ARMUR_LV1);
-		listQueuesForLevel(ARMUR_LV2);
+		listQueuesForLevel(ARMUR_LEVEL_0);
+		listQueuesForLevel(ARMUR_LEVEL_1);
+		listQueuesForLevel(ARMUR_LEVEL_2);
 		break;
 	
 	case 3:
@@ -627,7 +611,6 @@ static void	listQueues(int tokenCount, char **tokens)
 	default:
 		SYNTAX_ERROR;
 	}
-
 	sdr_exit_xn(sdr);
 }
 
@@ -785,16 +768,24 @@ static int	processLine(char *line, int lineLength, int *rc)
 		case 's':
 			if (attachToArmur() == 0)
 			{
-				if (tokenCount < 2)
+				switch (tokenCount)
 				{
-					printText("Can't start ARMUR: no nm_agent command.");
-				}
-				else
-				{
+				case 1:
+					if (armurStart(NULL) < 0)
+					{
+						putErrmsg("Can't start ARMUR.", NULL);
+					}
+					break;
+
+				case 2:
 					if (armurStart(tokens[1]) < 0)
 					{
 						putErrmsg("Can't start ARMUR.", NULL);
 					}
+					break;
+
+				default:
+					SYNTAX_ERROR;
 				}
 			}
 			return 0;

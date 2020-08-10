@@ -123,8 +123,8 @@ nm/utils/armur-armur.o: nm/utils/armur.c /usr/include/stdc-predef.h \
  ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
  ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
  cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_restart.h /usr/include/archive.h /usr/include/inttypes.h \
- /usr/include/archive_entry.h
+ nm/utils/armur_rhht.h nm/utils/armur_restart.h /usr/include/archive.h \
+ /usr/include/inttypes.h /usr/include/archive_entry.h
 
 /usr/include/stdc-predef.h:
 
@@ -489,6 +489,8 @@ cfdp/library/cfdpP.h:
 cfdp/include/cfdp.h:
 
 cfdp/include/cfdpops.h:
+
+nm/utils/armur_rhht.h:
 
 nm/utils/armur_restart.h:
 

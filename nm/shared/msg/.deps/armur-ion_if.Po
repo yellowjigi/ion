@@ -1,6 +1,5 @@
-nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
- /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
- nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
+nm/shared/msg/armur-ion_if.o: nm/shared/msg/ion_if.c \
+ /usr/include/stdc-predef.h config.h bp/include/bp.h \
  ici/include/platform.h /usr/include/time.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -115,28 +114,40 @@ nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
  /usr/include/x86_64-linux-gnu/bits/shm.h \
  /usr/include/x86_64-linux-gnu/sys/sem.h \
  /usr/include/x86_64-linux-gnu/bits/sem.h ici/include/platform_sm.h \
- ici/include/memmgr.h ici/include/psm.h ici/include/sdr.h \
+ ici/include/psm.h ici/include/platform.h ici/include/sdr.h \
  ici/include/sdrstring.h ici/include/sdrmgt.h ici/include/sdrxn.h \
- ici/include/sdrlist.h ici/include/smlist.h ici/include/smrbt.h \
- ici/include/zco.h bp/library/bpP.h bp/library/bpsec.h \
- ici/include/ionsec.h bp/include/bp.h ici/include/platform.h \
- ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
- ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_rhht.h
+ ici/include/psm.h ici/include/sdrlist.h ici/include/zco.h \
+ ici/include/sdr.h ici/include/lyst.h ici/include/smlist.h \
+ ici/include/ion.h ici/include/memmgr.h ici/include/smlist.h \
+ ici/include/smrbt.h ici/include/zco.h nm/shared/msg/../utils/nm_types.h \
+ nm/shared/msg/../utils/debug.h nm/shared/msg/ion_if.h \
+ nm/shared/msg/msg.h nm/shared/msg/../utils/vector.h \
+ nm/shared/msg/../utils/../primitives/blob.h nm/contrib/QCBOR/inc/qcbor.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h \
+ nm/contrib/QCBOR/inc/UsefulBuf.h nm/shared/msg/../primitives/ari.h \
+ nm/shared/msg/../primitives/../utils/debug.h \
+ nm/shared/msg/../primitives/../utils/rhht.h \
+ nm/shared/msg/../primitives/../utils/vector.h \
+ nm/shared/msg/../primitives/../primitives/tnv.h \
+ nm/shared/msg/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/msg/../primitives/../primitives/../utils/cbor_utils.h \
+ nm/shared/msg/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/msg/../primitives/../primitives/../utils/vector.h \
+ nm/shared/msg/../primitives/../primitives/../utils/vector.h \
+ nm/shared/msg/../primitives/report.h \
+ nm/shared/msg/../primitives/../utils/nm_types.h \
+ nm/shared/msg/../primitives/../utils/db.h \
+ nm/shared/msg/../primitives/../utils/nm_types.h \
+ nm/shared/msg/../primitives/../utils/rhht.h \
+ nm/shared/msg/../primitives/../utils/vector.h \
+ nm/shared/msg/../primitives/tnv.h nm/shared/msg/../primitives/ari.h \
+ nm/shared/msg/../utils/utils.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
 
-nm/utils/armur_restart.h:
-
-nm/utils/armur.h:
-
-ici/include/rfx.h:
-
-ici/include/ion.h:
+bp/include/bp.h:
 
 ici/include/platform.h:
 
@@ -436,9 +447,9 @@ ici/include/platform.h:
 
 ici/include/platform_sm.h:
 
-ici/include/memmgr.h:
-
 ici/include/psm.h:
+
+ici/include/platform.h:
 
 ici/include/sdr.h:
 
@@ -448,29 +459,13 @@ ici/include/sdrmgt.h:
 
 ici/include/sdrxn.h:
 
-ici/include/sdrlist.h:
-
-ici/include/smlist.h:
-
-ici/include/smrbt.h:
-
-ici/include/zco.h:
-
-bp/library/bpP.h:
-
-bp/library/bpsec.h:
-
-ici/include/ionsec.h:
-
-bp/include/bp.h:
-
-ici/include/platform.h:
-
 ici/include/psm.h:
 
-ici/include/sdr.h:
+ici/include/sdrlist.h:
 
 ici/include/zco.h:
+
+ici/include/sdr.h:
 
 ici/include/lyst.h:
 
@@ -478,18 +473,66 @@ ici/include/smlist.h:
 
 ici/include/ion.h:
 
-bp/library/saga.h:
+ici/include/memmgr.h:
 
-ltp/library/ltpP.h:
+ici/include/smlist.h:
 
-ltp/include/ltp.h:
+ici/include/smrbt.h:
 
-ici/include/sdrhash.h:
+ici/include/zco.h:
 
-cfdp/library/cfdpP.h:
+nm/shared/msg/../utils/nm_types.h:
 
-cfdp/include/cfdp.h:
+nm/shared/msg/../utils/debug.h:
 
-cfdp/include/cfdpops.h:
+nm/shared/msg/ion_if.h:
 
-nm/utils/armur_rhht.h:
+nm/shared/msg/msg.h:
+
+nm/shared/msg/../utils/vector.h:
+
+nm/shared/msg/../utils/../primitives/blob.h:
+
+nm/contrib/QCBOR/inc/qcbor.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h:
+
+nm/contrib/QCBOR/inc/UsefulBuf.h:
+
+nm/shared/msg/../primitives/ari.h:
+
+nm/shared/msg/../primitives/../utils/debug.h:
+
+nm/shared/msg/../primitives/../utils/rhht.h:
+
+nm/shared/msg/../primitives/../utils/vector.h:
+
+nm/shared/msg/../primitives/../primitives/tnv.h:
+
+nm/shared/msg/../primitives/../primitives/../utils/nm_types.h:
+
+nm/shared/msg/../primitives/../primitives/../utils/cbor_utils.h:
+
+nm/shared/msg/../primitives/../primitives/../utils/nm_types.h:
+
+nm/shared/msg/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/msg/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/msg/../primitives/report.h:
+
+nm/shared/msg/../primitives/../utils/nm_types.h:
+
+nm/shared/msg/../primitives/../utils/db.h:
+
+nm/shared/msg/../primitives/../utils/nm_types.h:
+
+nm/shared/msg/../primitives/../utils/rhht.h:
+
+nm/shared/msg/../primitives/../utils/vector.h:
+
+nm/shared/msg/../primitives/tnv.h:
+
+nm/shared/msg/../primitives/ari.h:
+
+nm/shared/msg/../utils/utils.h:

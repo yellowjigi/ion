@@ -57,14 +57,123 @@ static ARMUR_DB *_armurConstants()
 	return db;
 }
 
-static void	dropImageRef(PsmAddress imageRefElt)
+static int	raiseImage(Object imageAddr, ARMUR_VDB *armurvdb)
 {
-	PsmPartition	wm = getIonwm();
-	PsmAddress	imageRefAddr;
+	Sdr			sdr = getIonsdr();
+	PsmPartition		wm = getIonwm();
+	ARMUR_Image		imageBuf;
+	ARMUR_VPackageDescr	*vdescr;
+	ARMUR_VImage		*vimage;
+	PsmAddress		vimageAddr;
+	PsmAddress		addr;
+	PsmAddress		elt;
+	int			i;
+	char			*packageName;
 
-	imageRefAddr = sm_list_data(wm, imageRefElt);
-	oK(sm_list_delete(wm, imageRefElt, NULL, NULL));
-	psm_free(wm, imageRefAddr);
+	if ((vimageAddr = psm_malloc(wm, sizeof(ARMUR_VImage))) == 0)
+	{
+		return -1;
+	}
+
+	sdr_read(sdr, (char *)&imageBuf, imageAddr, sizeof(ARMUR_Image));
+
+	/*	Insert the vimage address in the hash table.		*/
+	if (rhht_insert(armurvdb->vimages, imageBuf.name, vimageAddr) != RH_OK)
+	{
+		psm_free(wm, vimageAddr);
+		return -1;
+	}
+
+	vimage = (ARMUR_VImage *)psp(wm, vimageAddr);
+	vimage->addr = imageAddr;
+
+	/*	Walk the packages possibly given in CSV formats.	*/
+	packageName = imageBuf.packageName;
+	while ((packageName = strtok(packageName, ",")) != NULL)
+	{
+		armurFindPackageDescr(packageName, &vdescr, &elt);
+		if (elt == 0)
+		{
+			//if (armurAddPackageDescr(packageName) < 0)
+			//{
+			//	return -1;
+			//}
+			//armurFindPackageDescr(packageName, &vdescr, &elt);
+			//if (elt == 0)
+			//{
+			//	return -1;
+			//}
+
+			/*	Not found. Need to add a new package descriptor.	*/
+			if ((addr = psm_malloc(wm, sizeof(ARMUR_VPackageDescr))) == 0)
+			{
+				return -1;
+			}
+			if (sm_list_insert_last(wm, armurvdb->applications, addr) == 0)
+			{
+				rhht_del_key(armurvdb->vimages, imageBuf.name);
+				psm_free(wm, addr);
+				return -1;
+			}
+
+			vdescr = (ARMUR_VPackageDescr *)psp(wm, addr);
+			istrcpy(vdescr->name, packageName, sizeof vdescr->name);
+			if ((vdescr->applications[ARMUR_APPTYPE_DAEMON] =
+				sm_list_create(wm)) == 0
+			|| (vdescr->applications[ARMUR_APPTYPE_NORMAL] =
+				sm_list_create(wm)) == 0)
+			{
+				// TODO: release memories.
+				return -1;
+			}
+		}
+
+		/*	Follow with level-specific procedures.			*/
+		switch (imageBuf.level)
+		{
+		case ARMUR_LEVEL_0:
+			/*	Populate the imageLv0-specific buf.			*/
+			/*	Copy the addresses of the lists of packages.		*/
+			for (i = 0; i < ARMUR_LAYERS; i++)
+			{
+				vimage->as.lv0.packages[i] = armurvdb->packages[i];
+			}
+			for (i = 0; i < ARMUR_APPTYPES; i++)
+			{
+				vimage->as.lv0.applications[i] = vdescr->applications[i];
+			}
+			elt = sm_list_insert_last(wm, armurvdb->corePackages, vimageAddr);
+			break;
+
+		case ARMUR_LEVEL_1:
+			/*	Populate the imageLv1-specific buf.			*/
+			vimage->as.lv1.layer = imageBuf.tag;
+			/*	Copy the addresses of the lists of applications.	*/
+			for (i = 0; i < ARMUR_APPTYPES; i++)
+			{
+				vimage->as.lv1.applications[i] = vdescr->applications[i];
+			}
+			elt = sm_list_insert_last(wm,
+				armurvdb->packages[(int)imageBuf.tag], vimageAddr);
+			break;
+
+		case ARMUR_LEVEL_2:
+			/*	Populate the imageLv2-specific buf.			*/
+			vimage->as.lv2.vstat = 0;
+			vimage->as.lv2.stop = NULL;
+			vimage->as.lv2.start = NULL;
+			elt = sm_list_insert_last(wm,
+				vdescr->applications[(int)imageBuf.tag], vimageAddr);
+		}
+		if (elt == 0)
+		{
+			// TODO: release memories.
+			return -1;
+		}
+		packageName = NULL;
+	}
+
+	return 0;
 }
 
 static char *_armurvdbName()
@@ -74,12 +183,15 @@ static char *_armurvdbName()
 
 static ARMUR_VDB *_armurvdb(char **name)
 {
+	Sdr			sdr;
 	static ARMUR_VDB	*vdb = NULL;
 	PsmPartition		wm;
 	PsmAddress		vdbAddress;
 	PsmAddress		elt;
-	Sdr			sdr;
 	ARMUR_DB		*db;
+	Object			sdrElt;
+	int			success;
+	int			level;
 
 	if (name)
 	{
@@ -106,6 +218,7 @@ static ARMUR_VDB *_armurvdb(char **name)
 
 		/*	ARMUR volatile database doesn't exist yet.	*/
 
+		/*	TODO: Free memory when an error occurs.		*/
 		sdr = getIonsdr();
 		CHKNULL(sdr_begin_xn(sdr));
 		vdbAddress = psm_zalloc(wm, sizeof(ARMUR_VDB));
@@ -118,25 +231,63 @@ static ARMUR_VDB *_armurvdb(char **name)
 
 		db = _armurConstants();
 		vdb = (ARMUR_VDB *)psp(wm, vdbAddress);
-		memset((char *)vdb, 0, sizeof(ARMUR_VDB));
 
-		/*	restartMask is always initialized to 0 in volatile database.
-		 *	This enables no restart when unexpected system reboot occurs.	*/
-		vdb->restartMask = 0;
+		vdb->vstat = ARMUR_VSTAT_IDLE;
+
+		/*	Prepare a hash table for vimages.		*/
+		/*	TODO: pass the number of buckets.		*/
+		if ((vdb->vimages = rhht_create()) == 0)
+		{
+			sdr_exit_xn(sdr);
+			putErrmsg("No space for volatile database.", NULL);
+			return NULL;
+		}
+
+		/*	Prepare lists of vimages for navigation.	*/
+		if ((vdb->corePackages = sm_list_create(wm)) == 0
+		|| (vdb->packages[ARMUR_LAYER_APPLICATION] = sm_list_create(wm)) == 0
+		|| (vdb->packages[ARMUR_LAYER_BUNDLE] = sm_list_create(wm)) == 0
+		|| (vdb->packages[ARMUR_LAYER_CONVERGENCE] = sm_list_create(wm)) == 0
+		|| (vdb->applications = sm_list_create(wm)) == 0)
+		{
+			sdr_exit_xn(sdr);
+			putErrmsg("No space for volatile database.", NULL);
+			return NULL;
+		}
+
+		/*	Prepare lists of restart queues.		*/
+		if ((vdb->restartQueue[ARMUR_LEVEL_0] = sm_list_create(wm)) == 0
+		|| (vdb->restartQueue[ARMUR_LEVEL_1] = sm_list_create(wm)) == 0
+		|| (vdb->restartQueue[ARMUR_LEVEL_2] = sm_list_create(wm)) == 0)
+		{
+			sdr_exit_xn(sdr);
+			putErrmsg("No space for volatile database.", NULL);
+			return NULL;
+		}
 
 		vdb->cfdpInfo = db->cfdpInfo;
 		vdb->nmagentPid = ERROR;
 
-		/*	Prepare queues to retain references of restart-pending images	*/
-		if ((vdb->restartQueue[ARMUR_LV0] = sm_list_create(wm)) == 0
-		|| (vdb->restartQueue[ARMUR_LV1] = sm_list_create(wm)) == 0
-		|| (vdb->restartQueue[ARMUR_LV2] = sm_list_create(wm)) == 0
-		|| psm_catlg(wm, *name, vdbAddress) < 0)
+		if (psm_catlg(wm, *name, vdbAddress) < 0)
 		{
-			psm_free(wm, vdbAddress);
 			sdr_exit_xn(sdr);
 			putErrmsg("Can't initialize volatile database.", NULL);
 			return NULL;
+		}
+
+		/*	Raise all the image instances of lv.0, 1 and 2 from the lists.	*/
+		for (level = 0; level < ARMUR_LEVELS; level++)
+		{
+			for (sdrElt = sdr_list_first(sdr, db->images[level]); sdrElt;
+				sdrElt = sdr_list_next(sdr, sdrElt))
+			{
+				if (raiseImage(sdr_list_data(sdr, sdrElt), vdb) < 0)
+				{
+					sdr_exit_xn(sdr);
+					putErrmsg("Can't raise images.", NULL);
+					return NULL;
+				}
+			}
 		}
 
 		sdr_exit_xn(sdr);
@@ -150,126 +301,13 @@ static char *_armurdbName()
 	return "armurdb";
 }
 
-static void	padHashKey(char *destPtr, char basePattern, int bufLen)
-{
-	int	i;
-	char	pad = basePattern;
-
-	for (i = strlen(destPtr); i < bufLen; i++)
-	{
-		*(destPtr + i) = pad;
-	}
-}
-
-static int	constructRestartFnHashKey(char *buffer, char *imageName)
-{
-	memset(buffer, 0, ARMUR_RESTARTFN_HASH_KEY_BUFLEN);
-	isprintf(buffer, ARMUR_RESTARTFN_HASH_KEY_BUFLEN, "%s", imageName);
-	padHashKey(buffer, 0x7F, ARMUR_RESTARTFN_HASH_KEY_LEN);
-	return istrlen(buffer, ARMUR_RESTARTFN_HASH_KEY_LEN);
-}
-
-static int	catalogueRestartFn(Object restartFns,
-			ARMUR_RestartFn *restartFn, Object restartFnObj)
-{
-	Sdr		sdr = getIonsdr();
-	char		restartFnKey[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
-	Address		obj;
-	Object		hashElt;
-
-	if (constructRestartFnHashKey(restartFnKey, restartFn->imageName)
-		> ARMUR_RESTARTFN_HASH_KEY_LEN)
-	{
-		writeMemoNote("[?] Max hash key length exceeded", restartFnKey);
-		return -1;
-	}
-
-	switch (sdr_hash_retrieve(sdr, restartFns, restartFnKey, &obj, &hashElt))
-	{
-	case -1:
-		putErrmsg("Can't revise hash table entry.", NULL);
-		return -1;
-
-	case 1:		/*	Retrieval succeeded, non-unique key.	*/
-		putErrmsg("Duplicate key.", NULL);
-		return -1;
-
-	default:	/*	No such pre-existing entry.		*/
-		if (sdr_hash_insert(sdr, restartFns, restartFnKey,
-			restartFnObj, &(restartFn->hashEntry)) < 0)
-		{
-			putErrmsg("Can't insert into hash table.", NULL);
-			return -1;
-		}
-		return 0;
-	}
-}
-
-static int	restartFnInit(Object hashTable, char *imageName, RestartFn restartFn)
-{
-	Sdr			sdr = getIonsdr();
-	ARMUR_RestartFn		restartFnBuf;
-	Object			restartFnObj;
-
-	restartFnObj = sdr_malloc(sdr, sizeof(ARMUR_RestartFn));
-	if (restartFnObj == 0)
-	{
-		return -1;
-	}
-
-	memset((char *)&restartFnBuf, 0, sizeof(ARMUR_RestartFn));
-	istrcpy(restartFnBuf.imageName, imageName, sizeof(restartFnBuf.imageName));
-	restartFnBuf.restart = restartFn;
-
-	sdr_write(sdr, restartFnObj, (char *)&restartFnBuf, sizeof(ARMUR_RestartFn));
-	if (catalogueRestartFn(hashTable, &restartFnBuf, restartFnObj) < 0)
-	{
-		sdr_free(sdr, restartFnObj);
-		return -1;
-	}
-
-	return 0;
-}
-
-static int	_restartFnInit(Object hashTable)
-{
-	/*		Restart functions		*/
-
-	/*	Core & protocol restart functions	*/
-	if (restartFnInit(hashTable, "libici.so", ionRestart)	< 0
-	|| restartFnInit(hashTable, "libltp.so", ltpRestart)	< 0
-	|| restartFnInit(hashTable, "libbp.so", bpRestart)	< 0
-	|| restartFnInit(hashTable, "libcfdp.so", cfdpRestart)	< 0
-	/*	Daemon-applications restart functions	*/
-	|| restartFnInit(hashTable, "rfxclock", rfxclockRestart)	< 0
-	|| restartFnInit(hashTable, "ltpclock", ltpclockRestart)	< 0
-	|| restartFnInit(hashTable, "ltpdeliv", ltpdelivRestart)	< 0
-	|| restartFnInit(hashTable, "ltpmeter", ltpmeterRestart)	< 0
-	|| restartFnInit(hashTable, "udplsi", udplsiRestart)		< 0
-	|| restartFnInit(hashTable, "udplso", udplsoRestart)		< 0
-	|| restartFnInit(hashTable, "ltpcli", ltpcliRestart)		< 0
-	|| restartFnInit(hashTable, "ltpclo", ltpcloRestart)		< 0
-	|| restartFnInit(hashTable, "bpclock", bpclockRestart)		< 0
-	|| restartFnInit(hashTable, "bptransit", bptransitRestart)	< 0
-	|| restartFnInit(hashTable, "ipnfw", ipnfwRestart)		< 0
-	|| restartFnInit(hashTable, "ipnadminep", ipnadminepRestart)	< 0
-	|| restartFnInit(hashTable, "bpclm", bpclmRestart)		< 0
-	|| restartFnInit(hashTable, "bputa", bputaRestart)		< 0
-	|| restartFnInit(hashTable, "cfdpclock", cfdpclockRestart)	< 0)
-	{
-		return -1;
-	}
-
-	return 0;
-}
-
 int	armurInit()
 {
-	Sdr		sdr;
-	ARMUR_DB	armurdbBuf;
-	Object		armurdbObject;
-	ARMUR_CfdpInfo	cfdpInfoInit;
-	char 		*armurvdbName = _armurvdbName();
+	Sdr			sdr;
+	ARMUR_DB		armurdbBuf;
+	Object			armurdbObject;
+	ARMUR_CfdpInfo		cfdpInfoInit;
+	char 			*armurvdbName = _armurvdbName();
 
 	if (ionAttach() < 0)
 	{
@@ -304,42 +342,18 @@ int	armurInit()
 		memset((char *)&armurdbBuf, 0, sizeof(ARMUR_DB));
 		armurdbBuf.stat = ARMUR_STAT_IDLE;
 
-		/*		Default paths				*/
-		armurdbBuf.installPath[ARMUR_LIB] =
-			sdr_string_create(sdr, ARMUR_LIBPATH_DEFAULT);
-		armurdbBuf.installPath[ARMUR_APP] =
-			sdr_string_create(sdr, ARMUR_APPPATH_DEFAULT);
+		/*	Default paths					*/
+		armurdbBuf.installPath[ARMUR_IMAGETYPE_LIB] =
+			sdr_string_create(sdr, ARMUR_PATH_LIB_DEFAULT);
+		armurdbBuf.installPath[ARMUR_IMAGETYPE_APP] =
+			sdr_string_create(sdr, ARMUR_PATH_APP_DEFAULT);
 
-		armurdbBuf.restartFns = sdr_hash_create(sdr,
-					ARMUR_RESTARTFN_HASH_KEY_LEN,
-					ARMUR_RESTARTFN_HASH_ENTRIES,
-					ARMUR_RESTARTFN_HASH_SEARCH_LEN);
-		if (armurdbBuf.restartFns)
-		{
-			if (_restartFnInit(armurdbBuf.restartFns) < 0)
-			{
-				sdr_cancel_xn(sdr);
-				putErrmsg("Can't initialize restart functions.", NULL);
-			}
-		}
+		/*	Prepare lists of image templates.		*/
+		armurdbBuf.images[ARMUR_LEVEL_0] = sdr_list_create(sdr);
+		armurdbBuf.images[ARMUR_LEVEL_1] = sdr_list_create(sdr);
+		armurdbBuf.images[ARMUR_LEVEL_2] = sdr_list_create(sdr);
 
-		armurdbBuf.images[ARMUR_LIB][armurGetProtocolIndex(ARMUR_CORE)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_LIB][armurGetProtocolIndex(ARMUR_LTP)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_LIB][armurGetProtocolIndex(ARMUR_BP)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_LIB][armurGetProtocolIndex(ARMUR_CFDP)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_APP][armurGetProtocolIndex(ARMUR_CORE)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_APP][armurGetProtocolIndex(ARMUR_LTP)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_APP][armurGetProtocolIndex(ARMUR_BP)]
-			= sdr_list_create(sdr);
-		armurdbBuf.images[ARMUR_APP][armurGetProtocolIndex(ARMUR_CFDP)]
-			= sdr_list_create(sdr);
-
+		/*	Prepare space for CFDP information.		*/
 		armurdbBuf.cfdpInfo = sdr_malloc(sdr, sizeof(ARMUR_CfdpInfo));
 		if (armurdbBuf.cfdpInfo)
 		{
@@ -348,7 +362,7 @@ int	armurInit()
 				(char *)&cfdpInfoInit, sizeof(ARMUR_CfdpInfo));
 		}
 
-		/*		Write to SDR and catalogue it		*/
+		/*	Write to SDR and catalogue it.			*/
 		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 		sdr_catlg(sdr, _armurdbName(), 0, armurdbObject);
 
@@ -380,18 +394,58 @@ int	armurInit()
 
 static void	dropVdb(PsmPartition wm, PsmAddress vdbAddress)
 {
-	ARMUR_VDB	*vdb;
-	PsmAddress	elt;
-	int		level;
+	ARMUR_VDB		*vdb;
+	ARMUR_VPackageDescr	*vdescr;
+	PsmAddress		elt;
+	PsmAddress		descrElt;
+	int			i;
 
 	vdb = (ARMUR_VDB *)psp(wm, vdbAddress);
-	for (level = 0; level < 3; level++)
+
+	/*	Drop the vimages hash table and free the psm memories.		*/
+	rhht_release(vdb->vimages);
+
+	/*	Clean the image elements of lv.0 from the core packages.	*/
+	while ((elt = sm_list_first(wm, vdb->corePackages)) != 0)
 	{
-		while ((elt = sm_list_first(wm, vdb->restartQueue[level])) != 0)
+		oK(sm_list_delete(wm, elt, NULL, NULL));
+	}
+	sm_list_destroy(wm, vdb->corePackages, NULL, NULL);
+
+	/*	Clean the image elements of lv.1 from the packages.		*/
+	for (i = 0; i < ARMUR_LAYERS; i++)
+	{
+		while ((elt = sm_list_first(wm, vdb->packages[i])) != 0)
 		{
-			dropImageRef(elt);
+			oK(sm_list_delete(wm, elt, NULL, NULL));
 		}
-		sm_list_destroy(wm, vdb->restartQueue[level], NULL, NULL);
+		sm_list_destroy(wm, vdb->packages[i], NULL, NULL);
+	}
+
+	/*	Clean the image elements of lv.2 from the applications.	*/
+	while ((descrElt = sm_list_first(wm, vdb->applications)) != 0)
+	{
+		vdescr = (ARMUR_VPackageDescr *)psp(wm, sm_list_data(wm, descrElt));
+		for (i = 0; i < ARMUR_APPTYPES; i++)
+		{
+			while ((elt = sm_list_first(wm, vdescr->applications[i])) != 0)
+			{
+				oK(sm_list_delete(wm, elt, NULL, NULL));
+			}
+			sm_list_destroy(wm, vdescr->applications[i], NULL, NULL);
+		}
+		oK(sm_list_delete(wm, descrElt, NULL, NULL));
+	}
+	sm_list_destroy(wm, vdb->applications, NULL, NULL);
+
+	/*	Drop & destroy the restart queues.	*/
+	for (i = 0; i < ARMUR_LEVELS; i++)
+	{
+		while ((elt = sm_list_first(wm, vdb->restartQueue[i])) != 0)
+		{
+			oK(sm_list_delete(wm, elt, NULL, NULL));
+		}
+		sm_list_destroy(wm, vdb->restartQueue[i], NULL, NULL);
 	}
 }
 
@@ -439,133 +493,137 @@ int	armurStart(char *nmagentCmd)
 	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 	ARMUR_DB	armurdbBuf;
 	ARMUR_CfdpInfo	cfdpInfoBuf;
-	char		cmdBuf[SDRSTRING_BUFSZ];
+	char		buf[SDRSTRING_BUFSZ];
 
-	CHKERR(sdr_begin_xn(sdr));
 	if (nmagentCmd)
 	{
 		if (strlen(nmagentCmd) > MAX_SDRSTRING)
 		{
+			putErrmsg("nm_agent command is too long.", nmagentCmd);
 			return -1;
 		}
 
+		CHKERR(sdr_begin_xn(sdr));
 		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+		if (armurdbBuf.nmagentCmd != 0)
+		{
+			sdr_free(sdr, armurdbBuf.nmagentCmd);
+		}
 		armurdbBuf.nmagentCmd = sdr_string_create(sdr, nmagentCmd);
 		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-		if (sdr_end_xn(sdr))
+		if (sdr_end_xn(sdr) < 0)
 		{
+			putErrmsg("ARMUR can't set nm_agent command.", NULL);
 			return -1;
 		}
 	}
 	else
 	{
+		CHKERR(sdr_begin_xn(sdr));
 		sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 		sdr_exit_xn(sdr);
 	}
 
-	if (armurdbBuf.nmagentCmd == 0)
+	CHKERR(sdr_begin_xn(sdr));
+	if (armurvdb->nmagentPid == ERROR)
 	{
-		/*	It's assumed that ARMUR has never yet been started by
-		 *	an AMP message. There is nothing to do.				*/
-		return 0;
+		if (armurdbBuf.nmagentCmd == 0)	/*	No nm_agent command.	*/
+		{
+			putErrmsg("ARMUR can't start nm_agent.", NULL);
+			return -1;
+		}
+
+		sdr_string_read(sdr, buf, armurdbBuf.nmagentCmd);
+		armurvdb->nmagentPid = pseudoshell(buf);
 	}
+	sdr_exit_xn(sdr);
 
 	switch ((_armurConstants())->stat)
 	{
 	case ARMUR_STAT_IDLE:
-		/*	Update the ARMUR stat and go to the next step.			*/
-
-		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-		armurdbBuf.stat = ARMUR_STAT_DOWNLOADING;
-		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-		if (sdr_end_xn(sdr))
+		if (cfdpAttach() < 0)
 		{
 			return -1;
 		}
 
-	case ARMUR_STAT_DOWNLOADING:
-		/*	Archive is being downloaded.	*/
+		CHKERR(sdr_begin_xn(sdr));
+		if (sdr_list_first(sdr, (getCfdpConstants())->events) == 0)
+		{
+			/*	No CFDP PDUs have yet been received
+			 *	until now. There is nothing to do
+			 *	and ARMUR is still idle. To avoid
+			 *	deadlock, we will exit.			*/
+			sdr_exit_xn(sdr);
+			return 0;
+		}
+		sdr_exit_xn(sdr);
+
+		/*	Check CFDP events and block as
+		 *	necessary.				*/
 
 		if (armurWait() < 0)
 		{
 			putErrmsg("ARMUR wait failed.", NULL);
 			return -1;
 		}
-		/*	Download has been finished.	*/
-
-		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-		armurdbBuf.stat = ARMUR_STAT_DOWNLOADED;
-		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-
-		sdr_stage(sdr, (char *)&cfdpInfoBuf,
-				armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-		cfdpInfoBuf.srcNbr = 0;
-		cfdpInfoBuf.txnNbr = 0;
-		sdr_write(sdr, armurvdb->cfdpInfo,
-				(char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-		if (sdr_end_xn(sdr))
-		{
-			return -1;
-		}
+		/*	Download has been finished.		*/
 
 	case ARMUR_STAT_DOWNLOADED:
-		/*	Start install procedure.	*/
+		/*	Start install procedure.		*/
 
 		if (armurInstall() < 0)
 		{
 			putErrmsg("ARMUR install failed.", NULL);
 			return -1;
 		}
-		/*	Install has been finished.	*/
-
-		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-		armurdbBuf.stat = ARMUR_STAT_INSTALLED;
-		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-
-		sdr_stage(sdr, (char *)&cfdpInfoBuf,
-				armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-		sdr_free(sdr, cfdpInfoBuf.archiveName);
-		cfdpInfoBuf.archiveName = 0;
-		sdr_write(sdr, armurvdb->cfdpInfo,
-				(char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-		if (sdr_end_xn(sdr))
-		{
-			return -1;
-		}
+		/*	Install has been finished.		*/
 
 	case ARMUR_STAT_INSTALLED:
-		/*	Start restart procedure.	*/
+		/*	If we safely arrived here, the
+		 *	downloaded archive file is no longer
+		 *	needed. Delete it.			*/
+		CHKERR(sdr_begin_xn(sdr));
+		sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo,
+			sizeof(ARMUR_CfdpInfo));
+		sdr_string_read(sdr, buf, cfdpInfoBuf.archiveName);
+		sdr_exit_xn(sdr);
+		if (fopen(buf, "r") != NULL)
+		{
+			oK(remove(buf));
+		}
+		/*	Start restart procedure.		*/
 
 		if (armurRestart() < 0)
 		{
 			putErrmsg("ARMUR restart failed.", NULL);
 			return -1;
 		}
-		/*	Restart has been finished.	*/
 
-		CHKERR(sdr_begin_xn(sdr));
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-		armurdbBuf.stat = ARMUR_STAT_IDLE;
-		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-		if (sdr_end_xn(sdr))
-		{
-			return -1;
-		}
+		/*	Restart has been finished.		*/
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
-	sdr_string_read(sdr, cmdBuf, armurdbBuf.nmagentCmd);
-	sdr_exit_xn(sdr);
+	/*	TODO: Send a report message.		*/
 
-	oK(nmagentRestart(cmdBuf));
+	/*	The entire procedure has been completed.
+	 *	Reset the CFDP-related information and state.		*/
+	CHKERR(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+	sdr_free(sdr, cfdpInfoBuf.archiveName);
+	cfdpInfoBuf.archiveName = 0;
+	sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	armurdbBuf.stat = ARMUR_STAT_IDLE;
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		return -1;
+	}
 
 	return 0;
 }
 
-int armurAttach()
+int	armurAttach()
 {
 	Object		armurdbObject = _armurdbObject(NULL);
 	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
@@ -616,7 +674,7 @@ int armurAttach()
 	return 0;
 }
 
-void armurDetach()
+void	armurDetach()
 {
 	char	*stop = NULL;
 
@@ -638,181 +696,102 @@ ARMUR_VDB *getArmurVdb()
 	return _armurvdb(NULL);
 }
 
-void	armurParseImageName(char *imageName, int *type, int *level)
+void	armurFindPackageDescr(char *packageName, ARMUR_VPackageDescr **vdescr,
+			PsmAddress *vdescrElt)
 {
-	if (strcmp(imageName + strlen(imageName) - 3, ".so") == 0)
-	{
-		if (strcmp(imageName, "libici.so") == 0)
-		{
-			if (level)
-			{
-				*level = ARMUR_LV0;
-			}
-		}
-		else
-		{
-			if (level)
-			{
-				*level = ARMUR_LV1;
-			}
-		}
-		*type = ARMUR_LIB;
-		return;
-	}
-
-	if (level)
-	{
-		*level = ARMUR_LV2;
-	}
-	*type = ARMUR_APP;
-}
-
-int	armurGetProtocolIndex(char protocolFlag)
-{
-	int	flag;
-	int	idx = 0;
-
-	for (flag = protocolFlag >> 1; flag; flag >>= 1)
-	{
-		idx++;
-	}
-
-	return idx;
-}
-
-int	armurFindRestartFn(char *imageName, Object *restartFnObj)
-{
-	Sdr		sdr = getIonsdr();
-	char		key[ARMUR_RESTARTFN_HASH_KEY_BUFLEN];
-	Object		hashElt;
-
-	CHKERR(imageName);
-	CHKERR(restartFnObj);
-
-	CHKERR(ionLocked());
-	*restartFnObj = 0;	/*	Default: not found.		*/
-	if (constructRestartFnHashKey(key, imageName) > ARMUR_RESTARTFN_HASH_KEY_LEN)
-	{
-		return 0;	/*	Can't be in hash table.		*/
-	}
-
-	if (sdr_hash_retrieve(sdr, (_armurConstants())->restartFns, key,
-		restartFnObj, &hashElt) < 0)
-	{
-		putErrmsg("Failed locating restart function in hash table.", NULL);
-		return -1;
-	}
-
-	return 0;
-}
-
-static Object	locateImage(char *imageName, int imageType)
-{
-	Sdr		sdr = getIonsdr();
-	ARMUR_DB	*armurdb = _armurConstants();
-			OBJ_POINTER(ARMUR_Image, image);
+	PsmPartition	wm = getIonwm();
+	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 	Object		elt;
-	int		protocol;
-	int		protocolIdx;
-	int		eltFound = 0;
 
-	CHKZERO(imageName);
-	CHKZERO(imageType == ARMUR_LIB || imageType == ARMUR_APP);
-
-	CHKZERO(ionLocked());
-	for (protocol = ARMUR_CORE; protocol < ARMUR_RESERVED; protocol <<= 1)
+	for (elt = sm_list_first(wm, armurvdb->applications); elt;
+		elt = sm_list_next(wm, elt))
 	{
-		protocolIdx = armurGetProtocolIndex(protocol);
-		for (elt = sdr_list_first(sdr, armurdb->images[imageType][protocolIdx]);
-			elt; elt = sdr_list_next(sdr, elt))
-		{
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, sdr_list_data(sdr, elt));
-			if (strcmp(image->name, imageName) == 0)
-			{
-				eltFound = 1;
-				break;
-			}
-		}
-		if (eltFound)
+		*vdescr = (ARMUR_VPackageDescr *)psp(wm, sm_list_data(wm, elt));
+		if (strcmp((*vdescr)->name, packageName) == 0)
 		{
 			break;
 		}
 	}
-
-	return elt;
+	*vdescrElt = elt;
 }
 
-void	armurFindImage(char *imageName, int imageType, Object *imageObj, Object *imageElt)
-{
-	Sdr	sdr = getIonsdr();
-	Object	elt;
-
-	CHKVOID(imageName);
-	CHKVOID(imageType == ARMUR_LIB || imageType == ARMUR_APP);
-	CHKVOID(imageObj);
-	CHKVOID(imageElt);
-
-	CHKVOID(ionLocked());
-	elt = locateImage(imageName, imageType);
-	if (elt == 0)
-	{
-		*imageElt = 0;
-		return;
-	}
-
-	*imageObj = sdr_list_data(sdr, elt);
-	*imageElt = elt;
-}
-
-static int	enqueueImage(Object imageObj, int level)
+void	armurFindImage(char *imageName, ARMUR_VImage **vimage, PsmAddress *vimageAddr)
 {
 	PsmPartition	wm = getIonwm();
-	ARMUR_ImageRef	*imageRef;
-	PsmAddress	addr;
-	PsmAddress	elt;
+	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 
-	CHKERR(imageObj);
-	CHKERR(level == ARMUR_LV0 || level == ARMUR_LV1 || level == ARMUR_LV2);
+	CHKVOID(imageName);
+	CHKVOID(vimage);
+	CHKVOID(vimageAddr);
+
+	CHKVOID(ionLocked());
+	if ((*vimageAddr = rhht_retrieve_key(armurvdb->vimages, imageName)) != 0)
+	{
+		*vimage = (ARMUR_VImage *)psp(wm, *vimageAddr);
+	}
+}
+
+static int	enqueueImage(int level, ARMUR_VImage *vimage, PsmAddress vimageAddr)
+{
+	PsmPartition	wm = getIonwm();
+	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
+	PsmAddress	elt = 0;
 
 	CHKERR(ionLocked());
-	addr = psm_malloc(wm, sizeof(ARMUR_ImageRef));
-	if (addr == 0)
+	if (level == ARMUR_LEVEL_1)
 	{
-		putErrmsg("No space for working memory.", NULL);
-		return -1;
+		/*	Compare the layer values of element data and then
+		 *	insert the given image address at the right place.	*/
+		ARMUR_VImage *thisVimage;
+		for (elt = sm_list_first(wm, armurvdb->restartQueue[level]); elt;
+			elt = sm_list_next(wm, elt))
+		{
+			thisVimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (thisVimage->as.lv1.layer < vimage->as.lv1.layer)
+			{
+				continue;
+			}
+
+			break;	/*	Insert before this element.		*/
+		}
 	}
 
-	elt = sm_list_insert_last(wm, (_armurvdb(NULL))->restartQueue[level], addr);
-	if (elt == 0)
+	if (elt)
 	{
-		psm_free(wm, addr);
-		putErrmsg("No space for working memory.", NULL);
-		return -1;
+		if ((elt = sm_list_insert_before(wm, elt, vimageAddr)) == 0)
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		if ((elt = sm_list_insert_last(wm, armurvdb->restartQueue[level],
+			vimageAddr)) == 0)
+		{
+			return -1;
+		}
 	}
 
-	imageRef = (ARMUR_ImageRef *)psp(wm, addr);
-	imageRef->imageObj = imageObj;
+	if (!(armurvdb->vstat & ARMUR_VSTAT(level)))
+	{
+		armurvdb->vstat |= ARMUR_VSTAT(level);
+	}
 
 	return 0;
 }
 
-int	armurAddImage(char *imageName, int protocol)
+static int	addImage(char *imageName, int level, char *packageName,
+			int layer, int apptype)
 {
-	Sdr		sdr = getIonsdr();
-	ARMUR_DB	*armurdb = _armurConstants();
-	ARMUR_Image	imageBuf;
-	Object		imageObj;
-	Object		imageElt;
-	Object		restartFnObj;
-	Object		obj;
-	Object		elt = 0;
-	int		level;
-	int		imageType;
-	int		p;
-	int		i;
+	Sdr			sdr = getIonsdr();
+	ARMUR_DB		*armurdb = _armurConstants();
+	ARMUR_Image		imageBuf;
+	Object			addr;
+	ARMUR_VImage		*vimage;
+	PsmAddress		vimageAddr;
 
 	CHKERR(imageName);
-	CHKERR(protocol);
+	CHKERR(packageName);
 
 	if (*imageName == 0)
 	{
@@ -826,84 +805,122 @@ int	armurAddImage(char *imageName, int protocol)
 		return 0;
 	}
 
-	if (protocol >= ARMUR_RESERVED)
-	{
-		writeMemoNote("[?] Protocol not supported", itoa(protocol));
-		return 0;
-	}
-
 	CHKERR(sdr_begin_xn(sdr));
-	armurParseImageName(imageName, &imageType, &level);
-	armurFindImage(imageName, imageType, &imageObj, &imageElt);
-	if (imageElt != 0)
+
+	/*	Begin with common procedures.				*/
+	armurFindImage(imageName, &vimage, &vimageAddr);
+	if (vimageAddr != 0)
 	{
 		sdr_exit_xn(sdr);
 		writeMemoNote("[?] Duplicate image", imageName);
 		return 0;
 	}
 
-	memset((char *)&imageBuf, 0, sizeof(ARMUR_Image));
-	istrcpy(imageBuf.name, imageName, sizeof imageBuf.name);
-	imageBuf.type = imageType;
-	imageBuf.protocol = protocol;
-
-	if (armurFindRestartFn(imageName, &restartFnObj) < 0)
+	/*	Allocate the data in the SDR heap space.		*/
+	if ((addr = sdr_malloc(sdr, sizeof(ARMUR_Image))) == 0)
 	{
+		sdr_exit_xn(sdr);
+		putErrmsg("No space for image object.", imageName);
 		return -1;
 	}
-	if (restartFnObj)
+
+	if (sdr_list_insert_last(sdr, armurdb->images[level], addr) == 0)
 	{
-		imageBuf.restartFnObj = restartFnObj;
+		sdr_cancel_xn(sdr);
+		putErrmsg("No space for image object.", imageName);
+		return -1;
 	}
 
-	obj = sdr_malloc(sdr, sizeof(ARMUR_Image));
-	if (obj)
+	memset((char *)&imageBuf, 0, sizeof(ARMUR_Image));
+	istrcpy(imageBuf.name, imageName, sizeof imageBuf.name);
+	istrcpy(imageBuf.packageName, packageName, sizeof imageBuf.packageName);
+	imageBuf.level = level;
+
+	/*	Follow with level-specific procedures.			*/
+	switch (level)
 	{
-		for (p = ARMUR_CORE; p < ARMUR_RESERVED; p <<= 1)
-		{
-			if (p & protocol)
-			{
-				i = armurGetProtocolIndex(p);
-				elt = sdr_list_insert_last(sdr,
-					armurdb->images[imageType][i], obj);
-			}
-		}
-		sdr_write(sdr, obj, (char *)&imageBuf, sizeof(ARMUR_Image));
+	case ARMUR_LEVEL_0:
+		imageBuf.tag = 0;
+		break;
+
+	case ARMUR_LEVEL_1:
+		imageBuf.tag = layer;
+		break;
+
+	case ARMUR_LEVEL_2:
+		imageBuf.tag = apptype;
 	}
-	/*	TODO: Increment the number of images installed.		*/
-	if (sdr_end_xn(sdr) < 0 || elt == 0)
+
+	/*	Write the data in the allocated SDR heap space.		*/
+	sdr_write(sdr, addr, (char *)&imageBuf, sizeof(ARMUR_Image));
+
+	if (sdr_end_xn(sdr) < 0)
 	{
 		putErrmsg("Can't add image.", imageName);
 		return -1;
 	}
 
+	/*	Now insert the address of the image in the hash table.	*/
+	CHKERR(sdr_begin_xn(sdr));
+	if (raiseImage(addr, _armurvdb(NULL)) < 0)
+	{
+		sdr_exit_xn(sdr);
+		putErrmsg("Can't raise image.", imageName);
+		return -1;
+	}
+	sdr_exit_xn(sdr);
+
 	return 0;
 }
 
-static void	setInstallTimestamp(Object imageObj, time_t installedTime)
+int	armurAddImageLv0(char *imageName, char *packageName)
+{
+	return addImage(imageName, ARMUR_LEVEL_0, packageName, 0, 0);
+}
+
+int	armurAddImageLv1(char *imageName, char *packageName, int layer)
+{
+	CHKERR(layer == ARMUR_LAYER_APPLICATION
+		|| layer == ARMUR_LAYER_BUNDLE
+		|| layer == ARMUR_LAYER_CONVERGENCE);
+
+	return addImage(imageName, ARMUR_LEVEL_1, packageName, layer, 0);
+}
+
+int	armurAddImageLv2(char *imageName, char *packageName, int apptype)
+{
+	CHKERR(apptype == ARMUR_APPTYPE_DAEMON
+		|| apptype == ARMUR_APPTYPE_NORMAL);
+
+	return addImage(imageName, ARMUR_LEVEL_2, packageName, 0, apptype);
+}
+
+static void	setInstallTimestamp(ARMUR_VImage *vimage, time_t installedTime)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_Image	imageBuf;
 
-	CHKVOID(imageObj);
-	CHKVOID(installedTime);
-
 	CHKVOID(ionLocked());
-	sdr_stage(sdr, (char *)&imageBuf, imageObj, sizeof(ARMUR_Image));
+	sdr_stage(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
 	imageBuf.installedTime = installedTime;
-	sdr_write(sdr, imageObj, (char *)&imageBuf, sizeof(ARMUR_Image));
+	sdr_write(sdr, vimage->addr, (char *)&imageBuf, sizeof(ARMUR_Image));
 }
 
-static void	getInstallDir(int type, char *installDir)
+static void	getInstallDir(ARMUR_Image image, char *installDir)
 {
-	Sdr	sdr = getIonsdr();
-	char	buf[SDRSTRING_BUFSZ];
-
-	CHKVOID(type == ARMUR_LIB || type == ARMUR_APP);
-	CHKVOID(installDir);
+	Sdr		sdr = getIonsdr();
+	ARMUR_DB	*armurdb = _armurConstants();
+	char		buf[SDRSTRING_BUFSZ];
 
 	CHKVOID(ionLocked());
-	sdr_string_read(sdr, buf, (_armurConstants())->installPath[type]);
+	if (image.level == ARMUR_LEVEL_2)
+	{
+		sdr_string_read(sdr, buf, armurdb->installPath[ARMUR_IMAGETYPE_APP]);
+	}
+	else
+	{
+		sdr_string_read(sdr, buf, armurdb->installPath[ARMUR_IMAGETYPE_LIB]);
+	}
 
 	istrcpy(installDir, buf, ARMUR_PATHNAME_LEN_MAX);
 }
@@ -912,48 +929,66 @@ int	armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_CfdpInfo	cfdpInfoBuf;
-	Object		cfdpInfoObj;
+	Object		addr;
 	
 	CHKERR(sdr_begin_xn(sdr));
 
-	cfdpInfoObj = (_armurvdb(NULL))->cfdpInfo;
-	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
+	addr = (_armurvdb(NULL))->cfdpInfo;
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, addr, sizeof(ARMUR_CfdpInfo));
 	cfdpInfoBuf.srcNbr = cfdpSrcNbr;
-	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+	sdr_write(sdr, addr, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
 
-	return sdr_end_xn(sdr);
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't update CFDP source number.", itoa(cfdpSrcNbr));
+		return -1;
+	}
+
+	return 0;
 }
 
-int	armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr)
-{
-	Sdr		sdr = getIonsdr();
-	ARMUR_CfdpInfo	cfdpInfoBuf;
-	Object		cfdpInfoObj;
-	
-	CHKERR(sdr_begin_xn(sdr));
-
-	cfdpInfoObj = (_armurvdb(NULL))->cfdpInfo;
-	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
-	cfdpInfoBuf.txnNbr = cfdpTxnNbr;
-	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-
-	return sdr_end_xn(sdr);
-}
+//int	armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr)
+//{
+//	Sdr		sdr = getIonsdr();
+//	ARMUR_CfdpInfo	cfdpInfoBuf;
+//	Object		addr;
+//	
+//	CHKERR(sdr_begin_xn(sdr));
+//
+//	addr = (_armurvdb(NULL))->cfdpInfo;
+//	sdr_stage(sdr, (char *)&cfdpInfoBuf, addr, sizeof(ARMUR_CfdpInfo));
+//	cfdpInfoBuf.txnNbr = cfdpTxnNbr;
+//	sdr_write(sdr, addr, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+//
+//	if (sdr_end_xn(sdr) < 0)
+//	{
+//		putErrmsg("Can't update CFDP transaction number.", itoa(cfdpTxnNbr));
+//		return -1;
+//	}
+//
+//	return 0;
+//}
 
 int	armurUpdateCfdpArchiveName(char *archiveName)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_CfdpInfo	cfdpInfoBuf;
-	Object		cfdpInfoObj;
+	Object		addr;
 	
 	CHKERR(sdr_begin_xn(sdr));
 
-	cfdpInfoObj = (_armurvdb(NULL))->cfdpInfo;
-	sdr_stage(sdr, (char *)&cfdpInfoBuf, cfdpInfoObj, sizeof(ARMUR_CfdpInfo));
+	addr = (_armurvdb(NULL))->cfdpInfo;
+	sdr_stage(sdr, (char *)&cfdpInfoBuf, addr, sizeof(ARMUR_CfdpInfo));
 	cfdpInfoBuf.archiveName = sdr_string_create(sdr, archiveName);
-	sdr_write(sdr, cfdpInfoObj, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+	sdr_write(sdr, addr, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
 
-	return sdr_end_xn(sdr);
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't update CFDP archive name.", archiveName);
+		return -1;
+	}
+
+	return 0;
 }
 
 int	armurWait()
@@ -979,41 +1014,27 @@ int	armurWait()
 	CfdpTransactionId	originatingTransactionId;
 	char			statusReportBuf[256];
 	MetadataList		filestoreResponses;
-	uvast			srcNbr;
-	uvast			txnNbr;
+
 	Sdr			sdr = getIonsdr();
-	CfdpDB			*cfdpdb;
-	Object			elt;
-				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
+	Object			armurdbObj = _armurdbObject(NULL);
+	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
+	ARMUR_DB		armurdbBuf;
+	ARMUR_CfdpInfo		cfdpInfoBuf;
+	char			buf[SDRSTRING_BUFSZ];
+	int			len;
+	uvast			srcNbr;
 
-	/*	Check first to see if cfdpInfo has been stored in the ARMUR DB.		*/
+	/*	Fetch the cfdpInfo stored in the ARMUR DB.		*/
 	CHKERR(sdr_begin_xn(sdr));
-	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, (_armurvdb(NULL))->cfdpInfo);
+	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
 	sdr_exit_xn(sdr);
-
-	CHKERR(cfdpInfo->srcNbr);
-	//CHKERR(cfdpInfo->txnNbr);//JIGI
-
-	if (cfdpAttach() < 0)
-	{
-		return -1;
-	}
-
-	cfdpdb = getCfdpConstants();
 
 	while (1)
 	{
-		/*	Nested SDR Txn to preserve CFDP event queue
-		 *	in case of unexpected system crash and reboot.		*/
+		/*	Nested SDR transaction to enable recovery of CFDP event
+		 *	items in case of unexpected system crash and reboot.	*/
 		CHKERR(sdr_begin_xn(sdr));
-
-		/*	To avoid deadlock.					*/
-		elt = sdr_list_first(sdr, cfdpdb->events);
-		if (elt == 0)
-		{
-			sdr_exit_xn(sdr);
-			continue;
-		}
+		
 		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
 				sourceFileNameBuf, destFileNameBuf,
 				&fileSize, &messagesToUser, &offset, &length,
@@ -1026,46 +1047,86 @@ int	armurWait()
 			return -1;
 		}
 
-		/* TODO: we need to check if any file data have been corrupted
-		 * or something that might cause the cfdp_get_event to block infinitely.
-		 * Implement it as a thread ?						*/
+		/*	TODO: we need to check if any file data have been
+		 *	corrupted or something might cause the cfdp_get_event
+		 *	to block indefinitely. Implement it as a thread ?	*/
 
 		cfdp_decompress_number(&srcNbr, &transactionId.sourceEntityNbr);
-		cfdp_decompress_number(&txnNbr, &transactionId.transactionNbr);
 
-		if (type == CfdpTransactionFinishedInd && srcNbr == cfdpInfo->srcNbr)
-			//&& txnNbr == cfdpInfo->txnNbr)//JIGI
+		if (type == CfdpMetadataRecvInd && srcNbr == cfdpInfoBuf.srcNbr)
 		{
-			/*	Now the download has been finished.	*/
-			printf("Download has been completed.\n");//dbg
-			if (sdr_end_xn(sdr))
+			while (messagesToUser)
 			{
-				return -1;
+				if (cfdp_get_usrmsg(&messagesToUser,
+					(unsigned char *)buf, &len) < 0)
+				{
+					putErrmsg("Failed getting user msg.", NULL);
+					return -1;
+				}
+
+				if (len > 0)
+				{
+					buf[len] = '\0';
+					printf("\tMessage to user: %s\n", buf);
+					if (strcmp(buf, "armur") == 0)
+					{
+						/*	Confirmed downloading.		*/
+						printf("%s.\n", destFileNameBuf);//dbg
+
+						/*	Configure CFDP information.	*/
+						cfdpInfoBuf.archiveName =
+							sdr_string_create(sdr,
+							destFileNameBuf);
+						sdr_write(sdr, armurvdb->cfdpInfo,
+							(char *)&cfdpInfoBuf,
+							sizeof(ARMUR_CfdpInfo));
+					}
+				}
 			}
+		}
+
+		if (type == CfdpTransactionFinishedInd && srcNbr == cfdpInfoBuf.srcNbr)
+		{
+			/*	Now the download has been finished.		*/
 			break;
 		}
 
-		if (sdr_end_xn(sdr))
+		if (sdr_end_xn(sdr) < 0)
 		{
 			return -1;
 		}
 	}
 
+	/*	Now the download has been finished.
+	 *	New archive name to install has been configured.
+	 *	Update the ARMUR stat and go to the next step.		*/
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	armurdbBuf.stat = ARMUR_STAT_DOWNLOADED;
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+
+	if (sdr_end_xn(sdr) < 0)
+	{
+		return -1;
+	}
+
+	printf("Download has been completed.\n");//dbg
 	return 0;
 }
 
 int	armurInstall()
 {
 	Sdr			sdr = getIonsdr();
-				OBJ_POINTER(ARMUR_Image, image);
-				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfo);
+	Object			armurdbObj = _armurdbObject(NULL);
 	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
-	Object			imageObj;
-	Object			imageElt;
-	int			imageType;
-	int			imageLevel;
+	ARMUR_DB		armurdbBuf;
+	ARMUR_CfdpInfo		cfdpInfoBuf;
+	ARMUR_Image		imageBuf;
+	ARMUR_VImage		*vimage;
+	PsmAddress		vimageAddr;
 	char			archiveNameBuf[SDRSTRING_BUFSZ];
 	char			imageName[ARMUR_FILENAME_LEN_MAX];
+	char			imageNameTmp[ARMUR_FILENAME_LEN_MAX];
+	char			*ext;
 	char			pathName[ARMUR_PATHNAME_LEN_MAX];
 	char			pathNameTmp[ARMUR_PATHNAME_LEN_MAX];
 	char			installDir[ARMUR_PATHNAME_LEN_MAX];
@@ -1075,9 +1136,8 @@ int	armurInstall()
 	time_t			installedTime = getCtime();
 
 	CHKERR(sdr_begin_xn(sdr));
-	GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfo, armurvdb->cfdpInfo);
-	CHKERR(cfdpInfo->archiveName);
-	sdr_string_read(sdr, archiveNameBuf, cfdpInfo->archiveName);
+	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+	sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
 	sdr_exit_xn(sdr);
 
 	/*	LIBARCHIVE APIs			*/
@@ -1108,32 +1168,46 @@ int	armurInstall()
 		}
 
 		istrcpy(imageName, archive_entry_pathname(entry), sizeof imageName);
+		strcpy(imageNameTmp, imageName);
+		if ((ext = strstr(imageNameTmp, ".so")) != NULL)
+		{
+			/*	This is a shared library.	*/
+			if (strcmp(ext, ".so") != 0)
+			{
+				/*	ABI version numbers are appended.
+				 *	We store the image name without them.	*/
+				ext[3] = '\0';
+			}
+		}
 
 		CHKERR(sdr_begin_xn(sdr));
-		armurParseImageName(imageName, &imageType, &imageLevel);
-		armurFindImage(imageName, imageType, &imageObj, &imageElt);
-		if (imageElt == 0)
+		armurFindImage(imageNameTmp, &vimage, &vimageAddr);
+		if (vimageAddr == 0)
 		{
-			/*	TODO: Append error message	*/
+			/*	This is an unknown image. Skip it.		*/
 			sdr_exit_xn(sdr);
+			putErrmsg("Unknown image, skipped.", imageName);
+			if (archive_read_data_skip(a) != ARCHIVE_OK)
+			{
+				archive_read_free(a);
+				return -1;
+			}
+			continue;
+		}
+
+		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
+		printf("INSTALL> found image: %s.\n", imageBuf.name);//dbg
+
+		/*	Retain the vimage in the restart queue.			*/
+		if (enqueueImage(imageBuf.level, vimage, vimageAddr) < 0)
+		{
+			sdr_exit_xn(sdr);
+			putErrmsg("Can't enqueue image", imageName);
 			archive_read_free(a);
 			return -1;
 		}
 
-		/*	Retain the image reference in the restart queue.	*/
-		if (enqueueImage(imageObj, imageLevel) < 0)
-		{
-			/*	TODO: Append error message	*/
-			//putErrmsg("Can't enqueue image", imageName);
-			sdr_exit_xn(sdr);
-			archive_read_free(a);
-			return -1;
-		}
-
-		GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageObj);
-		armurvdb->restartMask |= image->protocol;
-
-		getInstallDir(imageType, installDir);
+		getInstallDir(imageBuf, installDir);
 		sdr_exit_xn(sdr);
 
 		isprintf(pathName, sizeof pathName, "%s/%s", installDir, imageName);
@@ -1159,8 +1233,12 @@ int	armurInstall()
 		/*	Replace is successfully finished with this file.
 		 *	Now let's update the installedTime of the image.	*/
 		CHKERR(sdr_begin_xn(sdr));
-		setInstallTimestamp(imageObj, installedTime);
-		sdr_end_xn(sdr);
+		setInstallTimestamp(vimage, installedTime);
+		if (sdr_end_xn(sdr) < 0)
+		{
+			archive_read_free(a);
+			return -1;
+		}
 
 		if (archive_read_data_skip(a) != ARCHIVE_OK)
 		{
@@ -1168,117 +1246,293 @@ int	armurInstall()
 			return -1;
 		}
 	}
+	/*	TODO: Increment the number of images installed.		*/
 	archive_read_free(a);
-	oK(remove(archiveNameBuf));
+
+	CHKERR(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	armurdbBuf.stat = ARMUR_STAT_INSTALLED;
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		return -1;
+	}
+
 	printf("Install has been completed.\n");//dbg
+	return 0;
+}
+
+static int	stop(ARMUR_VImage *vimage, int level)
+{
+	PsmPartition	wm = getIonwm();
+	Object		elt;
+	ARMUR_VImage	*_vimage;
+	int		layer;
+
+	switch (level)
+	{
+	case ARMUR_LEVEL_0:
+		for (layer = ARMUR_LAYER_APPLICATION; layer <= ARMUR_LAYER_CONVERGENCE;
+			layer++)
+		{
+			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
+				elt; elt = sm_list_next(wm, elt))
+			{
+				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+				if (stop(_vimage, ARMUR_LEVEL_1) < 0)
+				{
+					return -1;
+				}
+			}
+		}
+		for (elt = sm_list_first(wm,
+			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
+			elt; elt = sm_list_next(wm, elt))
+		{
+			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
+			{
+				return -1;
+			}
+		}
+		break;
+
+	case ARMUR_LEVEL_1:
+		for (elt = sm_list_first(wm,
+			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
+			elt; elt = sm_list_next(wm, elt))
+		{
+			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
+			{
+				return -1;
+			}
+		}
+		break;
+
+	case ARMUR_LEVEL_2:
+	{
+		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STOPPED)
+		{
+			break;
+		}
+		ARMUR_Image	imageBuf;
+		Sdr		sdr = getIonsdr();
+		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
+		printf("Stop %s.\n", imageBuf.name);//dbg
+		if (vimage->as.lv2.stop() < 0)
+		{
+			return -1;
+		}
+		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STOPPED;
+	}
+	}
+
+	return 0;
+}
+
+static int	start(ARMUR_VImage *vimage, int level)
+{
+	PsmPartition	wm = getIonwm();
+	Object		elt;
+	ARMUR_VImage	*_vimage;
+	int		layer;
+
+	/*	Start: reverse order of stop	*/
+	switch (level)
+	{
+	case ARMUR_LEVEL_0:
+		for (elt = sm_list_first(wm,
+			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
+			elt; elt = sm_list_next(wm, elt))
+		{
+			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (start(_vimage, ARMUR_LEVEL_2) < 0)
+			{
+				return -1;
+			}
+		}
+		for (layer = ARMUR_LAYER_CONVERGENCE; layer >= ARMUR_LAYER_APPLICATION;
+			layer--)
+		{
+			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
+				elt; elt = sm_list_next(wm, elt))
+			{
+				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+				if (start(_vimage, ARMUR_LEVEL_1) < 0)
+				{
+					return -1;
+				}
+			}
+		}
+		break;
+
+	case ARMUR_LEVEL_1:
+		for (elt = sm_list_first(wm,
+			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
+			elt; elt = sm_list_next(wm, elt))
+		{
+			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (start(_vimage, ARMUR_LEVEL_2) < 0)
+			{
+				return -1;
+			}
+		}
+		break;
+	
+	case ARMUR_LEVEL_2:
+	{
+		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
+		{
+			break;
+		}
+		ARMUR_Image	imageBuf;
+		Sdr		sdr = getIonsdr();
+		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
+		printf("Start %s.\n", imageBuf.name);//dbg
+		if (vimage->as.lv2.start() < 0)
+		{
+			return -1;
+		}
+		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STARTED;
+	}
+	}
 
 	return 0;
 }
 
 int	armurRestart()
 {
-	Sdr		sdr = getIonsdr();
-	PsmPartition	wm = getIonwm();
-	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
-			OBJ_POINTER(ARMUR_Image, image);
-			OBJ_POINTER(ARMUR_RestartFn, restartFn);
-	PsmAddress	imageRefAddr;
-	PsmAddress	imageRefElt;
-	ARMUR_ImageRef	*imageRef;
-	int		level;
+	Sdr			sdr = getIonsdr();
+	PsmPartition		wm = getIonwm();
+	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
+	PsmAddress		elt;
+	PsmAddress		vdescrElt;
+	ARMUR_VImage		*vimage;
+	ARMUR_VPackageDescr	*vdescr;
+	int			i;
 
+	/*	Lock until the restart procedure is completed.	*/
 	CHKERR(sdr_begin_xn(sdr));
-	/*	Restart by ARMUR does not have to be done if the restart mask is zero,
-	 *	i.e., either 1) if restart queue is empty, 2) if the items have been
-	 *	restarted by an unexpected system reboot that reset the restart mask,
-	 *	or 3) if SDR recovery procedure has been conducted leading to
+	/*	We will restart applications only if the vstat is not idle, i.e.,
+	 *	if the restart procedure is still pending. The volatile state will
+	 *	be ARMUR_VSTAT_IDLE, in case either 1) the restart queues are empty,
+	 *	2) the items have been restarted by an unexpected system reboot that
+	 *	reset it or 3) SDR recovery procedure has been conducted leading to
 	 *	restart of the entire ION and reset of the volatile database.		*/
-	if (armurvdb->restartMask == 0)
+	if (armurvdb->vstat == ARMUR_VSTAT_IDLE)
 	{
 		sdr_exit_xn(sdr);
 		return 0;
 	}
-	sdr_exit_xn(sdr);
 
-	/*	There ARE some items to be restarted.					*/
-	for (level = 0; level < 3; level++)
+	/*	There ARE items to be restarted.		*/
+	restartFnInit();
+
+	if (armurvdb->vstat & ARMUR_VSTAT_LV0_PENDING)
 	{
-		CHKERR(sdr_begin_xn(sdr));
-		while ((imageRefElt = sm_list_first(wm, armurvdb->restartQueue[level])) != 0)
+		/*	Restart items from the queue of LEVEL 0.	*/
+		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_0]); elt;
+			elt = sm_list_next(wm, elt))
 		{
-			/*	Item was found. Let's get the image.			*/
-			imageRefAddr = sm_list_data(wm, imageRefElt);
-			imageRef = (ARMUR_ImageRef *)psp(wm, imageRefAddr);
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, imageRef->imageObj);
-
-			/*	We will restart applications only if the restart
-			 *	mask is not zero, i.e., if the items have not
-			 *	yet been restarted.					*/
-			if (armurvdb->restartMask == 0)
+			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			OBJ_POINTER(ARMUR_Image, image);//dbg
+			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
+			printf("RESTART> restart image: %s.\n", image->name);//dbg
+			if (stop(vimage, ARMUR_LEVEL_0) < 0
+			|| start(vimage, ARMUR_LEVEL_0) < 0)
 			{
-				/*	We will just delete the item from the queue.	*/
-				psm_free(wm, imageRefAddr);
-				oK(sm_list_delete(wm, imageRefElt, NULL, NULL));
-				sdr_exit_xn(sdr);
+				return -1;
+			}
+		}
 
-				CHKERR(sdr_begin_xn(sdr));	/*	For next loop	*/
+		goto FIN;
+	}
+
+	if (armurvdb->vstat & ARMUR_VSTAT_LV1_PENDING)
+	{
+		/*	Restart items from the queue of LEVEL 1.	*/
+		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
+			elt = sm_list_next(wm, elt))
+		{
+			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			OBJ_POINTER(ARMUR_Image, image);//dbg
+			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
+			printf("RESTART> restart image: %s.\n", image->name);//dbg
+			if (stop(vimage, ARMUR_LEVEL_1) < 0)
+			{
+				return -1;
+			}
+		}
+		for (elt = sm_list_last(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
+			elt = sm_list_prev(wm, elt))
+		{
+			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (start(vimage, ARMUR_LEVEL_1) < 0)
+			{
+				return -1;
+			}
+		}
+	}
+	
+	if (armurvdb->vstat & ARMUR_VSTAT_LV2_PENDING)
+	{
+		/*	Restart items from the queue of LEVEL 2.	*/
+		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_2]); elt;
+			elt = sm_list_next(wm, elt))
+		{
+			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			OBJ_POINTER(ARMUR_Image, image);//dbg
+			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
+			printf("RESTART> restart image: %s.\n", image->name);//dbg
+			if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
+			{
+				/*	Items in level 2 will be restarted only
+				 *	if they have not yet been restarted by the
+				 *	upper level.					*/
 				continue;
 			}
 
-			if (level == ARMUR_LV2)
+			/*	Stop & start	*/
+			if (stop(vimage, ARMUR_LEVEL_2) < 0
+			|| start(vimage, ARMUR_LEVEL_2) < 0)
 			{
-				/*	Items in level 2 will be restarted only if
-				 *	they have not yet been restarted by the upper
-				 *	level (i.e., if the corresponding bits have
-				 *	not yet been turned off).			*/
-				if ((armurvdb->restartMask & image->protocol)
-					!= image->protocol)
-				{
-					/*	We will just delete the item
-					 *	from the queue.				*/
-					psm_free(wm, imageRefAddr);
-					oK(sm_list_delete(wm, imageRefElt, NULL, NULL));
-					sdr_exit_xn(sdr);
-
-					CHKERR(sdr_begin_xn(sdr));/*	For next loop	*/
-					continue;
-				}
-			}
-
-			sdr_exit_xn(sdr);
-			GET_OBJ_POINTER(sdr, ARMUR_RestartFn, restartFn,
-					image->restartFnObj);
-			printf("%s will restart\n", image->name);//dbg
-			if (restartFn->restart() < 0)
-			{
-				/*	TODO: Append error message.			*/
 				return -1;
 			}
-
-			if (level == ARMUR_LV0 || level == ARMUR_LV1)
-			{
-				/*	Items in level 0 or 1 will xor the restart mask
-				 *	(i.e., will turn off corresponding bit flags).	*/
-				CHKERR(sdr_begin_xn(sdr));
-				armurvdb->restartMask ^= image->protocol;
-				sdr_exit_xn(sdr);
-			}
-
-			/*	Delete the item from the queue.				*/
-			CHKERR(sdr_begin_xn(sdr));
-			psm_free(wm, imageRefAddr);
-			oK(sm_list_delete(wm, imageRefElt, NULL, NULL));
-			sdr_exit_xn(sdr);
-
-			CHKERR(sdr_begin_xn(sdr));	/*	For next loop		*/
 		}
-		sdr_exit_xn(sdr);
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
-	armurvdb->restartMask = 0;
-	sdr_exit_xn(sdr);
-	printf("Restart has been completed.\n");//dbg
+	/*	Now reset the volatile states of the VDB.	*/
+FIN:
+	/*	Reset the restart queues.			*/
+	for (i = 0; i < ARMUR_LEVELS; i++)
+	{
+		while ((elt = sm_list_first(wm, armurvdb->restartQueue[i])) != 0)
+		{
+			oK(sm_list_delete(wm, elt, NULL, NULL));
+		}
+	}
 
+	/*	Reset the stop/start states of the lv2 images.	*/
+	for (vdescrElt = sm_list_first(wm, armurvdb->applications); vdescrElt;
+		vdescrElt = sm_list_next(wm, vdescrElt))
+	{
+		vdescr = (ARMUR_VPackageDescr *)psp(wm, sm_list_data(wm, vdescrElt));
+		for (elt = sm_list_first(wm, vdescr->applications[ARMUR_APPTYPE_DAEMON]);
+			elt; elt = sm_list_next(wm, elt))
+		{
+			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+			if (vimage->as.lv2.vstat)
+			{
+				vimage->as.lv2.vstat = 0;
+			}
+		}
+	}
+
+	/*	Reset the vstat of the ARMUR VDB.		*/
+	armurvdb->vstat = ARMUR_VSTAT_IDLE;
+	sdr_exit_xn(sdr);
+
+	printf("Restart has been completed.\n");//dbg
 	return 0;
 }

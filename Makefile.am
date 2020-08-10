@@ -2109,10 +2109,10 @@ ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/
 armurbin = armur
 
 # --- Utility Programs --- #
-armur_SOURCES = nm/utils/armur.c nm/utils/armuradmin.c nm/utils/armur_restart.c
+armur_SOURCES = nm/utils/armur.c nm/utils/armur_restart.c nm/utils/armuradmin.c nm/utils/armur_rhht.c
 armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
 armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
-armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS)
+armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS) $(NO_UNUSED_VARIABLE)
 
 ##########################
 #

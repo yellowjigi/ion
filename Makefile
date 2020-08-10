@@ -532,8 +532,9 @@ amsstop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(amsstop_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_armur_OBJECTS = nm/utils/armur-armur.$(OBJEXT) \
+	nm/utils/armur-armur_restart.$(OBJEXT) \
 	nm/utils/armur-armuradmin.$(OBJEXT) \
-	nm/utils/armur-armur_restart.$(OBJEXT)
+	nm/utils/armur-armur_rhht.$(OBJEXT)
 armur_OBJECTS = $(am_armur_OBJECTS)
 armur_DEPENDENCIES = libici.la libbp.la libltp.la libcfdp.la \
 	$(LIBOBJS)
@@ -3472,10 +3473,10 @@ ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/
 armurbin = armur
 
 # --- Utility Programs --- #
-armur_SOURCES = nm/utils/armur.c nm/utils/armuradmin.c nm/utils/armur_restart.c
+armur_SOURCES = nm/utils/armur.c nm/utils/armur_restart.c nm/utils/armuradmin.c nm/utils/armur_rhht.c
 armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
 armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
-armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS)
+armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS) $(NO_UNUSED_VARIABLE)
 
 # This library contains utility code that's helpful for tests in C.
 TESTUTILOBJS = tests/library/libtestutil.la
@@ -4252,9 +4253,11 @@ nm/utils/$(DEPDIR)/$(am__dirstamp):
 	@: > nm/utils/$(DEPDIR)/$(am__dirstamp)
 nm/utils/armur-armur.$(OBJEXT): nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
+nm/utils/armur-armur_restart.$(OBJEXT): nm/utils/$(am__dirstamp) \
+	nm/utils/$(DEPDIR)/$(am__dirstamp)
 nm/utils/armur-armuradmin.$(OBJEXT): nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
-nm/utils/armur-armur_restart.$(OBJEXT): nm/utils/$(am__dirstamp) \
+nm/utils/armur-armur_rhht.$(OBJEXT): nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
 
 armur$(EXEEXT): $(armur_OBJECTS) $(armur_DEPENDENCIES) $(EXTRA_armur_DEPENDENCIES) 
@@ -6177,6 +6180,7 @@ include nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-utils.Po
 include nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-vector.Po
 include nm/utils/$(DEPDIR)/armur-armur.Po
 include nm/utils/$(DEPDIR)/armur-armur_restart.Po
+include nm/utils/$(DEPDIR)/armur-armur_rhht.Po
 include nm/utils/$(DEPDIR)/armur-armuradmin.Po
 include restart/utils/$(DEPDIR)/ionrestart-ionrestart.Po
 include tests/1000.loopback/$(DEPDIR)/tests_1000_loopback_dotest-dotest.Po
@@ -7099,6 +7103,20 @@ nm/utils/armur-armur.obj: nm/utils/armur.c
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur.obj `if test -f 'nm/utils/armur.c'; then $(CYGPATH_W) 'nm/utils/armur.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur.c'; fi`
 
+nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_restart.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_restart.Tpo -c -o nm/utils/armur-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_restart.Tpo nm/utils/$(DEPDIR)/armur-armur_restart.Po
+#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armur-armur_restart.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
+
+nm/utils/armur-armur_restart.obj: nm/utils/armur_restart.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_restart.obj -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_restart.Tpo -c -o nm/utils/armur-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_restart.Tpo nm/utils/$(DEPDIR)/armur-armur_restart.Po
+#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armur-armur_restart.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
+
 nm/utils/armur-armuradmin.o: nm/utils/armuradmin.c
 	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armuradmin.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armuradmin.Tpo -c -o nm/utils/armur-armuradmin.o `test -f 'nm/utils/armuradmin.c' || echo '$(srcdir)/'`nm/utils/armuradmin.c
 	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armuradmin.Tpo nm/utils/$(DEPDIR)/armur-armuradmin.Po
@@ -7113,19 +7131,19 @@ nm/utils/armur-armuradmin.obj: nm/utils/armuradmin.c
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armuradmin.obj `if test -f 'nm/utils/armuradmin.c'; then $(CYGPATH_W) 'nm/utils/armuradmin.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armuradmin.c'; fi`
 
-nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_restart.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_restart.Tpo -c -o nm/utils/armur-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
-	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_restart.Tpo nm/utils/$(DEPDIR)/armur-armur_restart.Po
-#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armur-armur_restart.o' libtool=no \
+nm/utils/armur-armur_rhht.o: nm/utils/armur_rhht.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_rhht.o -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_rhht.Tpo -c -o nm/utils/armur-armur_rhht.o `test -f 'nm/utils/armur_rhht.c' || echo '$(srcdir)/'`nm/utils/armur_rhht.c
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_rhht.Tpo nm/utils/$(DEPDIR)/armur-armur_rhht.Po
+#	$(AM_V_CC)source='nm/utils/armur_rhht.c' object='nm/utils/armur-armur_rhht.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_rhht.o `test -f 'nm/utils/armur_rhht.c' || echo '$(srcdir)/'`nm/utils/armur_rhht.c
 
-nm/utils/armur-armur_restart.obj: nm/utils/armur_restart.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_restart.obj -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_restart.Tpo -c -o nm/utils/armur-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
-	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_restart.Tpo nm/utils/$(DEPDIR)/armur-armur_restart.Po
-#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armur-armur_restart.obj' libtool=no \
+nm/utils/armur-armur_rhht.obj: nm/utils/armur_rhht.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -MT nm/utils/armur-armur_rhht.obj -MD -MP -MF nm/utils/$(DEPDIR)/armur-armur_rhht.Tpo -c -o nm/utils/armur-armur_rhht.obj `if test -f 'nm/utils/armur_rhht.c'; then $(CYGPATH_W) 'nm/utils/armur_rhht.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_rhht.c'; fi`
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armur-armur_rhht.Tpo nm/utils/$(DEPDIR)/armur-armur_rhht.Po
+#	$(AM_V_CC)source='nm/utils/armur_rhht.c' object='nm/utils/armur-armur_rhht.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armur_CFLAGS) $(CFLAGS) -c -o nm/utils/armur-armur_rhht.obj `if test -f 'nm/utils/armur_rhht.c'; then $(CYGPATH_W) 'nm/utils/armur_rhht.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_rhht.c'; fi`
 
 bp/ipnd/beacon-beacon.o: bp/ipnd/beacon.c
 	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(beacon_CFLAGS) $(CFLAGS) -MT bp/ipnd/beacon-beacon.o -MD -MP -MF bp/ipnd/$(DEPDIR)/beacon-beacon.Tpo -c -o bp/ipnd/beacon-beacon.o `test -f 'bp/ipnd/beacon.c' || echo '$(srcdir)/'`bp/ipnd/beacon.c

@@ -122,7 +122,8 @@ nm/utils/armur-armuradmin.o: nm/utils/armuradmin.c \
  ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
  ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h
+ cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
+ nm/utils/armur_rhht.h
 
 /usr/include/stdc-predef.h:
 
@@ -487,3 +488,5 @@ cfdp/library/cfdpP.h:
 cfdp/include/cfdp.h:
 
 cfdp/include/cfdpops.h:
+
+nm/utils/armur_rhht.h:

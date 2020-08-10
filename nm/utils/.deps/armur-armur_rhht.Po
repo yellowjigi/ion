@@ -1,11 +1,12 @@
-nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
- /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
- nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
- ici/include/platform.h /usr/include/time.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+nm/utils/armur-armur_rhht.o: nm/utils/armur_rhht.c \
+ /usr/include/stdc-predef.h config.h nm/utils/armur_rhht.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h /usr/include/stdint.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar.h ici/include/ion.h \
+ ici/include/platform.h /usr/include/time.h \
  /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types.h \
@@ -90,11 +91,9 @@ nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h /usr/include/arpa/inet.h \
- /usr/include/netinet/in.h \
- /usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h /usr/include/stdint.h \
- /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/in.h /usr/include/netinet/ip.h \
- /usr/include/netinet/udp.h /usr/include/x86_64-linux-gnu/sys/utsname.h \
+ /usr/include/netinet/in.h /usr/include/x86_64-linux-gnu/bits/in.h \
+ /usr/include/netinet/ip.h /usr/include/netinet/udp.h \
+ /usr/include/x86_64-linux-gnu/sys/utsname.h \
  /usr/include/x86_64-linux-gnu/bits/utsname.h /usr/include/pwd.h \
  /usr/include/netdb.h /usr/include/rpc/netdb.h \
  /usr/include/x86_64-linux-gnu/bits/netdb.h \
@@ -118,29 +117,17 @@ nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
  ici/include/memmgr.h ici/include/psm.h ici/include/sdr.h \
  ici/include/sdrstring.h ici/include/sdrmgt.h ici/include/sdrxn.h \
  ici/include/sdrlist.h ici/include/smlist.h ici/include/smrbt.h \
- ici/include/zco.h bp/library/bpP.h bp/library/bpsec.h \
- ici/include/ionsec.h bp/include/bp.h ici/include/platform.h \
- ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
- ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_rhht.h
+ ici/include/zco.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
 
-nm/utils/armur_restart.h:
+nm/utils/armur_rhht.h:
 
-nm/utils/armur.h:
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h:
 
-ici/include/rfx.h:
-
-ici/include/ion.h:
-
-ici/include/platform.h:
-
-/usr/include/time.h:
+/usr/include/stdint.h:
 
 /usr/include/features.h:
 
@@ -151,6 +138,14 @@ ici/include/platform.h:
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
+
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
+
+ici/include/ion.h:
+
+ici/include/platform.h:
+
+/usr/include/time.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h:
 
@@ -366,12 +361,6 @@ ici/include/platform.h:
 
 /usr/include/netinet/in.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h:
-
-/usr/include/stdint.h:
-
-/usr/include/x86_64-linux-gnu/bits/wchar.h:
-
 /usr/include/x86_64-linux-gnu/bits/in.h:
 
 /usr/include/netinet/ip.h:
@@ -455,41 +444,3 @@ ici/include/smlist.h:
 ici/include/smrbt.h:
 
 ici/include/zco.h:
-
-bp/library/bpP.h:
-
-bp/library/bpsec.h:
-
-ici/include/ionsec.h:
-
-bp/include/bp.h:
-
-ici/include/platform.h:
-
-ici/include/psm.h:
-
-ici/include/sdr.h:
-
-ici/include/zco.h:
-
-ici/include/lyst.h:
-
-ici/include/smlist.h:
-
-ici/include/ion.h:
-
-bp/library/saga.h:
-
-ltp/library/ltpP.h:
-
-ltp/include/ltp.h:
-
-ici/include/sdrhash.h:
-
-cfdp/library/cfdpP.h:
-
-cfdp/include/cfdp.h:
-
-cfdp/include/cfdpops.h:
-
-nm/utils/armur_rhht.h:

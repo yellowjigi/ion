@@ -6,68 +6,37 @@
 /*	*	*	Restart functions	*	*	*/
 
 /*------------------------------*
- *	Client programs		*
- *------------------------------*/
-
-/*	ION		*/
-
-/*	BP		*/
-static void bputaStop();
-static void bputaStart();
-
-/*	LTP		*/
-static void ltpcliStart();
-
-/*	CFDP		*/
-
-/*------------------------------*
  *		ION		*
  *------------------------------*/
 
-/*	ION		*/
-int ionRestart()
+/*	rfxclock	*/
+static int rfxclockStop()
 {
-	if (bpAttach() < 0 || ltpAttach() < 0 || cfdpAttach() < 0)
+	IonVdb	*ionvdb = getIonVdb();
+
+	if (ionvdb->clockPid != ERROR)
 	{
-		return -1;
+		sm_TaskKill(ionvdb->clockPid, SIGTERM);
 	}
-
-	/*	Stop	*/
-	bpStop();
-	cfdpStop();
-	ltpStop();
-	rfx_stop();
-
-	/*	Start	*/
-	if (rfx_start() < 0
-	|| ltpStart(NULL) < 0
-	|| bpStart() < 0
-	|| cfdpStart("bputa") < 0)
-	{
-		return -1;
-	}
-
-	while (!rfx_system_is_started()
-		|| !bp_agent_is_started()
-		|| !ltp_engine_is_started()
-		|| !cfdp_entity_is_started());
 
 	return 0;
 }
 
-/*	rfxclock	*/
-int rfxclockRestart()
+static int rfxclockStart()
 {
-	/*	Stop	*/
-	rfx_stop();
+	Sdr	sdr = getIonsdr();
+	IonVdb	*ionvdb = getIonVdb();
 
-	/*	Start	*/
-	if (rfx_start() < 0)
+	if (ionvdb->clockPid != ERROR)
 	{
-		return -1;
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(ionvdb->clockPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
+		ionvdb->clockPid = ERROR;
 	}
 
-	while (!rfx_system_is_started());
+	ionvdb->clockPid = pseudoshell("rfxclock");
 
 	return 0;
 }
@@ -76,98 +45,93 @@ int rfxclockRestart()
  *		BP		*
  *------------------------------*/
 
-/*	BP		*/
-int bpRestart()
-{
-	if (bpAttach() < 0 || cfdpAttach() < 0)
-	{
-		return -1;
-	}
-
-	/*	Stop	*/
-	bputaStop(); // First stop the client program
-	bpStop();
-
-	/*	Start	*/
-	if (bpStart() < 0)
-	{
-		return -1;
-	}
-
-	while (!bp_agent_is_started());
-
-	bputaStart(); // Start the client program
-
-	return 0;
-}
-
 /*	bpclock		*/
-int bpclockRestart()
+static int bpclockStop()
 {
-	Sdr		sdr = getIonsdr();
 	BpVdb		*bpvdb;
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	bpvdb = getBpVdb();
 
-	/*	Stop	*/
-	if ((pid = bpvdb->clockPid) != ERROR)
+	if (bpvdb->clockPid != ERROR)
 	{
 		sm_TaskKill(bpvdb->clockPid, SIGTERM);
+	}
+
+	return 0;
+}
+
+static int bpclockStart()
+{
+	Sdr	sdr = getIonsdr();
+	BpVdb	*bpvdb;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
+	bpvdb = getBpVdb();
+
+	if (bpvdb->clockPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(bpvdb->clockPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		bpvdb->clockPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
-	if (bpvdb->clockPid == ERROR || !sm_TaskExists(bpvdb->clockPid))
-	{
-		bpvdb->clockPid = pseudoshell("bpclock");
-	}
-	sdr_exit_xn(sdr);
-
-	while (!bp_agent_is_started());
+	bpvdb->clockPid = pseudoshell("bpclock");
 
 	return 0;
 }
 
 /*	bptransit	*/
-int bptransitRestart()
+static int bptransitStop()
 {
-	Sdr	sdr = getIonsdr();
 	BpVdb	*bpvdb;
-	pid_t	pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	bpvdb = getBpVdb();
 
-	/*	Stop	*/
-	if ((pid = bpvdb->transitPid) != ERROR)
+	if (bpvdb->transitPid != ERROR)
 	{
 		sm_TaskKill(bpvdb->transitPid, SIGTERM);
+	}
+
+	return 0;
+}
+
+static int bptransitStart()
+{
+	Sdr	sdr = getIonsdr();
+	BpVdb	*bpvdb;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
+	bpvdb = getBpVdb();
+
+	if (bpvdb->transitPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(bpvdb->transitPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		bpvdb->transitPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
 	if (bpvdb->transitSemaphore == SM_SEM_NONE)
 	{
 		bpvdb->transitSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -178,50 +142,63 @@ int bptransitRestart()
 		sm_SemGive(bpvdb->transitSemaphore);
 	}
 	sm_SemTake(bpvdb->transitSemaphore);
-	if (bpvdb->transitPid == ERROR || !sm_TaskExists(bpvdb->transitPid))
-	{
-		bpvdb->transitPid = pseudoshell("bptransit");
-	}
-	sdr_exit_xn(sdr);
+
+	bpvdb->transitPid = pseudoshell("bptransit");
 
 	return 0;
 }
 
 /*	ipnfw		*/
-int ipnfwRestart()
+static int ipnfwStop()
 {
-	Sdr		sdr = getIonsdr();
 	VScheme		*vscheme;
 	PsmAddress	elt;
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
+	findScheme("ipn", &vscheme, &elt);
+	if (elt == 0)
+	{
+		return -1;
+	}
+
+	if (vscheme->fwdPid != ERROR)
+	{
+		sm_TaskKill(vscheme->fwdPid, SIGTERM);
+	}
+
+	return 0;
+}
+
+static int ipnfwStart()
+{
+	Sdr		sdr = getIonsdr();
+	VScheme		*vscheme;
+	PsmAddress	elt;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
 
 	findScheme("ipn", &vscheme, &elt);
 	if (elt == 0)
 	{
-		sdr_exit_xn(sdr);
 		return -1;
 	}
 
-	/*	Stop	*/
-	if ((pid = vscheme->fwdPid) != ERROR)
+	if (vscheme->fwdPid != ERROR)
 	{
-		sm_TaskKill(vscheme->fwdPid, SIGTERM);
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(vscheme->fwdPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		vscheme->fwdPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
 	if (vscheme->semaphore == SM_SEM_NONE)
 	{
 		vscheme->semaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -232,65 +209,88 @@ int ipnfwRestart()
 		sm_SemGive(vscheme->semaphore);
 	}
 	sm_SemTake(vscheme->semaphore);
-	if (vscheme->fwdPid == ERROR || !sm_TaskExists(vscheme->fwdPid))
-	{
-		vscheme->fwdPid = pseudoshell("ipnfw");
-	}
-	sdr_exit_xn(sdr);
+
+	vscheme->fwdPid = pseudoshell("ipnfw");
 
 	return 0;
 }
 
 /*	ipnadminep	*/
-int ipnadminepRestart()
+static int ipnadminepStop()
 {
-	Sdr		sdr = getIonsdr();
 	VScheme		*vscheme;
 	VEndpoint	*vpoint;
 	PsmAddress	elt;
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
-
 	findScheme("ipn", &vscheme, &elt);
 	if (elt == 0)
 	{
-		sdr_exit_xn(sdr);
 		return -1;
 	}
 
 	findEndpoint(NULL, vscheme->adminEid + 4, vscheme, &vpoint, &elt);
 	if (elt == 0)
 	{
-		sdr_exit_xn(sdr);
 		return -1;
 	}
 
-	/*	Stop	*/
-	if (vpoint->semaphore != SM_SEM_NONE)
-	{
-		sm_SemEnd(vpoint->semaphore);
-	}
 	if (vpoint->appPid != ERROR)
 	{
+		if (vpoint->semaphore != SM_SEM_NONE)
+		{
+			sm_SemEnd(vpoint->semaphore);
+		}
+	}
+
+	return 0;
+}
+
+static int ipnadminepStart()
+{
+	Sdr		sdr = getIonsdr();
+	VScheme		*vscheme;
+	VEndpoint	*vpoint;
+	PsmAddress	elt;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
+	findScheme("ipn", &vscheme, &elt);
+	if (elt == 0)
+	{
+		return -1;
+	}
+
+	findEndpoint(NULL, vscheme->adminEid + 4, vscheme, &vpoint, &elt);
+	if (elt == 0)
+	{
+		return -1;
+	}
+
+	if (vpoint->appPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(vpoint->appPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		vpoint->appPid = ERROR;
 	}
-	if ((pid = vscheme->admAppPid) != ERROR)
+	if (vscheme->admAppPid != ERROR)
 	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(vscheme->admAppPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		vscheme->admAppPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
 	if (vpoint->semaphore == SM_SEM_NONE)
 	{
 		vpoint->semaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -301,17 +301,44 @@ int ipnadminepRestart()
 		sm_SemGive(vpoint->semaphore);
 	}
 	sm_SemTake(vpoint->semaphore);
-	if (vscheme->admAppPid == ERROR || !sm_TaskExists(vscheme->admAppPid))
-	{
-		vscheme->admAppPid = pseudoshell("ipnadminep");
-	}
-	sdr_exit_xn(sdr);
+
+	vscheme->admAppPid = pseudoshell("ipnadminep");
 
 	return 0;
 }
 
 /*	bpclm		*/
-int bpclmRestart()
+static int bpclmStop()
+{
+	PsmPartition	wm = getIonwm();
+	BpVdb		*bpvdb;
+	VPlan		*vplan;
+	PsmAddress	elt;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
+	bpvdb = getBpVdb();
+
+	for (elt = sm_list_first(wm, bpvdb->plans); elt; elt = sm_list_next(wm, elt))
+	{
+		vplan = (VPlan *)psp(wm, sm_list_data(wm, elt));
+
+		if (vplan->clmPid != ERROR)
+		{
+			if (vplan->semaphore != SM_SEM_NONE)
+			{
+				sm_SemEnd(vplan->semaphore);
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int bpclmStart()
 {
 	Sdr		sdr = getIonsdr();
 	PsmPartition	wm = getIonwm();
@@ -319,36 +346,27 @@ int bpclmRestart()
 	VPlan		*vplan;
 	PsmAddress	elt;
 	char		cmdString[6 + MAX_EID_LEN + 1];
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	bpvdb = getBpVdb();
 
 	for (elt = sm_list_first(wm, bpvdb->plans); elt; elt = sm_list_next(wm, elt))
 	{
 		vplan = (VPlan *)psp(wm, sm_list_data(wm, elt));
 
-		/*	Stop	*/
-		if (vplan->semaphore != SM_SEM_NONE)
+		if (vplan->clmPid != ERROR)
 		{
-			sm_SemEnd(vplan->semaphore);
-		}
-		if ((pid = vplan->clmPid) != ERROR)
-		{
+			/*	TODO: Improve waiting procedure.	*/
+			sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+			while (sm_TaskExists(vplan->clmPid));
+			CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 			vplan->clmPid = ERROR;
 		}
-		sdr_exit_xn(sdr);
 
-		while (sm_TaskExists(pid));
-
-		CHKERR(sdr_begin_xn(sdr));
-
-		/*	Start	*/
 		if (vplan->semaphore == SM_SEM_NONE)
 		{
 			vplan->semaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -359,14 +377,10 @@ int bpclmRestart()
 			sm_SemGive(vplan->semaphore);
 		}
 		sm_SemTake(vplan->semaphore);
-		if (vplan->clmPid == ERROR || !sm_TaskExists(vplan->clmPid))
-		{
-			isprintf(cmdString, sizeof cmdString,
-					"bpclm %s", vplan->neighborEid);
-			vplan->clmPid = pseudoshell(cmdString);
-		}
+
+		isprintf(cmdString, sizeof cmdString, "bpclm %s", vplan->neighborEid);
+		vplan->clmPid = pseudoshell(cmdString);
 	}
-	sdr_exit_xn(sdr);
 
 	return 0;
 }
@@ -376,49 +390,18 @@ int bpclmRestart()
  *------------------------------*/
 
 /*	ltpcli		*/
-static void ltpcliStart()
+static int ltpcliStop()
 {
-	Sdr		sdr = getIonsdr();
-	PsmPartition	wm = getIonwm();
-	BpVdb		*bpvdb = getBpVdb();
-	VInduct		*vduct;
-	PsmAddress	elt;
-	char		cmdString[7 + MAX_CL_DUCT_NAME_LEN + 1];
-
-	CHKVOID(sdr_begin_xn(sdr));
-	for (elt = sm_list_first(wm, bpvdb->inducts); elt; elt = sm_list_next(wm, elt))
-	{
-		vduct = (VInduct *)psp(wm, sm_list_data(wm, elt));
-		if (strcmp(vduct->protocolName, "ltp") == 0)
-		{
-			if (vduct->cliPid == ERROR || !sm_TaskExists(vduct->cliPid))
-			{
-				isprintf(cmdString, sizeof cmdString,
-						"ltpcli %s", vduct->ductName);
-				vduct->cliPid = pseudoshell(cmdString);
-			}
-			break;
-		}
-	}
-	sdr_exit_xn(sdr);
-}
-
-int ltpcliRestart()
-{
-	Sdr		sdr = getIonsdr();
 	PsmPartition	wm = getIonwm();
 	BpVdb		*bpvdb;
 	VInduct		*vduct;
 	PsmAddress	elt;
-	char		cmdString[7 + MAX_CL_DUCT_NAME_LEN + 1];
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	bpvdb = getBpVdb();
 
 	for (elt = sm_list_first(wm, bpvdb->inducts); elt; elt = sm_list_next(wm, elt))
@@ -426,50 +409,67 @@ int ltpcliRestart()
 		vduct = (VInduct *)psp(wm, sm_list_data(wm, elt));
 		if (strcmp(vduct->protocolName, "ltp") == 0)
 		{
-			/*	Stop	*/
-			if ((pid = vduct->cliPid) != ERROR)
+			if (vduct->cliPid != ERROR)
 			{
 				sm_TaskKill(vduct->cliPid, SIGTERM);
-				vduct->cliPid = ERROR;
 			}
-			sdr_exit_xn(sdr);
-
-			while (sm_TaskExists(pid));
-			
-			CHKERR(sdr_begin_xn(sdr));
-
-			/*	Start	*/
-			if (vduct->cliPid == ERROR || !sm_TaskExists(vduct->cliPid))
-			{
-				isprintf(cmdString, sizeof cmdString,
-						"ltpcli %s", vduct->ductName);
-				vduct->cliPid = pseudoshell(cmdString);
-			}
-			break;
 		}
 	}
-	sdr_exit_xn(sdr);
 
 	return 0;
 }
 
-/*	ltpclo		*/
-int ltpcloRestart()
+static int ltpcliStart()
 {
 	Sdr		sdr = getIonsdr();
 	PsmPartition	wm = getIonwm();
 	BpVdb		*bpvdb;
-	VOutduct	*vduct;
+	VInduct		*vduct;
 	PsmAddress	elt;
 	char		cmdString[7 + MAX_CL_DUCT_NAME_LEN + 1];
-	pid_t		pid;
 
 	if (bpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
+	bpvdb = getBpVdb();
+
+	for (elt = sm_list_first(wm, bpvdb->inducts); elt; elt = sm_list_next(wm, elt))
+	{
+		vduct = (VInduct *)psp(wm, sm_list_data(wm, elt));
+		if (strcmp(vduct->protocolName, "ltp") == 0)
+		{
+			if (vduct->cliPid != ERROR)
+			{
+				/*	TODO: Improve waiting procedure.	*/
+				sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+				while (sm_TaskExists(vduct->cliPid));
+				CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
+				vduct->cliPid = ERROR;
+			}
+
+			isprintf(cmdString, sizeof cmdString, "ltpcli %s", vduct->ductName);
+			vduct->cliPid = pseudoshell(cmdString);
+		}
+	}
+
+	return 0;
+}
+
+/*	ltpclo		*/
+static int ltpcloStop()
+{
+	PsmPartition	wm = getIonwm();
+	BpVdb		*bpvdb;
+	VOutduct	*vduct;
+	PsmAddress	elt;
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
 	bpvdb = getBpVdb();
 
 	for (elt = sm_list_first(wm, bpvdb->outducts); elt; elt = sm_list_next(wm, elt))
@@ -477,22 +477,49 @@ int ltpcloRestart()
 		vduct = (VOutduct *)psp(wm, sm_list_data(wm, elt));
 		if (strcmp(vduct->protocolName, "ltp") == 0)
 		{
-			/*	Stop	*/
-			if (vduct->semaphore != SM_SEM_NONE)
+			if (vduct->cloPid != ERROR)
 			{
-				sm_SemEnd(vduct->semaphore);
+				if (vduct->semaphore != SM_SEM_NONE)
+				{
+					sm_SemEnd(vduct->semaphore);
+				}
 			}
-			if ((pid = vduct->cloPid) != ERROR)
+		}
+	}
+
+	return 0;
+}
+
+static int ltpcloStart()
+{
+	Sdr		sdr = getIonsdr();
+	PsmPartition	wm = getIonwm();
+	BpVdb		*bpvdb;
+	VOutduct	*vduct;
+	PsmAddress	elt;
+	char		cmdString[7 + MAX_CL_DUCT_NAME_LEN + 1];
+
+	if (bpAttach() < 0)
+	{
+		return -1;
+	}
+
+	bpvdb = getBpVdb();
+
+	for (elt = sm_list_first(wm, bpvdb->outducts); elt; elt = sm_list_next(wm, elt))
+	{
+		vduct = (VOutduct *)psp(wm, sm_list_data(wm, elt));
+		if (strcmp(vduct->protocolName, "ltp") == 0)
+		{
+			if (vduct->cloPid != ERROR)
 			{
+				/*	TODO: Improve waiting procedure.	*/
+				sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+				while (sm_TaskExists(vduct->cloPid));
+				CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 				vduct->cloPid = ERROR;
 			}
-			sdr_exit_xn(sdr);
 
-			while (sm_TaskExists(pid));
-
-			CHKERR(sdr_begin_xn(sdr));
-
-			/*	Start	*/
 			if (vduct->semaphore == SM_SEM_NONE)
 			{
 				vduct->semaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -503,15 +530,11 @@ int ltpcloRestart()
 				sm_SemGive(vduct->semaphore);
 			}
 			sm_SemTake(vduct->semaphore);
-			if (vduct->cloPid == ERROR || !sm_TaskExists(vduct->cloPid))
-			{
-				isprintf(cmdString, sizeof cmdString,
-						"ltpclo %s", vduct->ductName);
-				vduct->cloPid = pseudoshell(cmdString);
-			}
+
+			isprintf(cmdString, sizeof cmdString, "ltpclo %s", vduct->ductName);
+			vduct->cloPid = pseudoshell(cmdString);
 		}
 	}
-	sdr_exit_xn(sdr);
 
 	return 0;
 }
@@ -520,100 +543,96 @@ int ltpcloRestart()
  *		LTP		*
  *------------------------------*/
 
-/*	LTP		*/
-int ltpRestart()
-{
-	if (bpAttach() < 0 || ltpAttach() < 0)
-	{
-		return -1;
-	}
-
-	/*	Stop	*/
-	ltpStop();
-
-	/*	Start	*/
-	if (ltpStart(NULL) < 0)
-	{
-		return -1;
-	}
-
-	while (!ltp_engine_is_started());
-
-	ltpcliStart(); // Start the client program
-
-	return 0;
-}
-
 /*	ltpclock	*/
-int ltpclockRestart()
+static int ltpclockStop()
 {
-	Sdr	sdr = getIonsdr();
 	LtpVdb	*ltpvdb;
-	pid_t	pid;
 
 	if (ltpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	ltpvdb = getLtpVdb();
 
-	/*	Stop	*/
-	if ((pid = ltpvdb->clockPid) != ERROR)
+	if (ltpvdb->clockPid != ERROR)
 	{
 		sm_TaskKill(ltpvdb->clockPid, SIGTERM);
+	}
+
+	return 0;
+}
+
+static int ltpclockStart()
+{
+	Sdr	sdr = getIonsdr();
+	LtpVdb	*ltpvdb;
+
+	if (ltpAttach() < 0)
+	{
+		return -1;
+	}
+
+	ltpvdb = getLtpVdb();
+
+	if (ltpvdb->clockPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(ltpvdb->clockPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		ltpvdb->clockPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
-	if (ltpvdb->clockPid == ERROR || !sm_TaskExists(ltpvdb->clockPid))
-	{
-		ltpvdb->clockPid = pseudoshell("ltpclock");
-	}
-	sdr_exit_xn(sdr);
-
-	while (!ltp_engine_is_started());
+	ltpvdb->clockPid = pseudoshell("ltpclock");
 
 	return 0;
 }
 
 /*	ltpdeliv	*/
-int ltpdelivRestart()
+static int ltpdelivStop()
 {
-	Sdr	sdr = getIonsdr();
 	LtpVdb	*ltpvdb;
-	pid_t	pid;
 
 	if (ltpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	ltpvdb = getLtpVdb();
 
-	/*	Stop	*/
-	if (ltpvdb->deliverySemaphore != SM_SEM_NONE)
+	if (ltpvdb->delivPid != ERROR)
 	{
-		sm_SemEnd(ltpvdb->deliverySemaphore);
+		if (ltpvdb->deliverySemaphore != SM_SEM_NONE)
+		{
+			sm_SemEnd(ltpvdb->deliverySemaphore);
+		}
 	}
-	if ((pid = ltpvdb->delivPid) != ERROR)
+
+	return 0;
+}
+
+static int ltpdelivStart()
+{
+	Sdr	sdr = getIonsdr();
+	LtpVdb	*ltpvdb;
+
+	if (ltpAttach() < 0)
 	{
+		return -1;
+	}
+
+	ltpvdb = getLtpVdb();
+
+	if (ltpvdb->delivPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(ltpvdb->delivPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		ltpvdb->delivPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
 	if (ltpvdb->deliverySemaphore == SM_SEM_NONE)
 	{
 		ltpvdb->deliverySemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -624,17 +643,44 @@ int ltpdelivRestart()
 		sm_SemGive(ltpvdb->deliverySemaphore);
 	}
 	sm_SemTake(ltpvdb->deliverySemaphore);
-	if (ltpvdb->delivPid == ERROR || !sm_TaskExists(ltpvdb->delivPid))
-	{
-		ltpvdb->delivPid = pseudoshell("ltpdeliv");
-	}
-	sdr_exit_xn(sdr);
+
+	ltpvdb->delivPid = pseudoshell("ltpdeliv");
 
 	return 0;
 }
 
 /*	ltpmeter	*/
-int ltpmeterRestart()
+static int ltpmeterStop()
+{
+	PsmPartition	wm = getIonwm();
+	LtpVdb		*ltpvdb;
+	LtpVspan	*vspan;
+	PsmAddress	elt;
+
+	if (ltpAttach() < 0)
+	{
+		return -1;
+	}
+
+	ltpvdb = getLtpVdb();
+
+	for (elt = sm_list_first(wm, ltpvdb->spans); elt; elt = sm_list_next(wm, elt))
+	{
+		vspan = (LtpVspan *)psp(wm, sm_list_data(wm, elt));
+		
+		if (vspan->meterPid != ERROR)
+		{
+			if (vspan->bufClosedSemaphore != SM_SEM_NONE)
+			{
+				sm_SemEnd(vspan->bufClosedSemaphore);
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int ltpmeterStart()
 {
 	Sdr		sdr = getIonsdr();
 	PsmPartition	wm = getIonwm();
@@ -642,36 +688,27 @@ int ltpmeterRestart()
 	LtpVspan	*vspan;
 	PsmAddress	elt;
 	char		cmdString[20];
-	pid_t		pid;
 
 	if (ltpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	ltpvdb = getLtpVdb();
 
 	for (elt = sm_list_first(wm, ltpvdb->spans); elt; elt = sm_list_next(wm, elt))
 	{
 		vspan = (LtpVspan *)psp(wm, sm_list_data(wm, elt));
-		
-		/*	Stop	*/
-		if (vspan->bufClosedSemaphore != SM_SEM_NONE)
+
+		if (vspan->meterPid != ERROR)
 		{
-			sm_SemEnd(vspan->bufClosedSemaphore);
-		}
-		if ((pid = vspan->meterPid) != ERROR)
-		{
+			/*	TODO: Improve waiting procedure.	*/
+			sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+			while (sm_TaskExists(vspan->meterPid));
+			CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 			vspan->meterPid = ERROR;
 		}
-		sdr_exit_xn(sdr);
 
-		while (sm_TaskExists(pid));
-
-		CHKERR(sdr_begin_xn(sdr));
-
-		/*	Start	*/
 		if (vspan->bufClosedSemaphore == SM_SEM_NONE)
 		{
 			vspan->bufClosedSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -682,63 +719,111 @@ int ltpmeterRestart()
 			sm_SemGive(vspan->bufClosedSemaphore);
 		}
 		sm_SemTake(vspan->bufClosedSemaphore);
-		if (vspan->meterPid == ERROR || !sm_TaskExists(vspan->meterPid))
-		{
-			isprintf(cmdString, sizeof cmdString,
-				"ltpmeter " UVAST_FIELDSPEC, vspan->engineId);
-			vspan->meterPid = pseudoshell(cmdString);
-		}
+
+		isprintf(cmdString, sizeof cmdString, "ltpmeter " UVAST_FIELDSPEC,
+			vspan->engineId);
+		vspan->meterPid = pseudoshell(cmdString);
 	}
-	sdr_exit_xn(sdr);
 
 	return 0;
 }
 
 /*	udplsi		*/
-int udplsiRestart()
+static int udplsiStop()
 {
-	Sdr	sdr = getIonsdr();
 	LtpVdb	*ltpvdb;
 	LtpDB	*ltpdb;
-	pid_t	pid;
 
 	if (ltpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	ltpvdb = getLtpVdb();
 	ltpdb = getLtpConstants();
 
 	if (strncmp(ltpdb->lsiCmd, "udplsi", 6) == 0)
 	{
-		/*	Stop	*/
-		if ((pid = ltpvdb->lsiPid) != ERROR)
+		if (ltpvdb->lsiPid != ERROR)
 		{
 			sm_TaskKill(ltpvdb->lsiPid, SIGTERM);
-			ltpvdb->lsiPid = ERROR;
-		}
-		sdr_exit_xn(sdr);
-
-		while (sm_TaskExists(pid));
-
-		CHKERR(sdr_begin_xn(sdr));
-
-		/*	Start	*/
-		if (ltpvdb->lsiPid == ERROR || !sm_TaskExists(ltpvdb->lsiPid))
-		{
-			ltpvdb->lsiPid = pseudoshell(ltpdb->lsiCmd);
 		}
 	}
-	
-	sdr_exit_xn(sdr);
+
+	return 0;
+}
+
+static int udplsiStart()
+{
+	Sdr	sdr = getIonsdr();
+	LtpVdb	*ltpvdb;
+	LtpDB	*ltpdb;
+
+	if (ltpAttach() < 0)
+	{
+		return -1;
+	}
+
+	ltpvdb = getLtpVdb();
+	ltpdb = getLtpConstants();
+
+	if (strncmp(ltpdb->lsiCmd, "udplsi", 6) == 0)
+	{
+		if (ltpvdb->lsiPid != ERROR)
+		{
+			/*	TODO: Improve waiting procedure.	*/
+			sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+			while (sm_TaskExists(ltpvdb->lsiPid));
+			CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
+			ltpvdb->lsiPid = ERROR;
+		}
+
+		ltpvdb->lsiPid = pseudoshell(ltpdb->lsiCmd);
+	}
 
 	return 0;
 }
 
 /*	udplso		*/
-int udplsoRestart()
+static int udplsoStop()
+{
+	Sdr		sdr = getIonsdr();
+	PsmPartition	wm = getIonwm();
+	LtpVdb		*ltpvdb;
+	LtpSpan		span;
+	LtpVspan	*vspan;
+	PsmAddress	elt;
+	char		cmd[SDRSTRING_BUFSZ];
+
+	if (ltpAttach() < 0)
+	{
+		return -1;
+	}
+
+	ltpvdb = getLtpVdb();
+
+	for (elt = sm_list_first(wm, ltpvdb->spans); elt; elt = sm_list_next(wm, elt))
+	{
+		vspan = (LtpVspan *)psp(wm, sm_list_data(wm, elt));
+		sdr_read(sdr, (char *)&span, sdr_list_data(sdr, vspan->spanElt),
+			sizeof(LtpSpan));
+		sdr_string_read(sdr, cmd, span.lsoCmd);
+		if (strncmp(cmd, "udplso", 6) == 0)
+		{
+			if (vspan->lsoPid != ERROR)
+			{
+				if (vspan->segSemaphore != SM_SEM_NONE)
+				{
+					sm_SemEnd(vspan->segSemaphore);
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int udplsoStart()
 {
 	Sdr		sdr = getIonsdr();
 	PsmPartition	wm = getIonwm();
@@ -748,14 +833,12 @@ int udplsoRestart()
 	PsmAddress	elt;
 	char		cmd[SDRSTRING_BUFSZ];
 	char		cmdString[SDRSTRING_BUFSZ + 11];
-	pid_t		pid;
 
 	if (ltpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	ltpvdb = getLtpVdb();
 
 	for (elt = sm_list_first(wm, ltpvdb->spans); elt; elt = sm_list_next(wm, elt))
@@ -766,22 +849,15 @@ int udplsoRestart()
 		sdr_string_read(sdr, cmd, span.lsoCmd);
 		if (strncmp(cmd, "udplso", 6) == 0)
 		{
-			/*	Stop	*/
-			if (vspan->segSemaphore != SM_SEM_NONE)
+			if (vspan->lsoPid != ERROR)
 			{
-				sm_SemEnd(vspan->segSemaphore);
-			}
-			if ((pid = vspan->lsoPid) != ERROR)
-			{
+				/*	TODO: Improve waiting procedure.	*/
+				sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+				while (sm_TaskExists(vspan->lsoPid));
+				CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 				vspan->lsoPid = ERROR;
 			}
-			sdr_exit_xn(sdr);
 
-			while (sm_TaskExists(pid));
-
-			CHKERR(sdr_begin_xn(sdr));
-
-			/*	Start	*/
 			if (vspan->segSemaphore == SM_SEM_NONE)
 			{
 				vspan->segSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -792,15 +868,12 @@ int udplsoRestart()
 				sm_SemGive(vspan->segSemaphore);
 			}
 			sm_SemTake(vspan->segSemaphore);
-			if (vspan->lsoPid == ERROR || sm_TaskExists(vspan->lsoPid) == 0)
-			{
-				isprintf(cmdString, sizeof cmdString, "%s " UVAST_FIELDSPEC,
-						cmd, vspan->engineId);
-				vspan->lsoPid = pseudoshell(cmdString);
-			}
+
+			isprintf(cmdString, sizeof cmdString, "%s " UVAST_FIELDSPEC,
+				cmd, vspan->engineId);
+			vspan->lsoPid = pseudoshell(cmdString);
 		}
 	}
-	sdr_exit_xn(sdr);
 
 	return 0;
 }
@@ -809,140 +882,96 @@ int udplsoRestart()
  *		CFDP		*
  *------------------------------*/
 
-/*	CFDP		*/
-int cfdpRestart()
+/*	cfdpclock	*/
+static int cfdpclockStop()
 {
+	CfdpVdb	*cfdpvdb;
+
 	if (cfdpAttach() < 0)
 	{
 		return -1;
 	}
 
-	/*	Stop	*/
-	cfdpStop();
+	cfdpvdb = getCfdpVdb();
 
-	/*	Start	*/
-	if (cfdpStart("bputa") < 0)
+	if (cfdpvdb->clockPid != ERROR)
 	{
-		return -1;
+		sm_TaskKill(cfdpvdb->clockPid, SIGTERM);
 	}
-
-	while (!cfdp_entity_is_started());
 
 	return 0;
 }
 
-/*	cfdpclock	*/
-int cfdpclockRestart()
+static int cfdpclockStart()
 {
 	Sdr	sdr = getIonsdr();
 	CfdpVdb	*cfdpvdb;
-	pid_t	pid;
 
 	if (cfdpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	cfdpvdb = getCfdpVdb();
 
-	/*	Stop	*/
-	if ((pid = cfdpvdb->clockPid) != ERROR)
+	if (cfdpvdb->clockPid != ERROR)
 	{
-		sm_TaskKill(cfdpvdb->clockPid, SIGTERM);
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(cfdpvdb->clockPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		cfdpvdb->clockPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
-	if (cfdpvdb->clockPid == ERROR || !sm_TaskExists(cfdpvdb->clockPid))
-	{
-		cfdpvdb->clockPid = pseudoshell("cfdpclock");
-	}
-	sdr_exit_xn(sdr);
-
-	while (!cfdp_entity_is_started());
+	cfdpvdb->clockPid = pseudoshell("cfdpclock");
 
 	return 0;
 }
 
 /*	bputa		*/
-static void bputaStop()
+static int bputaStop()
 {
-	Sdr	sdr = getIonsdr();
-	CfdpVdb	*cfdpvdb = getCfdpVdb();
-	pid_t	pid;
-
-	CHKVOID(sdr_begin_xn(sdr));
-	if (cfdpvdb->fduSemaphore != SM_SEM_NONE)
-	{
-		sm_SemEnd(cfdpvdb->fduSemaphore);
-	}
-	if ((pid = cfdpvdb->utaPid) != ERROR)
-	{
-		cfdpvdb->utaPid = ERROR;
-	}
-	sdr_exit_xn(sdr);
-	while (sm_TaskExists(pid));
-}
-
-static void bputaStart()
-{
-	Sdr	sdr = getIonsdr();
-	CfdpVdb	*cfdpvdb = getCfdpVdb();
-
-	CHKVOID(sdr_begin_xn(sdr));
-	if (cfdpvdb->fduSemaphore == SM_SEM_NONE)
-	{
-		cfdpvdb->fduSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
-	}
-	else
-	{
-		sm_SemUnend(cfdpvdb->fduSemaphore);
-		sm_SemGive(cfdpvdb->fduSemaphore);
-	}
-	sm_SemTake(cfdpvdb->fduSemaphore);
-	if (cfdpvdb->utaPid == ERROR || !sm_TaskExists(cfdpvdb->utaPid))
-	{
-		cfdpvdb->utaPid = pseudoshell("bputa");
-	}
-	sdr_exit_xn(sdr);
-}
-
-int bputaRestart()
-{
-	Sdr	sdr = getIonsdr();
 	CfdpVdb	*cfdpvdb;
-	pid_t	pid;
 
 	if (cfdpAttach() < 0)
 	{
 		return -1;
 	}
 
-	CHKERR(sdr_begin_xn(sdr));
 	cfdpvdb = getCfdpVdb();
 
-	/*	Stop	*/
-	if (cfdpvdb->fduSemaphore != SM_SEM_NONE)
+	if (cfdpvdb->utaPid != ERROR)
 	{
-		sm_SemEnd(cfdpvdb->fduSemaphore);
+		if (cfdpvdb->fduSemaphore != SM_SEM_NONE)
+		{
+			sm_SemEnd(cfdpvdb->fduSemaphore);
+		}
 	}
-	if ((pid = cfdpvdb->utaPid) != ERROR)
+
+	return 0;
+}
+
+static int bputaStart()
+{
+	Sdr	sdr = getIonsdr();
+	CfdpVdb	*cfdpvdb;
+
+	if (cfdpAttach() < 0)
 	{
+		return -1;
+	}
+
+	cfdpvdb = getCfdpVdb();
+
+	if (cfdpvdb->utaPid != ERROR)
+	{
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(cfdpvdb->utaPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		cfdpvdb->utaPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	while (sm_TaskExists(pid));
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
 	if (cfdpvdb->fduSemaphore == SM_SEM_NONE)
 	{
 		cfdpvdb->fduSemaphore = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
@@ -953,11 +982,8 @@ int bputaRestart()
 		sm_SemGive(cfdpvdb->fduSemaphore);
 	}
 	sm_SemTake(cfdpvdb->fduSemaphore);
-	if (cfdpvdb->utaPid == ERROR || !sm_TaskExists(cfdpvdb->utaPid))
-	{
-		cfdpvdb->utaPid = pseudoshell("bputa");
-	}
-	sdr_exit_xn(sdr);
+
+	cfdpvdb->utaPid = pseudoshell("bputa");
 
 	return 0;
 }
@@ -967,35 +993,76 @@ int bputaRestart()
  *------------------------------*/
 
 /*	nm_agent	*/
-int nmagentRestart(char *startCmd)
+static int nmagentStop()
+{
+	ARMUR_VDB	*armurvdb = getArmurVdb();
+
+	if (armurvdb->nmagentPid != ERROR)
+	{
+		sm_TaskKill(armurvdb->nmagentPid, SIGTERM);
+	}
+
+	return 0;
+}
+
+static int nmagentStart()
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_VDB	*armurvdb = getArmurVdb();
-	pid_t		pid;
+	ARMUR_DB	*armurdb = getArmurConstants();
+	char		cmd[SDRSTRING_BUFSZ];
 
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Stop	*/
-	if ((pid = armurvdb->nmagentPid) != ERROR)
+	if (armurvdb->nmagentPid != ERROR)
 	{
-		sm_TaskKill(pid, SIGTERM);
+		/*	TODO: Improve waiting procedure.	*/
+		sdr_exit_xn(sdr); // Unlock to yield the SDR to the application.
+		while (sm_TaskExists(armurvdb->nmagentPid));
+		CHKERR(sdr_begin_xn(sdr)); // Retrieve the SDR access.
 		armurvdb->nmagentPid = ERROR;
 	}
-	sdr_exit_xn(sdr);
 
-	if (pid != ERROR)
-	{
-		while (sm_TaskExists(pid));
-	}
-
-	CHKERR(sdr_begin_xn(sdr));
-
-	/*	Start	*/
-	if (armurvdb->nmagentPid == ERROR || !sm_TaskExists(armurvdb->nmagentPid))
-	{
-		armurvdb->nmagentPid = pseudoshell(startCmd);
-	}
-	sdr_exit_xn(sdr);
+	sdr_string_read(sdr, cmd, armurdb->nmagentCmd);
+	//isprintf(ownEid, sizeof ownEid, "ipn:" UVAST_FIELDSPEC ".%u",
+	//	getOwnNodeNbr(), NM_AGENT_SVC_NBR);
+	//isprintf(cmdString, sizeof cmdString, "nm_agent %s %s", ownEid, armurdb->mgrEid);
+	armurvdb->nmagentPid = pseudoshell(cmd);
 
 	return 0;
+}
+
+static void	addRestartFn(char *imageName, ARMUR_StopFn stopFn, ARMUR_StartFn startFn)
+{
+	PsmPartition	wm = getIonwm();
+	ARMUR_VDB	*armurvdb = getArmurVdb();
+	ARMUR_VImage	*vimage;
+	PsmAddress	addr;
+
+	if ((addr = rhht_retrieve_key(armurvdb->vimages, imageName)) == 0)
+	{
+		return;
+	}
+
+	vimage = (ARMUR_VImage *)psp(wm, addr);
+	vimage->as.lv2.stop = stopFn;
+	vimage->as.lv2.start = startFn;
+}
+
+void	restartFnInit()
+{
+	addRestartFn("rfxclock",	rfxclockStop,	rfxclockStart);
+	addRestartFn("ltpclock",	ltpclockStop,	ltpclockStart);
+	addRestartFn("ltpdeliv",	ltpdelivStop,	ltpdelivStart);
+	addRestartFn("ltpmeter",	ltpmeterStop,	ltpmeterStart);
+	addRestartFn("udplsi",		udplsiStop,	udplsiStart);
+	addRestartFn("udplso",		udplsoStop,	udplsoStart);
+	addRestartFn("ltpcli",		ltpcliStop,	ltpcliStart);
+	addRestartFn("ltpclo",		ltpcloStop,	ltpcloStart);
+	addRestartFn("bpclock",		bpclockStop,	bpclockStart);
+	addRestartFn("bptransit",	bptransitStop,	bptransitStart);
+	addRestartFn("ipnfw",		ipnfwStop,	ipnfwStart);
+	addRestartFn("ipnadminep",	ipnadminepStop,	ipnadminepStart);
+	addRestartFn("bpclm",		bpclmStop,	bpclmStart);
+	addRestartFn("bputa",		bputaStop,	bputaStart);
+	addRestartFn("cfdpclock",	cfdpclockStop,	cfdpclockStart);
+	addRestartFn("nm_agent",	nmagentStop,	nmagentStart);
 }

@@ -1,7 +1,6 @@
-nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
- /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
- nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
- ici/include/platform.h /usr/include/time.h /usr/include/features.h \
+nm/shared/primitives/armur-blob.o: nm/shared/primitives/blob.c \
+ /usr/include/stdc-predef.h config.h ici/include/platform.h \
+ /usr/include/time.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
@@ -115,28 +114,46 @@ nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
  /usr/include/x86_64-linux-gnu/bits/shm.h \
  /usr/include/x86_64-linux-gnu/sys/sem.h \
  /usr/include/x86_64-linux-gnu/bits/sem.h ici/include/platform_sm.h \
- ici/include/memmgr.h ici/include/psm.h ici/include/sdr.h \
- ici/include/sdrstring.h ici/include/sdrmgt.h ici/include/sdrxn.h \
- ici/include/sdrlist.h ici/include/smlist.h ici/include/smrbt.h \
- ici/include/zco.h bp/library/bpP.h bp/library/bpsec.h \
- ici/include/ionsec.h bp/include/bp.h ici/include/platform.h \
- ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
- ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_rhht.h
+ nm/shared/primitives/../adm/adm.h \
+ nm/shared/primitives/../adm/../utils/nm_types.h \
+ nm/shared/primitives/../adm/../utils/debug.h \
+ nm/shared/primitives/../adm/../primitives/edd_var.h \
+ nm/shared/primitives/../adm/../primitives/../utils/db.h \
+ ici/include/sdr.h ici/include/sdrstring.h ici/include/sdrmgt.h \
+ ici/include/sdrxn.h ici/include/psm.h ici/include/platform.h \
+ ici/include/sdrlist.h \
+ nm/shared/primitives/../adm/../primitives/../utils/nm_types.h \
+ nm/shared/primitives/../adm/../primitives/../utils/rhht.h \
+ ici/include/ion.h ici/include/memmgr.h ici/include/sdr.h \
+ ici/include/smlist.h ici/include/smrbt.h ici/include/zco.h \
+ nm/shared/primitives/../adm/../primitives/../utils/vector.h \
+ nm/shared/primitives/../adm/../primitives/../utils/../primitives/blob.h \
+ nm/contrib/QCBOR/inc/qcbor.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h \
+ nm/contrib/QCBOR/inc/UsefulBuf.h \
+ nm/shared/primitives/../adm/../primitives/ari.h \
+ nm/shared/primitives/../adm/../primitives/../utils/debug.h \
+ nm/shared/primitives/../adm/../primitives/../utils/rhht.h \
+ nm/shared/primitives/../adm/../primitives/../utils/vector.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/tnv.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/../utils/cbor_utils.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/../utils/vector.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/../utils/vector.h \
+ nm/shared/primitives/../adm/../primitives/tnv.h \
+ nm/shared/primitives/../adm/../primitives/expr.h \
+ nm/shared/primitives/../adm/../primitives/../utils/nm_types.h \
+ nm/shared/primitives/../adm/../primitives/report.h \
+ nm/shared/primitives/../adm/../primitives/ctrl.h \
+ nm/shared/primitives/../adm/../primitives/../utils/utils.h \
+ bp/include/bp.h ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
+ ici/include/smlist.h nm/shared/primitives/../adm/../primitives/table.h \
+ nm/shared/primitives/../primitives/blob.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
-
-nm/utils/armur_restart.h:
-
-nm/utils/armur.h:
-
-ici/include/rfx.h:
-
-ici/include/ion.h:
 
 ici/include/platform.h:
 
@@ -436,9 +453,15 @@ ici/include/platform.h:
 
 ici/include/platform_sm.h:
 
-ici/include/memmgr.h:
+nm/shared/primitives/../adm/adm.h:
 
-ici/include/psm.h:
+nm/shared/primitives/../adm/../utils/nm_types.h:
+
+nm/shared/primitives/../adm/../utils/debug.h:
+
+nm/shared/primitives/../adm/../primitives/edd_var.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/db.h:
 
 ici/include/sdr.h:
 
@@ -448,7 +471,21 @@ ici/include/sdrmgt.h:
 
 ici/include/sdrxn.h:
 
+ici/include/psm.h:
+
+ici/include/platform.h:
+
 ici/include/sdrlist.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/nm_types.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/rhht.h:
+
+ici/include/ion.h:
+
+ici/include/memmgr.h:
+
+ici/include/sdr.h:
 
 ici/include/smlist.h:
 
@@ -456,19 +493,51 @@ ici/include/smrbt.h:
 
 ici/include/zco.h:
 
-bp/library/bpP.h:
+nm/shared/primitives/../adm/../primitives/../utils/vector.h:
 
-bp/library/bpsec.h:
+nm/shared/primitives/../adm/../primitives/../utils/../primitives/blob.h:
 
-ici/include/ionsec.h:
+nm/contrib/QCBOR/inc/qcbor.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h:
+
+nm/contrib/QCBOR/inc/UsefulBuf.h:
+
+nm/shared/primitives/../adm/../primitives/ari.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/debug.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/rhht.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/vector.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/tnv.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/../utils/nm_types.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/../utils/cbor_utils.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/../utils/nm_types.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/primitives/../adm/../primitives/tnv.h:
+
+nm/shared/primitives/../adm/../primitives/expr.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/nm_types.h:
+
+nm/shared/primitives/../adm/../primitives/report.h:
+
+nm/shared/primitives/../adm/../primitives/ctrl.h:
+
+nm/shared/primitives/../adm/../primitives/../utils/utils.h:
 
 bp/include/bp.h:
 
-ici/include/platform.h:
-
 ici/include/psm.h:
-
-ici/include/sdr.h:
 
 ici/include/zco.h:
 
@@ -476,20 +545,6 @@ ici/include/lyst.h:
 
 ici/include/smlist.h:
 
-ici/include/ion.h:
+nm/shared/primitives/../adm/../primitives/table.h:
 
-bp/library/saga.h:
-
-ltp/library/ltpP.h:
-
-ltp/include/ltp.h:
-
-ici/include/sdrhash.h:
-
-cfdp/library/cfdpP.h:
-
-cfdp/include/cfdp.h:
-
-cfdp/include/cfdpops.h:
-
-nm/utils/armur_rhht.h:
+nm/shared/primitives/../primitives/blob.h:

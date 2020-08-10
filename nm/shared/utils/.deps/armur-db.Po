@@ -1,6 +1,5 @@
-nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
- /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
- nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
+nm/shared/utils/armur-db.o: nm/shared/utils/db.c \
+ /usr/include/stdc-predef.h config.h nm/shared/utils/db.h \
  ici/include/platform.h /usr/include/time.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -115,28 +114,51 @@ nm/utils/armur-armur_restart.o: nm/utils/armur_restart.c \
  /usr/include/x86_64-linux-gnu/bits/shm.h \
  /usr/include/x86_64-linux-gnu/sys/sem.h \
  /usr/include/x86_64-linux-gnu/bits/sem.h ici/include/platform_sm.h \
- ici/include/memmgr.h ici/include/psm.h ici/include/sdr.h \
- ici/include/sdrstring.h ici/include/sdrmgt.h ici/include/sdrxn.h \
- ici/include/sdrlist.h ici/include/smlist.h ici/include/smrbt.h \
- ici/include/zco.h bp/library/bpP.h bp/library/bpsec.h \
- ici/include/ionsec.h bp/include/bp.h ici/include/platform.h \
- ici/include/psm.h ici/include/sdr.h ici/include/zco.h ici/include/lyst.h \
- ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
- ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
- cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_rhht.h
+ ici/include/sdr.h ici/include/sdrstring.h ici/include/sdrmgt.h \
+ ici/include/sdrxn.h ici/include/psm.h ici/include/platform.h \
+ ici/include/sdrlist.h nm/shared/utils/nm_types.h nm/shared/utils/debug.h \
+ nm/shared/utils/rhht.h ici/include/ion.h ici/include/memmgr.h \
+ ici/include/sdr.h ici/include/smlist.h ici/include/smrbt.h \
+ ici/include/zco.h nm/shared/utils/vector.h \
+ nm/shared/utils/../primitives/blob.h nm/contrib/QCBOR/inc/qcbor.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h \
+ nm/contrib/QCBOR/inc/UsefulBuf.h nm/shared/utils/utils.h bp/include/bp.h \
+ ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
+ ici/include/smlist.h nm/shared/utils/../primitives/ari.h \
+ nm/shared/utils/../primitives/../utils/debug.h \
+ nm/shared/utils/../primitives/../utils/rhht.h \
+ nm/shared/utils/../primitives/../utils/vector.h \
+ nm/shared/utils/../primitives/../primitives/tnv.h \
+ nm/shared/utils/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/utils/../primitives/../primitives/../utils/cbor_utils.h \
+ nm/shared/utils/../primitives/../primitives/../utils/nm_types.h \
+ nm/shared/utils/../primitives/../primitives/../utils/vector.h \
+ nm/shared/utils/../primitives/../primitives/../utils/vector.h \
+ nm/shared/utils/../primitives/ctrl.h \
+ nm/shared/utils/../primitives/../utils/utils.h \
+ nm/shared/utils/../primitives/../utils/nm_types.h \
+ nm/shared/utils/../primitives/../utils/db.h \
+ nm/shared/utils/../primitives/tnv.h nm/shared/utils/../primitives/ari.h \
+ nm/shared/utils/../primitives/report.h \
+ nm/shared/utils/../primitives/rules.h \
+ nm/shared/utils/../primitives/../primitives/ctrl.h \
+ nm/shared/utils/../primitives/../primitives/expr.h \
+ nm/shared/utils/../primitives/../primitives/ari.h \
+ nm/shared/utils/../primitives/../primitives/tnv.h \
+ nm/shared/utils/../primitives/edd_var.h \
+ nm/shared/utils/../primitives/expr.h \
+ nm/shared/utils/../primitives/table.h nm/shared/utils/../adm/adm.h \
+ nm/shared/utils/../adm/../utils/nm_types.h \
+ nm/shared/utils/../adm/../primitives/edd_var.h \
+ nm/shared/utils/../adm/../primitives/report.h \
+ nm/shared/utils/../adm/../primitives/ctrl.h \
+ nm/shared/utils/../adm/../primitives/table.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
 
-nm/utils/armur_restart.h:
-
-nm/utils/armur.h:
-
-ici/include/rfx.h:
-
-ici/include/ion.h:
+nm/shared/utils/db.h:
 
 ici/include/platform.h:
 
@@ -436,10 +458,6 @@ ici/include/platform.h:
 
 ici/include/platform_sm.h:
 
-ici/include/memmgr.h:
-
-ici/include/psm.h:
-
 ici/include/sdr.h:
 
 ici/include/sdrstring.h:
@@ -448,7 +466,23 @@ ici/include/sdrmgt.h:
 
 ici/include/sdrxn.h:
 
+ici/include/psm.h:
+
+ici/include/platform.h:
+
 ici/include/sdrlist.h:
+
+nm/shared/utils/nm_types.h:
+
+nm/shared/utils/debug.h:
+
+nm/shared/utils/rhht.h:
+
+ici/include/ion.h:
+
+ici/include/memmgr.h:
+
+ici/include/sdr.h:
 
 ici/include/smlist.h:
 
@@ -456,19 +490,21 @@ ici/include/smrbt.h:
 
 ici/include/zco.h:
 
-bp/library/bpP.h:
+nm/shared/utils/vector.h:
 
-bp/library/bpsec.h:
+nm/shared/utils/../primitives/blob.h:
 
-ici/include/ionsec.h:
+nm/contrib/QCBOR/inc/qcbor.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stdbool.h:
+
+nm/contrib/QCBOR/inc/UsefulBuf.h:
+
+nm/shared/utils/utils.h:
 
 bp/include/bp.h:
 
-ici/include/platform.h:
-
 ici/include/psm.h:
-
-ici/include/sdr.h:
 
 ici/include/zco.h:
 
@@ -476,20 +512,64 @@ ici/include/lyst.h:
 
 ici/include/smlist.h:
 
-ici/include/ion.h:
+nm/shared/utils/../primitives/ari.h:
 
-bp/library/saga.h:
+nm/shared/utils/../primitives/../utils/debug.h:
 
-ltp/library/ltpP.h:
+nm/shared/utils/../primitives/../utils/rhht.h:
 
-ltp/include/ltp.h:
+nm/shared/utils/../primitives/../utils/vector.h:
 
-ici/include/sdrhash.h:
+nm/shared/utils/../primitives/../primitives/tnv.h:
 
-cfdp/library/cfdpP.h:
+nm/shared/utils/../primitives/../primitives/../utils/nm_types.h:
 
-cfdp/include/cfdp.h:
+nm/shared/utils/../primitives/../primitives/../utils/cbor_utils.h:
 
-cfdp/include/cfdpops.h:
+nm/shared/utils/../primitives/../primitives/../utils/nm_types.h:
 
-nm/utils/armur_rhht.h:
+nm/shared/utils/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/utils/../primitives/../primitives/../utils/vector.h:
+
+nm/shared/utils/../primitives/ctrl.h:
+
+nm/shared/utils/../primitives/../utils/utils.h:
+
+nm/shared/utils/../primitives/../utils/nm_types.h:
+
+nm/shared/utils/../primitives/../utils/db.h:
+
+nm/shared/utils/../primitives/tnv.h:
+
+nm/shared/utils/../primitives/ari.h:
+
+nm/shared/utils/../primitives/report.h:
+
+nm/shared/utils/../primitives/rules.h:
+
+nm/shared/utils/../primitives/../primitives/ctrl.h:
+
+nm/shared/utils/../primitives/../primitives/expr.h:
+
+nm/shared/utils/../primitives/../primitives/ari.h:
+
+nm/shared/utils/../primitives/../primitives/tnv.h:
+
+nm/shared/utils/../primitives/edd_var.h:
+
+nm/shared/utils/../primitives/expr.h:
+
+nm/shared/utils/../primitives/table.h:
+
+nm/shared/utils/../adm/adm.h:
+
+nm/shared/utils/../adm/../utils/nm_types.h:
+
+nm/shared/utils/../adm/../primitives/edd_var.h:
+
+nm/shared/utils/../adm/../primitives/report.h:
+
+nm/shared/utils/../adm/../primitives/ctrl.h:
+
+nm/shared/utils/../adm/../primitives/table.h:
