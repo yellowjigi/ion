@@ -8,7 +8,6 @@
 #include "bpP.h"
 #include "ltpP.h"
 #include "cfdpP.h"
-#include "armur_rhht.h"
 
 /*	Default install paths	*/
 #define ARMUR_PATH_LIB_DEFAULT	"/usr/local/lib"

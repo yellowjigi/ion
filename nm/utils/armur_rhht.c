@@ -13,6 +13,28 @@
  *****************************************************************************/
 #include "armur_rhht.h"
 
+typedef uint16_t rh_idx_t;
+
+/**
+ * A hash table is a collection of hash table entries.
+ */
+typedef struct {
+	PsmAddress	value;
+	char		key[32];
+	rh_idx_t	delta;
+} rh_elt_t;
+
+
+/**
+ * Meta-data for the hash table and a pointer to its first entry.
+ */
+typedef struct {
+	rh_elt_t	buckets[ARMUR_VIMAGE_HASH_ENTRIES];
+	rh_idx_t	num_bkts;
+	rh_idx_t	num_elts;
+	rh_idx_t	max_delta;
+} rhht_t;
+
 /*
  * +--------------------------------------------------------------------------+
  * |					   Private Functions  								  +
@@ -99,7 +121,6 @@ static void p_rhht_bkwrd_shft(rhht_t *ht, rh_idx_t idx)
 {
 	rh_idx_t	i;
 	rh_idx_t	next_idx;
-	rh_idx_t	ideal_idx;
 
 	CHKVOID(ht);
 	CHKVOID(idx < ht->num_bkts);
@@ -192,7 +213,7 @@ static rh_idx_t p_rh_calc_placement(rhht_t *ht, rh_idx_t idx, rh_elt_t *elt)
  * \par Function Name: rhht_create
  *
  *****************************************************************************/
-PsmAddress	rhht_create()
+PsmAddress	ARMUR_rhht_create()
 {
 	PsmPartition	wm = getIonwm();
 	PsmAddress	rhhtAddr;
@@ -273,7 +294,7 @@ static int	rhht_find(rhht_t *ht, char *key, rh_idx_t *idx)
 	return RH_NOT_FOUND;
 }
 
-PsmAddress	rhht_retrieve_key(PsmAddress rhhtAddr, char *key)
+PsmAddress	ARMUR_rhht_retrieve_key(PsmAddress rhhtAddr, char *key)
 {
 	PsmPartition	wm = getIonwm();
 	rhht_t		*ht;
@@ -294,7 +315,7 @@ PsmAddress	rhht_retrieve_key(PsmAddress rhhtAddr, char *key)
  * \par Function Name: rhht_insert
  *
  *****************************************************************************/
-int	rhht_insert(PsmAddress rhhtAddr, char *key, PsmAddress value)
+int	ARMUR_rhht_insert(PsmAddress rhhtAddr, char *key, PsmAddress value)
 {
 	PsmPartition	wm = getIonwm();
 	rhht_t		*ht;
@@ -375,7 +396,7 @@ static void	rhht_del_idx(rhht_t *ht, rh_idx_t idx)
 	p_rhht_bkwrd_shft(ht, idx);
 }
 
-void	rhht_del_key(PsmAddress rhhtAddr, void *item)
+void	ARMUR_rhht_del_key(PsmAddress rhhtAddr, void *item)
 {
 	PsmPartition	wm = getIonwm();
 	rhht_t		*ht;
@@ -388,7 +409,7 @@ void	rhht_del_key(PsmAddress rhhtAddr, void *item)
 	}
 }
 
-void	rhht_release(PsmAddress rhhtAddr)
+void	ARMUR_rhht_release(PsmAddress rhhtAddr)
 {
 	PsmPartition	wm = getIonwm();
 	rhht_t		*ht;

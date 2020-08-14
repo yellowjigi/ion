@@ -2,6 +2,7 @@
 // jigi
 
 #include "armur_restart.h"
+#include "armur_rhht.h"
 
 /*	*	*	Restart functions	*	*	*/
 
@@ -1037,7 +1038,7 @@ static void	addRestartFn(char *imageName, ARMUR_StopFn stopFn, ARMUR_StartFn sta
 	ARMUR_VImage	*vimage;
 	PsmAddress	addr;
 
-	if ((addr = rhht_retrieve_key(armurvdb->vimages, imageName)) == 0)
+	if ((addr = ARMUR_rhht_retrieve_key(armurvdb->vimages, imageName)) == 0)
 	{
 		return;
 	}

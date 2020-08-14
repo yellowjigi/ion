@@ -146,7 +146,7 @@ bin_PROGRAMS = \
 	$(amsbin) \
 	$(cfdpbin) \
 	$(armurbin)
-#jigi
+#JIGI
 
 
 lib_LTLIBRARIES = \
@@ -158,7 +158,9 @@ lib_LTLIBRARIES = \
 	$(dtpclib) \
 	$(bssplib) \
 	$(amslib) \
-	$(cfdplib)
+	$(cfdplib) \
+	$(armurlib)
+#JIGI
 
 include_HEADERS = \
 	$(iciinclude) \
@@ -2040,22 +2042,25 @@ nm_agent_SOURCES =  	$(nm_shared_src)		\
 			nm/agent/adm_ion_ltp_admin_agent.c	\
 			nm/agent/adm_ltp_agent_impl.c	\
 			nm/agent/adm_ltp_agent_agent.c 	\
-			nm/agent/adm_ion_bpcp_impl.c	\
-			nm/agent/adm_ion_bpcp_agent.c	\
-			nm/agent/adm_ion_bpsource_impl.c	\
-			nm/agent/adm_ion_bpsource_agent.c	\
-			#nm/agent/adm_kplo_telecommand_impl.c	\
-			#nm/agent/adm_kplo_telecommand_agent.c
-#last 6 lines added by jigi//JIGI
+			nm/agent/adm_ion_armur_impl.c	\
+			nm/agent/adm_ion_armur_agent.c
+
+#nm/agent/adm_ion_bpcp_impl.c	\
+#nm/agent/adm_ion_bpcp_agent.c	\
+#nm/agent/adm_ion_bpsource_impl.c	\
+#nm/agent/adm_ion_bpsource_agent.c	\
+#nm/agent/adm_telecommand_impl.c	\
+#nm/agent/adm_telecommand_agent.c
+#last 8 lines added //JIGI
 
 
-nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
+nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la libarmur.la $(LIBOBJS) $(PTHREAD_LIBS)
 nm_agent_LDFLAGS = -L/usr/local/lib -lm -lpthread 
 
-nm_agent_CFLAGS = -I/usr/include -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm  \
+nm_agent_CFLAGS = -I/usr/include -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils -I$(srcdir)/nm \
                   -I$(srcdir)/nm/agent -I$(srcdir)/bp/library/ext/sbsp $(AM_CFLAGS) $(NO_UNUSED_VARIABLE) \
                   -DAGENT_ROLE $(CBOR_CFLAGS)
-# libcfdp.la & -I$(srcdir)/cfdp/library added by jigi
+# libcfdp.la, libarmur.la & -I$(srcdir)/cfdp/library, -I$(srcdir)/nm/utils added //JIGI
 
 nm_mgr_SOURCES =	$(nm_shared_src)		\
 			nm/mgr/agents.c 		\
@@ -2075,10 +2080,12 @@ nm_mgr_SOURCES =	$(nm_shared_src)		\
 			nm/mgr/adm_ion_ipn_admin_mgr.c	\
 			nm/mgr/adm_ion_ltp_admin_mgr.c	\
 			nm/mgr/adm_ltp_agent_mgr.c	\
-			nm/mgr/adm_ion_bpcp_mgr.c	\
-			nm/mgr/adm_ion_bpsource_mgr.c	\
-			nm/mgr/adm_kplo_telecommand_mgr.c
-#last 3 lines added by jigi
+			nm/mgr/adm_ion_armur_mgr.c
+
+#nm/mgr/adm_ion_bpcp_mgr.c	\
+#nm/mgr/adm_ion_bpsource_mgr.c	\
+#nm/mgr/adm_telecommand_mgr.c
+#last 4 lines added //JIGI
 
 nm_mgr_LDADD = libici.la libbp.la libltp.la $(LIBOBJS) $(PTHREAD_LIBS)
 
@@ -2102,17 +2109,32 @@ ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/
 
 ##########################
 #
-# ARMUR SECTION //jigi
+# ARMUR SECTION //JIGI
 #
 ##########################
 
-armurbin = armur
+armurcflags = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils
+
+armurbin = armuradmin
+
+armurlib = libarmur.la
+
+# --- Libraries --- #
+
+libarmur_la_SOURCES = \
+	nm/utils/libarmur.c \
+	nm/utils/libarmurnm.c \
+	nm/utils/armur_restart.c \
+	nm/utils/armur_rhht.c
+libarmur_la_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+libarmur_la_LIBADD = libici.la libbp.la libltp.la libcfdp.la -larchive
+#armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
 
 # --- Utility Programs --- #
-armur_SOURCES = nm/utils/armur.c nm/utils/armur_restart.c nm/utils/armuradmin.c nm/utils/armur_rhht.c
-armur_LDADD = libici.la libbp.la libltp.la libcfdp.la $(LIBOBJS) $(PTHREAD_LIBS)
-armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
-armur_CFLAGS = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils $(AM_CFLAGS) $(NO_UNUSED_VARIABLE)
+
+armuradmin_SOURCES = nm/utils/armuradmin.c
+armuradmin_LDADD = libarmur.la libici.la $(LIBOBJS)
+armuradmin_CFLAGS = $(armurcflags) $(AM_CFLAGS)
 
 ##########################
 #

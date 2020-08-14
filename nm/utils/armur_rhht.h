@@ -47,28 +47,6 @@
  * |							  DATA TYPES  								  +
  * +--------------------------------------------------------------------------+
  */
-typedef uint16_t rh_idx_t;
-
-
-/**
- * A hash table is a collection of hash table entries.
- */
-typedef struct {
-	PsmAddress	value;
-	char		key[32];
-	rh_idx_t	delta;
-} rh_elt_t;
-
-
-/**
- * Meta-data for the hash table and a pointer to its first entry.
- */
-typedef struct {
-	rh_elt_t	buckets[ARMUR_VIMAGE_HASH_ENTRIES];
-	rh_idx_t	num_bkts;
-	rh_idx_t	num_elts;
-	rh_idx_t	max_delta;
-} rhht_t;
 
 
 /*
@@ -78,10 +56,10 @@ typedef struct {
  */
 
 
-extern PsmAddress	rhht_create();
-extern PsmAddress	rhht_retrieve_key(PsmAddress rhhtAddr, char *key);
-extern int		rhht_insert(PsmAddress rhhtAddr, char *key, PsmAddress value);
-extern void		rhht_release(PsmAddress rhhtAddr);
-extern void		rhht_del_key(PsmAddress rhhtAddr, void *key);
+extern PsmAddress	ARMUR_rhht_create();
+extern PsmAddress	ARMUR_rhht_retrieve_key(PsmAddress rhhtAddr, char *key);
+extern int		ARMUR_rhht_insert(PsmAddress rhhtAddr, char *key, PsmAddress value);
+extern void		ARMUR_rhht_del_key(PsmAddress rhhtAddr, void *key);
+extern void		ARMUR_rhht_release(PsmAddress rhhtAddr);
 
 #endif /* _ARMUR_RHHT_H_ */

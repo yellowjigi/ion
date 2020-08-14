@@ -48,11 +48,12 @@
 #include "adm_ionsec_admin.h"
 #include "adm_ion_ltp_admin.h"
 #include "adm_ltp_agent.h"
-#include "adm_ion_bpcp.h"//jigi, 03/31/20
-#include "adm_ion_bpsource.h"//jigi, 04/06/20
-//#include "adm_kplo_ls.h"//jigi, 04/07/20, commented out, 05/18/20
-#include "adm_kplo_telecommand.h"//jigi, 04/16/20
-//#include "adm_kplo_upgrade.h"//jigi, 04/17/20, commented out, 05/18/20
+//#include "adm_ion_bpcp.h"	//jigi, 03/31/20
+//#include "adm_ion_bpsource.h"	//jigi, 04/06/20
+//#include "adm_ls.h"		//jigi, 04/07/20
+//#include "adm_telecommand.h"	//jigi, 04/16/20
+//#include "adm_upgrade.h"	//jigi, 04/17/20
+#include "adm_ion_armur.h"	//jigi, 08/12/20
 
 vector_t g_adm_info;
 
@@ -573,6 +574,30 @@ ari_t* adm_build_ari(amp_type_e type, uint8_t has_parms, vec_idx_t nn, uvast id)
 	return result;
 }
 
+//JIGI, 08/13/20
+ari_t	*adm_build_ari_lit(amp_type_e type, void *value)
+{
+	ari_t	*result = ari_create(AMP_TYPE_LIT);
+	CHKNULL(result);
+
+	result->as_lit.type = type;
+	result->as_lit.flags = 0;
+	switch (type)
+	{
+	case AMP_TYPE_INT:	result->as_lit.value.as_int = *((int32_t *)value);	break;
+	case AMP_TYPE_UINT:	result->as_lit.value.as_uint = *((uint32_t *)value);	break;
+	case AMP_TYPE_VAST:	result->as_lit.value.as_vast = *((vast *)value);	break;
+	case AMP_TYPE_UVAST:	result->as_lit.value.as_uvast = *((uvast *)value);	break;
+	case AMP_TYPE_REAL32:	result->as_lit.value.as_real32 = *((float *)value);	break;
+	case AMP_TYPE_REAL64:	result->as_lit.value.as_real64 = *((double *)value);	break;
+	default:
+		ari_release(result, 1);
+		result = NULL;
+	}
+
+	return result;
+}
+
 
 ari_t *adm_build_ari_parm_6(amp_type_e type, vec_idx_t nn, uvast id, tnv_t *p1, tnv_t *p2, tnv_t* p3, tnv_t *p4, tnv_t *p5, tnv_t *p6)
 {
@@ -669,11 +694,12 @@ void adm_init()
 	dtn_ion_ionsecadmin_init();
 	dtn_ion_ltpadmin_init();
 	dtn_ltp_agent_init();
-	dtn_ion_bpcp_init();//jigi
-	dtn_ion_bpsource_init();//jigi
-	//dtn_kplo_ls_init();//jigi
-	//dtn_kplo_telecommand_init();//jigi//JIGI
-	//dtn_kplo_upgrade_init();//jigi
+	//dtn_ion_bpcp_init();
+	//dtn_ion_bpsource_init();
+	//dtn_ls_init();
+	//dtn_telecommand_init();
+	//dtn_upgrade_init();
+	dtn_ion_armur_init();
 
 	AMP_DEBUG_EXIT("adm_init","->.", NULL);
 }

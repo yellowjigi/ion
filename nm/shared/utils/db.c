@@ -550,10 +550,14 @@ int db_init(char *name)
 	gVDB.tags = vec_create(DB_MAX_NN, vec_blob_del, vec_blob_comp, vec_blob_copy, 0, &success);
 	CHKUSR(success == AMP_OK, success);
 
-	adm_init();
-
-
+	/*	CODE MODIFIED FROM HERE		jigi	*/
+	/*	WHAT	: change the order of calls	*/
+	/*	REASON	: so that persistent objects
+	 *		can be added after init. of DB.	*/
+	//adm_init();
 	success = db_read_objs(name);
+	adm_init();
+	/*	CODE MODIFIED UNTIL HERE	jigi	*/
 
 	num = vdb_obj_init(gDB.ctrls, vdb_db_init_ctrl);
 	AMP_DEBUG_ALWAYS("vdb_init", "Added %d Controls from DB.", num);

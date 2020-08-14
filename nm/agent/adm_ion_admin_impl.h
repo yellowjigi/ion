@@ -45,7 +45,6 @@ void name_adm_init_agent();
 
 tnv_t *dtn_ion_ionadmin_ctrl_node_contact_change(eid_t *def_mgr, tnvc_t *parms, int8_t *status);	/* ETRI & HYU */
 
-/*             TODO              */
 /*   STOP CUSTOM FUNCTIONS HERE  */
 
 void dtn_ion_ionadmin_setup();

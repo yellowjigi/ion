@@ -1492,14 +1492,6 @@ tnv_t *amp_agent_ctrl_gen_rpts(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		for(ac_it = vecit_first(&(ids->values)); vecit_valid(ac_it); ac_it = vecit_next(ac_it))
 		{
 			ari_t *cur_id = vecit_data(ac_it);
-			printf("cur_id->type: %u.\n", cur_id->type);//jigi
-			printf("cur_id->as_reg.flags: %hhu.\n", cur_id->as_reg.flags);
-			printf("cur_id->as_reg.nn_idx: %u.\n", cur_id->as_reg.nn_idx);
-			printf("cur_id->as_reg.iss_idx: %u.\n", cur_id->as_reg.iss_idx);
-			printf("cur_id->as_reg.tag_idx: %u.\n", cur_id->as_reg.tag_idx);
-			printf("cur_id->as_reg.name.value: %hhu.\n", *cur_id->as_reg.name.value);
-			printf("cur_id->as_reg.name.length: %zu.\n", cur_id->as_reg.name.length);
-			printf("vec_num_entries(cur_id->as_reg.parms.values): %d.\n", vec_num_entries(cur_id->as_reg.parms.values));
 			rpt_t *rpt = rpt_create(ari_copy_ptr(cur_id), getCtime(), NULL);
 
 			if(cur_id->type == AMP_TYPE_RPTTPL)
