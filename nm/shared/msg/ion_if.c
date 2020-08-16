@@ -190,7 +190,8 @@ blob_t *iif_receive(iif_t *iif, msg_metadata_t *meta, int timeout, int *success)
     ZcoReader reader;
     int content_len;
     Sdr sdr = bp_get_sdr();
-    blob_t *result;
+    //blob_t *result;
+    blob_t *result = NULL;//DBG
     int status;
 
 

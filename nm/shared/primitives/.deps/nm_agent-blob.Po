@@ -149,6 +149,9 @@ nm/shared/primitives/nm_agent-blob.o: nm/shared/primitives/blob.c \
  nm/shared/primitives/../adm/../primitives/../utils/utils.h \
  bp/include/bp.h ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h nm/shared/primitives/../adm/../primitives/table.h \
+ nm/shared/primitives/../adm/../primitives/rules.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/ctrl.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/expr.h \
  nm/shared/primitives/../primitives/blob.h
 
 /usr/include/stdc-predef.h:
@@ -546,5 +549,11 @@ ici/include/lyst.h:
 ici/include/smlist.h:
 
 nm/shared/primitives/../adm/../primitives/table.h:
+
+nm/shared/primitives/../adm/../primitives/rules.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/ctrl.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/expr.h:
 
 nm/shared/primitives/../primitives/blob.h:

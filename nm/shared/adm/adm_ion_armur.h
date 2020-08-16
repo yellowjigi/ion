@@ -112,17 +112,17 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |wait                 |45c119014100  |Trigger ARMUR and wait for the downloa|       |
+ * |wait                 |458119014100  |Trigger ARMUR and wait for the downloa|       |
  * |                     |              |d to be finished.                     |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |install              |45c119014101  |Extract the binary archive and install|       |
+ * |install              |458119014101  |Extract the binary archive and install|       |
  * |                     |              |the images.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |restart              |45c119014102  |Restart daemon applications according |       |
+ * |restart              |458119014102  |Restart daemon applications according |       |
  * |                     |              |to the images on the restart queues fr|       |
  * |                     |              |om ARMUR VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |45c119014103  |Generate a report indicating the resul|       |
+ * |report               |458119014103  |Generate a report indicating the resul|       |
  * |                     |              |t of the remote software update.      |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */

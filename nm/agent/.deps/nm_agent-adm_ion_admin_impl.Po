@@ -147,6 +147,9 @@ nm/agent/nm_agent-adm_ion_admin_impl.o: nm/agent/adm_ion_admin_impl.c \
  nm/agent/../shared/adm/../primitives/../utils/utils.h bp/include/bp.h \
  ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h nm/agent/../shared/adm/../primitives/table.h \
+ nm/agent/../shared/adm/../primitives/rules.h \
+ nm/agent/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/agent/../shared/adm/../primitives/../primitives/expr.h \
  nm/agent/adm_ion_admin_impl.h nm/agent/../shared/utils/utils.h \
  nm/agent/../shared/primitives/ctrl.h \
  nm/agent/../shared/primitives/table.h \
@@ -551,6 +554,12 @@ ici/include/lyst.h:
 ici/include/smlist.h:
 
 nm/agent/../shared/adm/../primitives/table.h:
+
+nm/agent/../shared/adm/../primitives/rules.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/expr.h:
 
 nm/agent/adm_ion_admin_impl.h:
 

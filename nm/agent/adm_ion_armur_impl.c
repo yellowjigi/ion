@@ -134,6 +134,32 @@ tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * +-------------------------------------------------------------------------+
 	 */
 
+	Sdr	sdr = getIonsdr();
+
+	if (armurAttach() < 0)
+	{
+		return result;
+	}
+
+	if (cfdpAttach() < 0)
+	{
+		return result;
+	}
+
+	CHKNULL(sdr_begin_xn(sdr));
+	if (sdr_list_first(sdr, (getCfdpConstants())->events) == 0)
+	{
+		/*	No CFDP PDUs have yet been received until now.
+		 *	There is nothing to do and ARMUR is still idle.
+		 *	To avoid deadlock, we will exit.			*/
+		sdr_exit_xn(sdr);
+		*status = CTRL_SUCCESS;
+		printf("SBR_IDLE executed.\n");//dbg
+		return result;
+	}
+	sdr_exit_xn(sdr);
+
+	/*	Check CFDP events and block as necessary.		*/
 	if (armurWait() == 0)
 	{
 		*status = CTRL_SUCCESS;

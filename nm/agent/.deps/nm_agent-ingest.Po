@@ -168,6 +168,7 @@ nm/agent/nm_agent-ingest.o: nm/agent/ingest.c /usr/include/stdc-predef.h \
  nm/agent/../shared/adm/../primitives/table.h \
  nm/agent/../shared/adm/../primitives/../utils/nm_types.h \
  nm/agent/../shared/adm/../primitives/../utils/vector.h \
+ nm/agent/../shared/adm/../primitives/rules.h \
  nm/agent/../shared/utils/db.h nm/agent/../shared/primitives/ctrl.h
 
 /usr/include/stdc-predef.h:
@@ -621,6 +622,8 @@ nm/agent/../shared/adm/../primitives/table.h:
 nm/agent/../shared/adm/../primitives/../utils/nm_types.h:
 
 nm/agent/../shared/adm/../primitives/../utils/vector.h:
+
+nm/agent/../shared/adm/../primitives/rules.h:
 
 nm/agent/../shared/utils/db.h:
 

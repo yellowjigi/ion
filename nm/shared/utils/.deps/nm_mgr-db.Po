@@ -152,7 +152,8 @@ nm/shared/utils/nm_mgr-db.o: nm/shared/utils/db.c \
  nm/shared/utils/../adm/../primitives/edd_var.h \
  nm/shared/utils/../adm/../primitives/report.h \
  nm/shared/utils/../adm/../primitives/ctrl.h \
- nm/shared/utils/../adm/../primitives/table.h
+ nm/shared/utils/../adm/../primitives/table.h \
+ nm/shared/utils/../adm/../primitives/rules.h
 
 /usr/include/stdc-predef.h:
 
@@ -573,3 +574,5 @@ nm/shared/utils/../adm/../primitives/report.h:
 nm/shared/utils/../adm/../primitives/ctrl.h:
 
 nm/shared/utils/../adm/../primitives/table.h:
+
+nm/shared/utils/../adm/../primitives/rules.h:

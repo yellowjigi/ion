@@ -538,6 +538,78 @@ int adm_add_var_from_tnv(ari_t *id, tnv_t value)
 	return ((rh_code == RH_OK) || (rh_code == RH_DUPLICATE)) ? AMP_OK : AMP_FAIL;
 }
 
+/******************************************************************************
+ * by jigi
+ * \par Function Name: adm_add_sbr
+ *
+ * \par Registers a pre-configured ADM SBR with the local AMP actor.
+ *
+ * \retval AMP STATUS CODE
+ *
+ * \param[in] id        The identifier for this SBR.
+ * \param[in] contents  The ordered IDs of the report.
+ *
+ * \par Notes:
+ *   - Due to the current design of the AMP rule, ARI, EXPR and AC items from
+ *     the given parameters will be deep-copied, which requires release of the
+ *     original pointers of these items. We handle release inside this function.
+ *
+ *
+ * Modification History:
+ *  MM/DD/YY  AUTHOR         DESCRIPTION
+ *  --------  ------------   ---------------------------------------------
+ *  08/16/20  jigi           initial implementation
+ *****************************************************************************/
+int	adm_add_sbr(ari_t *id, uvast start, expr_t *cond, uvast eval, uvast fire,
+		ac_t *action)
+{
+	rule_t		*sbr = NULL;
+	sbr_def_t	def;
+	int		rh_code;
+
+	if (id == NULL || cond == NULL || action == NULL)
+	{
+		ari_release(id, 1);
+		expr_release(cond, 1);
+		ac_release(action, 1);
+		return AMP_FAIL;
+	}
+
+	def.expr = expr_copy(*cond);
+	def.max_eval = eval;
+	def.max_fire = fire;
+
+	if ((sbr = rule_create_sbr(*id, start, def, ac_copy(action))) == NULL)
+	{
+		ari_release(id, 1);
+		expr_release(cond, 1);
+		ac_release(action, 1);
+		AMP_DEBUG_ALWAYS("adm_add_sbr", "Unable to create SBR structure.", NULL);
+		return AMP_FAIL;
+	}
+
+	/*	Rule has been defined from the copied objects.
+	 *	These initially allocated pointers are no longer needed.	*/
+	ari_release(id, 1);
+	expr_release(cond, 1);
+	ac_release(action, 1);
+
+	if ((rh_code = VDB_ADD_RULE(&(sbr->id), sbr)) != RH_OK)
+	{
+		rule_release(sbr, 1);
+		if (rh_code == RH_DUPLICATE)
+		{
+			AMP_DEBUG_WARN("adm_add_sbr", "Ignoring duplicate item.", NULL);
+		}
+		return AMP_FAIL;
+	}
+
+	/*	Successfully added to the SBR VDB.		*/
+	//gAgentInstr.num_sbrs++; //Not here, because adm.c is designed to be shared.
+	//db_persist_rule(sbr); //There is a bug related to CBOR encoding.
+
+	return AMP_OK;
+}
 
 // Takes over name and parms, no matter what.
 ari_t* adm_build_ari(amp_type_e type, uint8_t has_parms, vec_idx_t nn, uvast id)
@@ -574,25 +646,16 @@ ari_t* adm_build_ari(amp_type_e type, uint8_t has_parms, vec_idx_t nn, uvast id)
 	return result;
 }
 
-//JIGI, 08/13/20
-ari_t	*adm_build_ari_lit(amp_type_e type, void *value)
+//JIGI, 08/16/20
+ari_t	*adm_build_ari_lit_uint(uint32_t value)
 {
-	ari_t	*result = ari_create(AMP_TYPE_LIT);
-	CHKNULL(result);
+	ari_t	*result;
 
-	result->as_lit.type = type;
-	result->as_lit.flags = 0;
-	switch (type)
+	if ((result = ari_create(AMP_TYPE_LIT)) != NULL)
 	{
-	case AMP_TYPE_INT:	result->as_lit.value.as_int = *((int32_t *)value);	break;
-	case AMP_TYPE_UINT:	result->as_lit.value.as_uint = *((uint32_t *)value);	break;
-	case AMP_TYPE_VAST:	result->as_lit.value.as_vast = *((vast *)value);	break;
-	case AMP_TYPE_UVAST:	result->as_lit.value.as_uvast = *((uvast *)value);	break;
-	case AMP_TYPE_REAL32:	result->as_lit.value.as_real32 = *((float *)value);	break;
-	case AMP_TYPE_REAL64:	result->as_lit.value.as_real64 = *((double *)value);	break;
-	default:
-		ari_release(result, 1);
-		result = NULL;
+		result->as_lit.type = AMP_TYPE_UINT;
+		result->as_lit.value.as_uint = value;
+		result->as_lit.flags = 0;
 	}
 
 	return result;

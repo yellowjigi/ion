@@ -152,6 +152,9 @@ nm/shared/primitives/nm_agent-expr.o: nm/shared/primitives/expr.c \
  nm/shared/primitives/../adm/../primitives/../utils/../primitives/blob.h \
  nm/shared/primitives/../adm/../primitives/table.h \
  nm/shared/primitives/../adm/../primitives/../utils/vector.h \
+ nm/shared/primitives/../adm/../primitives/rules.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/ctrl.h \
+ nm/shared/primitives/../adm/../primitives/../primitives/expr.h \
  nm/shared/primitives/../utils/db.h
 
 /usr/include/stdc-predef.h:
@@ -561,5 +564,11 @@ nm/shared/primitives/../adm/../primitives/../utils/../primitives/blob.h:
 nm/shared/primitives/../adm/../primitives/table.h:
 
 nm/shared/primitives/../adm/../primitives/../utils/vector.h:
+
+nm/shared/primitives/../adm/../primitives/rules.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/ctrl.h:
+
+nm/shared/primitives/../adm/../primitives/../primitives/expr.h:
 
 nm/shared/primitives/../utils/db.h:

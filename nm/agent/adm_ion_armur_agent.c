@@ -25,9 +25,8 @@
 #include "adm_ion_armur_impl.h"
 #include "rda.h"
 
-#include "instr.h"
-#include "../utils/armur.h"
 #include "../shared/adm/adm_amp_agent.h"
+#include "instr.h"
 
 
 #define _HAVE_DTN_ION_ARMUR_ADM_
@@ -114,33 +113,21 @@ void dtn_ion_armur_init_tblt()
 
 void dtn_ion_armur_init_sbr()
 {
-	rule_t		*sbr = NULL;
-	sbr_def_t	def;
-	ac_t		action;
-	ari_t		*id = NULL;
-	expr_t		*state = NULL;
-	ac_t		*ac = NULL;
-	uint32_t	val;
+	ari_t	*id = NULL;
+	expr_t	*state = NULL;
+	ac_t	*action = NULL;
 	
 	id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_IDLE);
-
-	memset(&def, 0, sizeof(sbr_def_t));
 	state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT));
-	val = ARMUR_STAT_IDLE;
-	expr_add_item(state, adm_build_ari_lit(AMP_TYPE_UINT, &val));
+	expr_add_item(state, adm_build_ari_lit_uint(0));
 	expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	def.expr = *state;
-	def.max_eval = 0;
-	def.max_fire = 1;
-
-	ac = ac_create();
-	ac_insert(ac, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT));
-	action = *ac;
-
-	sbr = rule_create_sbr(*id, 0, def, action);
-	gAgentInstr.num_sbrs++;
-	db_persist_rule(sbr);
+	action = ac_create();
+	ac_insert(action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT));
+	if (adm_add_sbr(id, 0, state, 0, 1, action) == AMP_OK)
+	{
+		gAgentInstr.num_sbrs++;
+	}
 }
 
 #endif // _HAVE_DTN_ION_ARMUR_ADM_

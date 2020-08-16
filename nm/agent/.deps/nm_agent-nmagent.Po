@@ -147,6 +147,9 @@ nm/agent/nm_agent-nmagent.o: nm/agent/nmagent.c \
  nm/agent/../shared/adm/../primitives/../utils/utils.h bp/include/bp.h \
  ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h nm/agent/../shared/adm/../primitives/table.h \
+ nm/agent/../shared/adm/../primitives/rules.h \
+ nm/agent/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/agent/../shared/adm/../primitives/../primitives/expr.h \
  nm/agent/../shared/utils/db.h nm/agent/nmagent.h \
  nm/agent/../shared/utils/nm_types.h nm/agent/../shared/msg/ion_if.h \
  nm/agent/../shared/msg/msg.h nm/agent/../shared/msg/../utils/nm_types.h \
@@ -154,13 +157,9 @@ nm/agent/nm_agent-nmagent.o: nm/agent/nmagent.c \
  nm/agent/../shared/msg/../primitives/ari.h \
  nm/agent/../shared/msg/../primitives/report.h \
  nm/agent/../shared/primitives/ari.h \
- nm/agent/../shared/primitives/rules.h \
- nm/agent/../shared/primitives/../utils/nm_types.h \
- nm/agent/../shared/primitives/../utils/db.h \
- nm/agent/../shared/primitives/../primitives/ctrl.h \
- nm/agent/../shared/primitives/../primitives/expr.h \
- nm/agent/../shared/msg/msg.h nm/agent/ingest.h nm/agent/rda.h \
- nm/agent/../shared/primitives/report.h nm/agent/instr.h
+ nm/agent/../shared/primitives/rules.h nm/agent/../shared/msg/msg.h \
+ nm/agent/ingest.h nm/agent/rda.h nm/agent/../shared/primitives/report.h \
+ nm/agent/instr.h
 
 /usr/include/stdc-predef.h:
 
@@ -558,6 +557,12 @@ ici/include/smlist.h:
 
 nm/agent/../shared/adm/../primitives/table.h:
 
+nm/agent/../shared/adm/../primitives/rules.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/expr.h:
+
 nm/agent/../shared/utils/db.h:
 
 nm/agent/nmagent.h:
@@ -579,14 +584,6 @@ nm/agent/../shared/msg/../primitives/report.h:
 nm/agent/../shared/primitives/ari.h:
 
 nm/agent/../shared/primitives/rules.h:
-
-nm/agent/../shared/primitives/../utils/nm_types.h:
-
-nm/agent/../shared/primitives/../utils/db.h:
-
-nm/agent/../shared/primitives/../primitives/ctrl.h:
-
-nm/agent/../shared/primitives/../primitives/expr.h:
 
 nm/agent/../shared/msg/msg.h:
 

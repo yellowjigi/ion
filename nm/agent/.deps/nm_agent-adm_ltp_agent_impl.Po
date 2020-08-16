@@ -154,6 +154,9 @@ nm/agent/nm_agent-adm_ltp_agent_impl.o: nm/agent/adm_ltp_agent_impl.c \
  ici/include/psm.h \
  nm/agent/../shared/adm/../primitives/../utils/../primitives/blob.h \
  nm/agent/../shared/adm/../primitives/table.h \
+ nm/agent/../shared/adm/../primitives/rules.h \
+ nm/agent/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/agent/../shared/adm/../primitives/../primitives/expr.h \
  nm/agent/adm_ltp_agent_impl.h ltp/library/ltpnm.h \
  nm/agent/../shared/utils/utils.h nm/agent/../shared/primitives/ctrl.h \
  nm/agent/../shared/primitives/tnv.h
@@ -573,6 +576,12 @@ ici/include/psm.h:
 nm/agent/../shared/adm/../primitives/../utils/../primitives/blob.h:
 
 nm/agent/../shared/adm/../primitives/table.h:
+
+nm/agent/../shared/adm/../primitives/rules.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/expr.h:
 
 nm/agent/adm_ltp_agent_impl.h:
 

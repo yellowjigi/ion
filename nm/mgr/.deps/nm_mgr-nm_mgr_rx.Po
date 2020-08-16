@@ -157,6 +157,9 @@ nm/mgr/nm_mgr-nm_mgr_rx.o: nm/mgr/nm_mgr_rx.c /usr/include/stdc-predef.h \
  nm/mgr/../shared/adm/../primitives/../utils/../primitives/blob.h \
  nm/mgr/../shared/adm/../primitives/table.h \
  nm/mgr/../shared/adm/../primitives/../utils/vector.h \
+ nm/mgr/../shared/adm/../primitives/rules.h \
+ nm/mgr/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/mgr/../shared/adm/../primitives/../primitives/expr.h \
  nm/mgr/../shared/primitives/report.h nm/mgr/../shared/msg/msg.h \
  nm/mgr/agents.h nm/mgr/../shared/utils/utils.h \
  nm/mgr/../shared/utils/vector.h nm/mgr/../shared/utils/debug.h
@@ -584,6 +587,12 @@ nm/mgr/../shared/adm/../primitives/../utils/../primitives/blob.h:
 nm/mgr/../shared/adm/../primitives/table.h:
 
 nm/mgr/../shared/adm/../primitives/../utils/vector.h:
+
+nm/mgr/../shared/adm/../primitives/rules.h:
+
+nm/mgr/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/mgr/../shared/adm/../primitives/../primitives/expr.h:
 
 nm/mgr/../shared/primitives/report.h:
 

@@ -143,6 +143,9 @@ nm/shared/adm/nm_mgr-adm.o: nm/shared/adm/adm.c \
  nm/shared/adm/../primitives/../utils/utils.h bp/include/bp.h \
  ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h nm/shared/adm/../primitives/table.h \
+ nm/shared/adm/../primitives/rules.h \
+ nm/shared/adm/../primitives/../primitives/ctrl.h \
+ nm/shared/adm/../primitives/../primitives/expr.h \
  nm/shared/adm/../utils/utils.h nm/shared/adm/../utils/db.h \
  nm/shared/adm/../primitives/expr.h nm/shared/adm/adm_amp_agent.h \
  nm/shared/adm/adm_bp_agent.h nm/shared/adm/adm_sbsp.h \
@@ -546,6 +549,12 @@ ici/include/lyst.h:
 ici/include/smlist.h:
 
 nm/shared/adm/../primitives/table.h:
+
+nm/shared/adm/../primitives/rules.h:
+
+nm/shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/shared/adm/../primitives/../primitives/expr.h:
 
 nm/shared/adm/../utils/utils.h:
 

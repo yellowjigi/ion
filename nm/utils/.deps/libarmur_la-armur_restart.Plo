@@ -1,8 +1,7 @@
 nm/utils/libarmur_la-armur_restart.lo: nm/utils/armur_restart.c \
- /usr/include/stdc-predef.h config.h nm/utils/armur_restart.h \
- nm/utils/armur.h ici/include/rfx.h ici/include/ion.h \
- ici/include/platform.h /usr/include/time.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ /usr/include/stdc-predef.h config.h nm/utils/armur.h ici/include/rfx.h \
+ ici/include/ion.h ici/include/platform.h /usr/include/time.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
@@ -124,13 +123,11 @@ nm/utils/libarmur_la-armur_restart.lo: nm/utils/armur_restart.c \
  ici/include/smlist.h ici/include/ion.h bp/library/saga.h \
  ltp/library/ltpP.h ltp/include/ltp.h ici/include/sdrhash.h \
  cfdp/library/cfdpP.h cfdp/include/cfdp.h cfdp/include/cfdpops.h \
- nm/utils/armur_rhht.h
+ nm/utils/armur_restart.h nm/utils/armur_rhht.h
 
 /usr/include/stdc-predef.h:
 
 config.h:
-
-nm/utils/armur_restart.h:
 
 nm/utils/armur.h:
 
@@ -491,5 +488,7 @@ cfdp/library/cfdpP.h:
 cfdp/include/cfdp.h:
 
 cfdp/include/cfdpops.h:
+
+nm/utils/armur_restart.h:
 
 nm/utils/armur_rhht.h:

@@ -1,6 +1,7 @@
 // 2020-07-20
 // jigi
 
+#include "armur.h"
 #include "armur_restart.h"
 #include "armur_rhht.h"
 

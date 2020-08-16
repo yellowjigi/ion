@@ -150,6 +150,9 @@ nm/agent/nm_agent-adm_bp_agent_impl.o: nm/agent/adm_bp_agent_impl.c \
  nm/agent/../shared/adm/../primitives/ctrl.h \
  nm/agent/../shared/adm/../primitives/../utils/utils.h \
  nm/agent/../shared/adm/../primitives/table.h \
+ nm/agent/../shared/adm/../primitives/rules.h \
+ nm/agent/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/agent/../shared/adm/../primitives/../primitives/expr.h \
  nm/agent/adm_bp_agent_impl.h nm/agent/../shared/utils/utils.h \
  nm/agent/../shared/primitives/ctrl.h \
  nm/agent/../shared/primitives/table.h \
@@ -564,6 +567,12 @@ nm/agent/../shared/adm/../primitives/ctrl.h:
 nm/agent/../shared/adm/../primitives/../utils/utils.h:
 
 nm/agent/../shared/adm/../primitives/table.h:
+
+nm/agent/../shared/adm/../primitives/rules.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/agent/../shared/adm/../primitives/../primitives/expr.h:
 
 nm/agent/adm_bp_agent_impl.h:
 

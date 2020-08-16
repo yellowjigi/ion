@@ -36,7 +36,7 @@
 #define AMP_DEBUG_LVL_WARN 3 /** Warning and above debugging */
 #define AMP_DEBUG_LVL_ERR  4 /** Error and above debugging */
 
-#define AMP_DEBUG_LVL	AMP_DEBUG_LVL_WARN
+#define AMP_DEBUG_LVL	AMP_DEBUG_LVL_ERR
 
 #define	AMP_GMSG_BUFLEN	256
 #if AMP_DEBUGGING == 1

@@ -157,6 +157,9 @@ nm/mgr/nm_mgr-metadata.o: nm/mgr/metadata.c /usr/include/stdc-predef.h \
  nm/mgr/../shared/adm/../primitives/../utils/../primitives/blob.h \
  nm/mgr/../shared/adm/../primitives/table.h \
  nm/mgr/../shared/adm/../primitives/../utils/vector.h \
+ nm/mgr/../shared/adm/../primitives/rules.h \
+ nm/mgr/../shared/adm/../primitives/../primitives/ctrl.h \
+ nm/mgr/../shared/adm/../primitives/../primitives/expr.h \
  nm/mgr/../shared/primitives/report.h nm/mgr/../shared/msg/msg.h \
  nm/mgr/../shared/primitives/ari.h
 
@@ -585,6 +588,12 @@ nm/mgr/../shared/adm/../primitives/../utils/../primitives/blob.h:
 nm/mgr/../shared/adm/../primitives/table.h:
 
 nm/mgr/../shared/adm/../primitives/../utils/vector.h:
+
+nm/mgr/../shared/adm/../primitives/rules.h:
+
+nm/mgr/../shared/adm/../primitives/../primitives/ctrl.h:
+
+nm/mgr/../shared/adm/../primitives/../primitives/expr.h:
 
 nm/mgr/../shared/primitives/report.h:
 

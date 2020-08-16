@@ -147,6 +147,9 @@ nm/shared/msg/nm_agent-msg.o: nm/shared/msg/msg.c \
  nm/shared/msg/../adm/../primitives/../utils/utils.h bp/include/bp.h \
  ici/include/psm.h ici/include/zco.h ici/include/lyst.h \
  ici/include/smlist.h nm/shared/msg/../adm/../primitives/table.h \
+ nm/shared/msg/../adm/../primitives/rules.h \
+ nm/shared/msg/../adm/../primitives/../primitives/ctrl.h \
+ nm/shared/msg/../adm/../primitives/../primitives/expr.h \
  nm/shared/msg/../msg/msg.h nm/shared/msg/../msg/../utils/nm_types.h \
  nm/shared/msg/../msg/../utils/vector.h \
  nm/shared/msg/../msg/../primitives/ari.h \
@@ -550,6 +553,12 @@ ici/include/lyst.h:
 ici/include/smlist.h:
 
 nm/shared/msg/../adm/../primitives/table.h:
+
+nm/shared/msg/../adm/../primitives/rules.h:
+
+nm/shared/msg/../adm/../primitives/../primitives/ctrl.h:
+
+nm/shared/msg/../adm/../primitives/../primitives/expr.h:
 
 nm/shared/msg/../msg/msg.h:
 
