@@ -37,6 +37,9 @@ void dtn_ion_armur_setup()
 	 * |START CUSTOM FUNCTION setup BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+
+	 armurAttach();
+
 	/*
 	 * +-------------------------------------------------------------------------+
 	 * |STOP CUSTOM FUNCTION setup BODY
@@ -108,6 +111,7 @@ tnv_t *dtn_ion_armur_get_armur_stat(tnvc_t *parms)
 
 	armurnm_state_get(&snapshot);
 	result = tnv_from_uint(snapshot.currentStat);
+	//result = tnv_from_byte(snapshot.currentStat);
 
 	/*
 	 * +-------------------------------------------------------------------------+
@@ -135,6 +139,8 @@ tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 */
 
 	Sdr	sdr = getIonsdr();
+
+	printf("ctrl_wait in.\n");//dbg
 
 	if (armurAttach() < 0)
 	{
