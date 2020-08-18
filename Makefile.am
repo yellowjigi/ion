@@ -2115,7 +2115,11 @@ ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/
 
 armurcflags = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils
 
-armurbin = armuradmin
+ION_LIBS = libici.la libbp.la libltp.la libcfdp.la
+
+armurbin = \
+	armuradmin \
+	armurrestart
 
 armurlib = libarmur.la
 
@@ -2124,10 +2128,9 @@ armurlib = libarmur.la
 libarmur_la_SOURCES = \
 	nm/utils/libarmur.c \
 	nm/utils/libarmurnm.c \
-	nm/utils/armur_restart.c \
 	nm/utils/armur_rhht.c
 libarmur_la_CFLAGS = $(armurcflags) $(AM_CFLAGS)
-libarmur_la_LIBADD = libici.la libbp.la libltp.la libcfdp.la -larchive
+libarmur_la_LIBADD = $(ION_LIBS) -larchive
 #armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
 
 # --- Utility Programs --- #
@@ -2135,6 +2138,10 @@ libarmur_la_LIBADD = libici.la libbp.la libltp.la libcfdp.la -larchive
 armuradmin_SOURCES = nm/utils/armuradmin.c
 armuradmin_LDADD = libarmur.la libici.la $(LIBOBJS)
 armuradmin_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+
+armurrestart_SOURCES = nm/utils/armur_restart.c
+armurrestart_LDADD = libarmur.la $(ION_LIBS) $(LIBOBJS)
+armurrestart_CFLAGS = $(armurcflags) $(AM_CFLAGS)
 
 ##########################
 #

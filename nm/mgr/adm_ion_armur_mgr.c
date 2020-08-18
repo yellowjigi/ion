@@ -51,7 +51,6 @@ void dtn_ion_armur_init()
 	dtn_ion_armur_init_mac();
 	dtn_ion_armur_init_rpttpl();
 	dtn_ion_armur_init_tblt();
-	dtn_ion_armur_init_sbr();
 }
 
 void dtn_ion_armur_init_meta()
@@ -146,11 +145,6 @@ void dtn_ion_armur_init_rpttpl()
 }
 
 void dtn_ion_armur_init_tblt()
-{
-
-}
-
-void dtn_ion_armur_init_sbr()
 {
 
 }

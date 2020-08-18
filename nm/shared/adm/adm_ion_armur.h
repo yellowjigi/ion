@@ -179,6 +179,8 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_ARMUR_SBR_IDLE 0x00
+#define DTN_ION_ARMUR_SBR_DOWNLOADED 0x01
+#define DTN_ION_ARMUR_SBR_INSTALLED 0x02
 
 
 /* Initialization functions. */

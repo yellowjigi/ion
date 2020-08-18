@@ -226,10 +226,9 @@ am__v_lt_1 =
 libams_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libams_la_CFLAGS) \
 	$(CFLAGS) $(libams_la_LDFLAGS) $(LDFLAGS) -o $@
-libarmur_la_DEPENDENCIES = libici.la libbp.la libltp.la libcfdp.la
+libarmur_la_DEPENDENCIES = $(ION_LIBS)
 am_libarmur_la_OBJECTS = nm/utils/libarmur_la-libarmur.lo \
 	nm/utils/libarmur_la-libarmurnm.lo \
-	nm/utils/libarmur_la-armur_restart.lo \
 	nm/utils/libarmur_la-armur_rhht.lo
 libarmur_la_OBJECTS = $(am_libarmur_la_OBJECTS)
 libarmur_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -460,7 +459,7 @@ am__EXEEXT_12 = amsd$(EXEEXT) amshello$(EXEEXT) amsshell$(EXEEXT) \
 	ramsgate$(EXEEXT)
 am__EXEEXT_13 = cfdpadmin$(EXEEXT) cfdpclock$(EXEEXT) bputa$(EXEEXT) \
 	cfdptest$(EXEEXT) bpcp$(EXEEXT) bpcpd$(EXEEXT) tcputa$(EXEEXT)
-am__EXEEXT_14 = armuradmin$(EXEEXT)
+am__EXEEXT_14 = armuradmin$(EXEEXT) armurrestart$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__acsadmin_SOURCES_DIST = bp/utils/acsadmin.c
 am_acsadmin_OBJECTS =  \
@@ -545,6 +544,13 @@ armuradmin_OBJECTS = $(am_armuradmin_OBJECTS)
 armuradmin_DEPENDENCIES = libarmur.la libici.la $(LIBOBJS)
 armuradmin_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(armuradmin_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_armurrestart_OBJECTS =  \
+	nm/utils/armurrestart-armur_restart.$(OBJEXT)
+armurrestart_OBJECTS = $(am_armurrestart_OBJECTS)
+armurrestart_DEPENDENCIES = libarmur.la $(ION_LIBS) $(LIBOBJS)
+armurrestart_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(armurrestart_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_beacon_OBJECTS = bp/ipnd/beacon-beacon.$(OBJEXT)
 beacon_OBJECTS = $(am_beacon_OBJECTS)
@@ -1524,45 +1530,46 @@ SOURCES = $(libams_la_SOURCES) $(libarmur_la_SOURCES) \
 	$(acslist_SOURCES) $(amsbenchr_SOURCES) $(amsbenchs_SOURCES) \
 	$(amsd_SOURCES) $(amshello_SOURCES) $(amslog_SOURCES) \
 	$(amslogprt_SOURCES) $(amsmib_SOURCES) $(amsshell_SOURCES) \
-	$(amsstop_SOURCES) $(armuradmin_SOURCES) $(beacon_SOURCES) \
-	$(bibeclo_SOURCES) $(bpadmin_SOURCES) $(bpcancel_SOURCES) \
-	$(bpchat_SOURCES) $(bpclm_SOURCES) $(bpclock_SOURCES) \
-	$(bpcounter_SOURCES) $(bpcp_SOURCES) $(bpcpd_SOURCES) \
-	$(bpcrash_SOURCES) $(bpdriver_SOURCES) $(bpecho_SOURCES) \
-	$(bping_SOURCES) $(bplist_SOURCES) $(bpnmtest_SOURCES) \
-	$(bprecvfile_SOURCES) $(bpsecadmin_SOURCES) \
-	$(bpsendfile_SOURCES) $(bpsink_SOURCES) $(bpsource_SOURCES) \
-	$(bpstats_SOURCES) $(bpstats2_SOURCES) $(bptrace_SOURCES) \
-	$(bptransit_SOURCES) $(bputa_SOURCES) $(brsccla_SOURCES) \
-	$(brsscla_SOURCES) $(bssStreamingApp_SOURCES) \
-	$(bsscounter_SOURCES) $(bssdriver_SOURCES) \
-	$(bsspadmin_SOURCES) $(bsspcli_SOURCES) $(bsspclo_SOURCES) \
-	$(bsspclock_SOURCES) $(bssrecv_SOURCES) $(cfdpadmin_SOURCES) \
-	$(cfdpclock_SOURCES) $(cfdptest_SOURCES) $(cgrfetch_SOURCES) \
-	$(dccpcli_SOURCES) $(dccpclo_SOURCES) $(dccplsi_SOURCES) \
-	$(dccplso_SOURCES) $(dgr2file_SOURCES) $(dgrcli_SOURCES) \
-	$(dgrclo_SOURCES) $(dtn2admin_SOURCES) $(dtn2adminep_SOURCES) \
-	$(dtn2fw_SOURCES) $(dtpcadmin_SOURCES) $(dtpcclock_SOURCES) \
-	$(dtpcd_SOURCES) $(dtpcreceive_SOURCES) $(dtpcsend_SOURCES) \
-	$(file2dgr_SOURCES) $(file2sdr_SOURCES) $(file2sm_SOURCES) \
-	$(file2tcp_SOURCES) $(file2udp_SOURCES) $(hmackeys_SOURCES) \
-	$(imcadmin_SOURCES) $(imcfw_SOURCES) $(ionadmin_SOURCES) \
-	$(ionexit_SOURCES) $(ionlog_SOURCES) $(ionrestart_SOURCES) \
-	$(ionsecadmin_SOURCES) $(ionunlock_SOURCES) $(ionwarn_SOURCES) \
-	$(ipnadmin_SOURCES) $(ipnadminep_SOURCES) $(ipnd_SOURCES) \
-	$(ipnfw_SOURCES) $(lgagent_SOURCES) $(lgsend_SOURCES) \
-	$(ltpadmin_SOURCES) $(ltpcli_SOURCES) $(ltpclo_SOURCES) \
-	$(ltpclock_SOURCES) $(ltpcounter_SOURCES) $(ltpdeliv_SOURCES) \
-	$(ltpdriver_SOURCES) $(ltpmeter_SOURCES) \
-	$(ltpsecadmin_SOURCES) $(nm_agent_SOURCES) $(nm_mgr_SOURCES) \
-	$(node_SOURCES) $(owltsim_SOURCES) $(owlttb_SOURCES) \
-	$(psmshell_SOURCES) $(psmwatch_SOURCES) $(ramsgate_SOURCES) \
-	$(rfxclock_SOURCES) $(sdatest_SOURCES) $(sdr2file_SOURCES) \
-	$(sdrmend_SOURCES) $(sdrwatch_SOURCES) $(sm2file_SOURCES) \
-	$(smlistsh_SOURCES) $(smrbtsh_SOURCES) $(stcpcli_SOURCES) \
-	$(stcpclo_SOURCES) $(tcp2file_SOURCES) $(tcpbsi_SOURCES) \
-	$(tcpbso_SOURCES) $(tcpcli_SOURCES) $(tcpclo_SOURCES) \
-	$(tcputa_SOURCES) $(tests_1000_loopback_dotest_SOURCES) \
+	$(amsstop_SOURCES) $(armuradmin_SOURCES) \
+	$(armurrestart_SOURCES) $(beacon_SOURCES) $(bibeclo_SOURCES) \
+	$(bpadmin_SOURCES) $(bpcancel_SOURCES) $(bpchat_SOURCES) \
+	$(bpclm_SOURCES) $(bpclock_SOURCES) $(bpcounter_SOURCES) \
+	$(bpcp_SOURCES) $(bpcpd_SOURCES) $(bpcrash_SOURCES) \
+	$(bpdriver_SOURCES) $(bpecho_SOURCES) $(bping_SOURCES) \
+	$(bplist_SOURCES) $(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
+	$(bpsecadmin_SOURCES) $(bpsendfile_SOURCES) $(bpsink_SOURCES) \
+	$(bpsource_SOURCES) $(bpstats_SOURCES) $(bpstats2_SOURCES) \
+	$(bptrace_SOURCES) $(bptransit_SOURCES) $(bputa_SOURCES) \
+	$(brsccla_SOURCES) $(brsscla_SOURCES) \
+	$(bssStreamingApp_SOURCES) $(bsscounter_SOURCES) \
+	$(bssdriver_SOURCES) $(bsspadmin_SOURCES) $(bsspcli_SOURCES) \
+	$(bsspclo_SOURCES) $(bsspclock_SOURCES) $(bssrecv_SOURCES) \
+	$(cfdpadmin_SOURCES) $(cfdpclock_SOURCES) $(cfdptest_SOURCES) \
+	$(cgrfetch_SOURCES) $(dccpcli_SOURCES) $(dccpclo_SOURCES) \
+	$(dccplsi_SOURCES) $(dccplso_SOURCES) $(dgr2file_SOURCES) \
+	$(dgrcli_SOURCES) $(dgrclo_SOURCES) $(dtn2admin_SOURCES) \
+	$(dtn2adminep_SOURCES) $(dtn2fw_SOURCES) $(dtpcadmin_SOURCES) \
+	$(dtpcclock_SOURCES) $(dtpcd_SOURCES) $(dtpcreceive_SOURCES) \
+	$(dtpcsend_SOURCES) $(file2dgr_SOURCES) $(file2sdr_SOURCES) \
+	$(file2sm_SOURCES) $(file2tcp_SOURCES) $(file2udp_SOURCES) \
+	$(hmackeys_SOURCES) $(imcadmin_SOURCES) $(imcfw_SOURCES) \
+	$(ionadmin_SOURCES) $(ionexit_SOURCES) $(ionlog_SOURCES) \
+	$(ionrestart_SOURCES) $(ionsecadmin_SOURCES) \
+	$(ionunlock_SOURCES) $(ionwarn_SOURCES) $(ipnadmin_SOURCES) \
+	$(ipnadminep_SOURCES) $(ipnd_SOURCES) $(ipnfw_SOURCES) \
+	$(lgagent_SOURCES) $(lgsend_SOURCES) $(ltpadmin_SOURCES) \
+	$(ltpcli_SOURCES) $(ltpclo_SOURCES) $(ltpclock_SOURCES) \
+	$(ltpcounter_SOURCES) $(ltpdeliv_SOURCES) $(ltpdriver_SOURCES) \
+	$(ltpmeter_SOURCES) $(ltpsecadmin_SOURCES) $(nm_agent_SOURCES) \
+	$(nm_mgr_SOURCES) $(node_SOURCES) $(owltsim_SOURCES) \
+	$(owlttb_SOURCES) $(psmshell_SOURCES) $(psmwatch_SOURCES) \
+	$(ramsgate_SOURCES) $(rfxclock_SOURCES) $(sdatest_SOURCES) \
+	$(sdr2file_SOURCES) $(sdrmend_SOURCES) $(sdrwatch_SOURCES) \
+	$(sm2file_SOURCES) $(smlistsh_SOURCES) $(smrbtsh_SOURCES) \
+	$(stcpcli_SOURCES) $(stcpclo_SOURCES) $(tcp2file_SOURCES) \
+	$(tcpbsi_SOURCES) $(tcpbso_SOURCES) $(tcpcli_SOURCES) \
+	$(tcpclo_SOURCES) $(tcputa_SOURCES) \
+	$(tests_1000_loopback_dotest_SOURCES) \
 	$(tests_1500_loopback_brs_dotest_SOURCES) \
 	$(tests_bug_0015_tcpclo_bpcp_sig_handling_test_SOURCES) \
 	$(tests_issue_188_common_cos_syntax_dotest_SOURCES) \
@@ -1586,12 +1593,13 @@ DIST_SOURCES = $(libams_la_SOURCES) $(libarmur_la_SOURCES) \
 	$(amsbenchr_SOURCES) $(amsbenchs_SOURCES) $(amsd_SOURCES) \
 	$(amshello_SOURCES) $(amslog_SOURCES) $(amslogprt_SOURCES) \
 	$(amsmib_SOURCES) $(amsshell_SOURCES) $(amsstop_SOURCES) \
-	$(armuradmin_SOURCES) $(beacon_SOURCES) $(bibeclo_SOURCES) \
-	$(bpadmin_SOURCES) $(bpcancel_SOURCES) $(bpchat_SOURCES) \
-	$(bpclm_SOURCES) $(bpclock_SOURCES) $(bpcounter_SOURCES) \
-	$(bpcp_SOURCES) $(bpcpd_SOURCES) $(bpcrash_SOURCES) \
-	$(bpdriver_SOURCES) $(bpecho_SOURCES) $(bping_SOURCES) \
-	$(bplist_SOURCES) $(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
+	$(armuradmin_SOURCES) $(armurrestart_SOURCES) \
+	$(beacon_SOURCES) $(bibeclo_SOURCES) $(bpadmin_SOURCES) \
+	$(bpcancel_SOURCES) $(bpchat_SOURCES) $(bpclm_SOURCES) \
+	$(bpclock_SOURCES) $(bpcounter_SOURCES) $(bpcp_SOURCES) \
+	$(bpcpd_SOURCES) $(bpcrash_SOURCES) $(bpdriver_SOURCES) \
+	$(bpecho_SOURCES) $(bping_SOURCES) $(bplist_SOURCES) \
+	$(bpnmtest_SOURCES) $(bprecvfile_SOURCES) \
 	$(bpsecadmin_SOURCES) $(bpsendfile_SOURCES) $(bpsink_SOURCES) \
 	$(bpsource_SOURCES) $(bpstats_SOURCES) $(bpstats2_SOURCES) \
 	$(bptrace_SOURCES) $(bptransit_SOURCES) $(bputa_SOURCES) \
@@ -3478,24 +3486,30 @@ ionrestart_CFLAGS = -I$(srcdir)/ici/sdr  -I$(srcdir)/ici/library -I$(srcdir)/bp/
 #
 ##########################
 armurcflags = -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils
-armurbin = armuradmin
+ION_LIBS = libici.la libbp.la libltp.la libcfdp.la
+armurbin = \
+	armuradmin \
+	armurrestart
+
 armurlib = libarmur.la
 
 # --- Libraries --- #
 libarmur_la_SOURCES = \
 	nm/utils/libarmur.c \
 	nm/utils/libarmurnm.c \
-	nm/utils/armur_restart.c \
 	nm/utils/armur_rhht.c
 
 libarmur_la_CFLAGS = $(armurcflags) $(AM_CFLAGS)
-libarmur_la_LIBADD = libici.la libbp.la libltp.la libcfdp.la -larchive
+libarmur_la_LIBADD = $(ION_LIBS) -larchive
 #armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
 
 # --- Utility Programs --- #
 armuradmin_SOURCES = nm/utils/armuradmin.c
 armuradmin_LDADD = libarmur.la libici.la $(LIBOBJS)
 armuradmin_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+armurrestart_SOURCES = nm/utils/armur_restart.c
+armurrestart_LDADD = libarmur.la $(ION_LIBS) $(LIBOBJS)
+armurrestart_CFLAGS = $(armurcflags) $(AM_CFLAGS)
 
 # This library contains utility code that's helpful for tests in C.
 TESTUTILOBJS = tests/library/libtestutil.la
@@ -3697,8 +3711,6 @@ nm/utils/$(DEPDIR)/$(am__dirstamp):
 nm/utils/libarmur_la-libarmur.lo: nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
 nm/utils/libarmur_la-libarmurnm.lo: nm/utils/$(am__dirstamp) \
-	nm/utils/$(DEPDIR)/$(am__dirstamp)
-nm/utils/libarmur_la-armur_restart.lo: nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
 nm/utils/libarmur_la-armur_rhht.lo: nm/utils/$(am__dirstamp) \
 	nm/utils/$(DEPDIR)/$(am__dirstamp)
@@ -4287,6 +4299,12 @@ nm/utils/armuradmin-armuradmin.$(OBJEXT): nm/utils/$(am__dirstamp) \
 armuradmin$(EXEEXT): $(armuradmin_OBJECTS) $(armuradmin_DEPENDENCIES) $(EXTRA_armuradmin_DEPENDENCIES) 
 	@rm -f armuradmin$(EXEEXT)
 	$(AM_V_CCLD)$(armuradmin_LINK) $(armuradmin_OBJECTS) $(armuradmin_LDADD) $(LIBS)
+nm/utils/armurrestart-armur_restart.$(OBJEXT):  \
+	nm/utils/$(am__dirstamp) nm/utils/$(DEPDIR)/$(am__dirstamp)
+
+armurrestart$(EXEEXT): $(armurrestart_OBJECTS) $(armurrestart_DEPENDENCIES) $(EXTRA_armurrestart_DEPENDENCIES) 
+	@rm -f armurrestart$(EXEEXT)
+	$(AM_V_CCLD)$(armurrestart_LINK) $(armurrestart_OBJECTS) $(armurrestart_LDADD) $(LIBS)
 bp/ipnd/beacon-beacon.$(OBJEXT): bp/ipnd/$(am__dirstamp) \
 	bp/ipnd/$(DEPDIR)/$(am__dirstamp)
 
@@ -6186,7 +6204,7 @@ include nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-rhht.Po
 include nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-utils.Po
 include nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-vector.Po
 include nm/utils/$(DEPDIR)/armuradmin-armuradmin.Po
-include nm/utils/$(DEPDIR)/libarmur_la-armur_restart.Plo
+include nm/utils/$(DEPDIR)/armurrestart-armur_restart.Po
 include nm/utils/$(DEPDIR)/libarmur_la-armur_rhht.Plo
 include nm/utils/$(DEPDIR)/libarmur_la-libarmur.Plo
 include nm/utils/$(DEPDIR)/libarmur_la-libarmurnm.Plo
@@ -6291,13 +6309,6 @@ nm/utils/libarmur_la-libarmurnm.lo: nm/utils/libarmurnm.c
 #	$(AM_V_CC)source='nm/utils/libarmurnm.c' object='nm/utils/libarmur_la-libarmurnm.lo' libtool=yes \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libarmur_la_CFLAGS) $(CFLAGS) -c -o nm/utils/libarmur_la-libarmurnm.lo `test -f 'nm/utils/libarmurnm.c' || echo '$(srcdir)/'`nm/utils/libarmurnm.c
-
-nm/utils/libarmur_la-armur_restart.lo: nm/utils/armur_restart.c
-	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libarmur_la_CFLAGS) $(CFLAGS) -MT nm/utils/libarmur_la-armur_restart.lo -MD -MP -MF nm/utils/$(DEPDIR)/libarmur_la-armur_restart.Tpo -c -o nm/utils/libarmur_la-armur_restart.lo `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
-	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/libarmur_la-armur_restart.Tpo nm/utils/$(DEPDIR)/libarmur_la-armur_restart.Plo
-#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/libarmur_la-armur_restart.lo' libtool=yes \
-#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libarmur_la_CFLAGS) $(CFLAGS) -c -o nm/utils/libarmur_la-armur_restart.lo `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
 
 nm/utils/libarmur_la-armur_rhht.lo: nm/utils/armur_rhht.c
 	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libarmur_la_CFLAGS) $(CFLAGS) -MT nm/utils/libarmur_la-armur_rhht.lo -MD -MP -MF nm/utils/$(DEPDIR)/libarmur_la-armur_rhht.Tpo -c -o nm/utils/libarmur_la-armur_rhht.lo `test -f 'nm/utils/armur_rhht.c' || echo '$(srcdir)/'`nm/utils/armur_rhht.c
@@ -7138,6 +7149,20 @@ nm/utils/armuradmin-armuradmin.obj: nm/utils/armuradmin.c
 #	$(AM_V_CC)source='nm/utils/armuradmin.c' object='nm/utils/armuradmin-armuradmin.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armuradmin_CFLAGS) $(CFLAGS) -c -o nm/utils/armuradmin-armuradmin.obj `if test -f 'nm/utils/armuradmin.c'; then $(CYGPATH_W) 'nm/utils/armuradmin.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armuradmin.c'; fi`
+
+nm/utils/armurrestart-armur_restart.o: nm/utils/armur_restart.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -MT nm/utils/armurrestart-armur_restart.o -MD -MP -MF nm/utils/$(DEPDIR)/armurrestart-armur_restart.Tpo -c -o nm/utils/armurrestart-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armurrestart-armur_restart.Tpo nm/utils/$(DEPDIR)/armurrestart-armur_restart.Po
+#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armurrestart-armur_restart.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -c -o nm/utils/armurrestart-armur_restart.o `test -f 'nm/utils/armur_restart.c' || echo '$(srcdir)/'`nm/utils/armur_restart.c
+
+nm/utils/armurrestart-armur_restart.obj: nm/utils/armur_restart.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -MT nm/utils/armurrestart-armur_restart.obj -MD -MP -MF nm/utils/$(DEPDIR)/armurrestart-armur_restart.Tpo -c -o nm/utils/armurrestart-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
+	$(AM_V_at)$(am__mv) nm/utils/$(DEPDIR)/armurrestart-armur_restart.Tpo nm/utils/$(DEPDIR)/armurrestart-armur_restart.Po
+#	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armurrestart-armur_restart.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -c -o nm/utils/armurrestart-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
 
 bp/ipnd/beacon-beacon.o: bp/ipnd/beacon.c
 	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(beacon_CFLAGS) $(CFLAGS) -MT bp/ipnd/beacon-beacon.o -MD -MP -MF bp/ipnd/$(DEPDIR)/beacon-beacon.Tpo -c -o bp/ipnd/beacon-beacon.o `test -f 'bp/ipnd/beacon.c' || echo '$(srcdir)/'`bp/ipnd/beacon.c

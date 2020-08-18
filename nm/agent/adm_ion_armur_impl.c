@@ -137,15 +137,9 @@ tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |START CUSTOM FUNCTION ctrl_wait BODY
 	 * +-------------------------------------------------------------------------+
 	 */
-
 	Sdr	sdr = getIonsdr();
 
-	printf("ctrl_wait in.\n");//dbg
-
-	if (armurAttach() < 0)
-	{
-		return result;
-	}
+	printf("ctrl_wait in>\n");//dbg
 
 	if (cfdpAttach() < 0)
 	{
@@ -160,16 +154,20 @@ tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		 *	To avoid deadlock, we will exit.			*/
 		sdr_exit_xn(sdr);
 		*status = CTRL_SUCCESS;
-		printf("SBR_IDLE executed.\n");//dbg
+		//AMP_DEBUG_ALWAYS("dtn_ion_armur_ctrl_wait", "No CFDP events.", NULL);//dbg
 		return result;
 	}
 	sdr_exit_xn(sdr);
 
 	/*	Check CFDP events and block as necessary.		*/
-	if (armurWait() == 0)
+	if (armurWait() < 0)
 	{
-		*status = CTRL_SUCCESS;
+		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_wait", "ARMUR_WAIT failed.", NULL);
+		return result;
 	}
+
+	/*	Download has been finished.		*/
+	*status = CTRL_SUCCESS;
 	
 	/*
 	 * +-------------------------------------------------------------------------+
@@ -192,10 +190,15 @@ tnv_t *dtn_ion_armur_ctrl_install(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * +-------------------------------------------------------------------------+
 	 */
 
-	if (armurInstall() == 0)
+	printf("ctrl_install in>\n");//dbg
+	if (armurInstall() < 0)
 	{
-		*status = CTRL_SUCCESS;
+		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_install", "ARMUR_INSTALL failed.", NULL);
+		return result;
 	}
+
+	/*	Install has been finished.		*/
+	*status = CTRL_SUCCESS;
 	
 	/*
 	 * +-------------------------------------------------------------------------+
@@ -217,11 +220,35 @@ tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |START CUSTOM FUNCTION ctrl_restart BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+	Sdr		sdr = getIonsdr();
+	ARMUR_VDB	*armurvdb = getArmurVdb();
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	char		archiveNameBuf[SDRSTRING_BUFSZ];
 
-	if (armurRestart() == 0)
+	printf("ctrl_restart in>\n");//dbg
+
+	/*	If we safely arrived here, the downloaded
+	 *	archive file is no longer needed. Delete it.		*/
+	CHKNULL(sdr_begin_xn(sdr));
+	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+	sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
+	sdr_exit_xn(sdr);
+	//if (fopen(buf, "r") != NULL)
+	//{
+		/*	If the file has been already removed, call to remove
+		 *	will throw a file-not-exist error and then return.
+		 *	So we skip the call to fopen to check if it exists.	*/
+		remove(archiveNameBuf);
+	//}
+
+	/*	Start a restart program.		*/
+	if (pseudoshell("armurrestart") < 0)
 	{
-		*status = CTRL_SUCCESS;
+		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_restart", "ARMUR_RESTART failed.", NULL);
+		return result;
 	}
+
+	*status = CTRL_SUCCESS;
 
 	/*
 	 * +-------------------------------------------------------------------------+

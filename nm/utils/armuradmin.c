@@ -217,9 +217,9 @@ static void	printStat(char stat)
 		buffer = "idle";
 		break;
 
-	case ARMUR_STAT_DOWNLOADING:
-		buffer = "downloading...";
-		break;
+	//case ARMUR_STAT_DOWNLOADING:
+	//	buffer = "downloading...";
+	//	break;
 
 	case ARMUR_STAT_DOWNLOADED:
 		buffer = "installing...";

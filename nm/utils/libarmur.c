@@ -2,7 +2,7 @@
 // jigi
 
 #include "armur.h"
-#include "armur_restart.h"
+//#include "armur_restart.h"
 #include "armur_rhht.h"
 #include <archive.h>
 #include <archive_entry.h>
@@ -541,6 +541,7 @@ int	armurStart(char *nmagentCmd)
 	//switch ((_armurConstants())->stat)
 	//{
 	//case ARMUR_STAT_IDLE:
+/*	MIGRATED TO ARMUR_CTRL_WAIT 08/18/2020		*/
 	//	if (cfdpAttach() < 0)
 	//	{
 	//		return -1;
@@ -569,6 +570,7 @@ int	armurStart(char *nmagentCmd)
 	//	/*	Download has been finished.		*/
 
 	//case ARMUR_STAT_DOWNLOADED:
+/*	MIGRATED TO ARMUR_CTRL_INSTALL 08/18/2020	*/
 	//	/*	Start install procedure.		*/
 
 	//	if (armurInstall() < 0)
@@ -579,6 +581,7 @@ int	armurStart(char *nmagentCmd)
 	//	/*	Install has been finished.		*/
 
 	//case ARMUR_STAT_INSTALLED:
+/*	MIGRATED TO ARMUR_CTRL_RESTART 08/18/2020	*/
 	//	/*	If we safely arrived here, the
 	//	 *	downloaded archive file is no longer
 	//	 *	needed. Delete it.			*/
@@ -925,6 +928,22 @@ static void	getInstallDir(ARMUR_Image image, char *installDir)
 	istrcpy(installDir, buf, ARMUR_PATHNAME_LEN_MAX);
 }
 
+void	armurUpdateStat(int armurStat)
+{
+	Sdr		sdr = getIonsdr();
+	ARMUR_DB	armurdbBuf;
+	Object		armurdbObj = _armurdbObject(NULL);
+
+	CHKVOID(armurStat == ARMUR_STAT_IDLE
+		|| armurStat == ARMUR_STAT_DOWNLOADED
+		|| armurStat == ARMUR_STAT_INSTALLED);
+
+	CHKVOID(ionLocked());
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	armurdbBuf.stat = armurStat;
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+}
+
 int	armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr)
 {
 	Sdr		sdr = getIonsdr();
@@ -1016,9 +1035,7 @@ int	armurWait()
 	MetadataList		filestoreResponses;
 
 	Sdr			sdr = getIonsdr();
-	Object			armurdbObj = _armurdbObject(NULL);
 	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
-	ARMUR_DB		armurdbBuf;
 	ARMUR_CfdpInfo		cfdpInfoBuf;
 	char			buf[SDRSTRING_BUFSZ];
 	int			len;
@@ -1067,11 +1084,12 @@ int	armurWait()
 				if (len > 0)
 				{
 					buf[len] = '\0';
-					printf("\tMessage to user: %s\n", buf);
+					printf("\tMessage to user: %s\n", buf);//dbg
 					if (strcmp(buf, "armur") == 0)
 					{
 						/*	Confirmed downloading.		*/
-						printf("%s.\n", destFileNameBuf);//dbg
+						printf("\tFilename: %s.\n",
+							destFileNameBuf);//dbg
 
 						/*	Configure CFDP information.	*/
 						cfdpInfoBuf.archiveName =
@@ -1100,25 +1118,20 @@ int	armurWait()
 	/*	Now the download has been finished.
 	 *	New archive name to install has been configured.
 	 *	Update the ARMUR stat and go to the next step.		*/
-	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	armurdbBuf.stat = ARMUR_STAT_DOWNLOADED;
-	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-
+	armurUpdateStat(ARMUR_STAT_DOWNLOADED);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		return -1;
 	}
 
-	printf("Download has been completed.\n");//dbg
+	printf("***Download has been completed.\n");//dbg
 	return 0;
 }
 
 int	armurInstall()
 {
 	Sdr			sdr = getIonsdr();
-	Object			armurdbObj = _armurdbObject(NULL);
 	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
-	ARMUR_DB		armurdbBuf;
 	ARMUR_CfdpInfo		cfdpInfoBuf;
 	ARMUR_Image		imageBuf;
 	ARMUR_VImage		*vimage;
@@ -1196,7 +1209,7 @@ int	armurInstall()
 		}
 
 		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
-		printf("INSTALL> found image: %s.\n", imageBuf.name);//dbg
+		printf("\tfound image: %s.\n", imageBuf.name);//dbg
 
 		/*	Retain the vimage in the restart queue.			*/
 		if (enqueueImage(imageBuf.level, vimage, vimageAddr) < 0)
@@ -1250,289 +1263,267 @@ int	armurInstall()
 	archive_read_free(a);
 
 	CHKERR(sdr_begin_xn(sdr));
-	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	armurdbBuf.stat = ARMUR_STAT_INSTALLED;
-	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	armurUpdateStat(ARMUR_STAT_INSTALLED);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		return -1;
 	}
 
-	printf("Install has been completed.\n");//dbg
+	printf("***Install has been completed.\n");//dbg
 	return 0;
 }
 
-static int	stop(ARMUR_VImage *vimage, int level)
-{
-	PsmPartition	wm = getIonwm();
-	Object		elt;
-	ARMUR_VImage	*_vimage;
-	int		layer;
-
-	switch (level)
-	{
-	case ARMUR_LEVEL_0:
-		for (layer = ARMUR_LAYER_APPLICATION; layer <= ARMUR_LAYER_CONVERGENCE;
-			layer++)
-		{
-			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
-				elt; elt = sm_list_next(wm, elt))
-			{
-				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-				if (stop(_vimage, ARMUR_LEVEL_1) < 0)
-				{
-					return -1;
-				}
-			}
-		}
-		for (elt = sm_list_first(wm,
-			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
-			elt; elt = sm_list_next(wm, elt))
-		{
-			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
-			{
-				return -1;
-			}
-		}
-		break;
-
-	case ARMUR_LEVEL_1:
-		for (elt = sm_list_first(wm,
-			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
-			elt; elt = sm_list_next(wm, elt))
-		{
-			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
-			{
-				return -1;
-			}
-		}
-		break;
-
-	case ARMUR_LEVEL_2:
-	{
-		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STOPPED)
-		{
-			break;
-		}
-		ARMUR_Image	imageBuf;
-		Sdr		sdr = getIonsdr();
-		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
-		printf("Stop %s.\n", imageBuf.name);//dbg
-		if (vimage->as.lv2.stop() < 0)
-		{
-			return -1;
-		}
-		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STOPPED;
-	}
-	}
-
-	return 0;
-}
-
-static int	start(ARMUR_VImage *vimage, int level)
-{
-	PsmPartition	wm = getIonwm();
-	Object		elt;
-	ARMUR_VImage	*_vimage;
-	int		layer;
-
-	/*	Start: reverse order of stop	*/
-	switch (level)
-	{
-	case ARMUR_LEVEL_0:
-		for (elt = sm_list_first(wm,
-			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
-			elt; elt = sm_list_next(wm, elt))
-		{
-			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (start(_vimage, ARMUR_LEVEL_2) < 0)
-			{
-				return -1;
-			}
-		}
-		for (layer = ARMUR_LAYER_CONVERGENCE; layer >= ARMUR_LAYER_APPLICATION;
-			layer--)
-		{
-			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
-				elt; elt = sm_list_next(wm, elt))
-			{
-				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-				if (start(_vimage, ARMUR_LEVEL_1) < 0)
-				{
-					return -1;
-				}
-			}
-		}
-		break;
-
-	case ARMUR_LEVEL_1:
-		for (elt = sm_list_first(wm,
-			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
-			elt; elt = sm_list_next(wm, elt))
-		{
-			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (start(_vimage, ARMUR_LEVEL_2) < 0)
-			{
-				return -1;
-			}
-		}
-		break;
-	
-	case ARMUR_LEVEL_2:
-	{
-		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
-		{
-			break;
-		}
-		ARMUR_Image	imageBuf;
-		Sdr		sdr = getIonsdr();
-		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
-		printf("Start %s.\n", imageBuf.name);//dbg
-		if (vimage->as.lv2.start() < 0)
-		{
-			return -1;
-		}
-		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STARTED;
-	}
-	}
-
-	return 0;
-}
-
-int	armurRestart()
-{
-	Sdr			sdr = getIonsdr();
-	PsmPartition		wm = getIonwm();
-	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
-	PsmAddress		elt;
-	PsmAddress		vdescrElt;
-	ARMUR_VImage		*vimage;
-	ARMUR_VPackageDescr	*vdescr;
-	int			i;
-
-	/*	Lock until the restart procedure is completed.	*/
-	CHKERR(sdr_begin_xn(sdr));
-	/*	We will restart applications only if the vstat is not idle, i.e.,
-	 *	if the restart procedure is still pending. The volatile state will
-	 *	be ARMUR_VSTAT_IDLE, in case either 1) the restart queues are empty,
-	 *	2) the items have been restarted by an unexpected system reboot that
-	 *	reset it or 3) SDR recovery procedure has been conducted leading to
-	 *	restart of the entire ION and reset of the volatile database.		*/
-	if (armurvdb->vstat == ARMUR_VSTAT_IDLE)
-	{
-		sdr_exit_xn(sdr);
-		return 0;
-	}
-
-	/*	There ARE items to be restarted.		*/
-	restartFnInit();
-
-	if (armurvdb->vstat & ARMUR_VSTAT_LV0_PENDING)
-	{
-		/*	Restart items from the queue of LEVEL 0.	*/
-		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_0]); elt;
-			elt = sm_list_next(wm, elt))
-		{
-			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			OBJ_POINTER(ARMUR_Image, image);//dbg
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
-			printf("RESTART> restart image: %s.\n", image->name);//dbg
-			if (stop(vimage, ARMUR_LEVEL_0) < 0
-			|| start(vimage, ARMUR_LEVEL_0) < 0)
-			{
-				return -1;
-			}
-		}
-
-		goto FIN;
-	}
-
-	if (armurvdb->vstat & ARMUR_VSTAT_LV1_PENDING)
-	{
-		/*	Restart items from the queue of LEVEL 1.	*/
-		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
-			elt = sm_list_next(wm, elt))
-		{
-			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			OBJ_POINTER(ARMUR_Image, image);//dbg
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
-			printf("RESTART> restart image: %s.\n", image->name);//dbg
-			if (stop(vimage, ARMUR_LEVEL_1) < 0)
-			{
-				return -1;
-			}
-		}
-		for (elt = sm_list_last(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
-			elt = sm_list_prev(wm, elt))
-		{
-			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (start(vimage, ARMUR_LEVEL_1) < 0)
-			{
-				return -1;
-			}
-		}
-	}
-	
-	if (armurvdb->vstat & ARMUR_VSTAT_LV2_PENDING)
-	{
-		/*	Restart items from the queue of LEVEL 2.	*/
-		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_2]); elt;
-			elt = sm_list_next(wm, elt))
-		{
-			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			OBJ_POINTER(ARMUR_Image, image);//dbg
-			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
-			printf("RESTART> restart image: %s.\n", image->name);//dbg
-			if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
-			{
-				/*	Items in level 2 will be restarted only
-				 *	if they have not yet been restarted by the
-				 *	upper level.					*/
-				continue;
-			}
-
-			/*	Stop & start	*/
-			if (stop(vimage, ARMUR_LEVEL_2) < 0
-			|| start(vimage, ARMUR_LEVEL_2) < 0)
-			{
-				return -1;
-			}
-		}
-	}
-
-	/*	Now reset the volatile states of the VDB.	*/
-FIN:
-	/*	Reset the restart queues.			*/
-	for (i = 0; i < ARMUR_LEVELS; i++)
-	{
-		while ((elt = sm_list_first(wm, armurvdb->restartQueue[i])) != 0)
-		{
-			oK(sm_list_delete(wm, elt, NULL, NULL));
-		}
-	}
-
-	/*	Reset the stop/start states of the lv2 images.	*/
-	for (vdescrElt = sm_list_first(wm, armurvdb->applications); vdescrElt;
-		vdescrElt = sm_list_next(wm, vdescrElt))
-	{
-		vdescr = (ARMUR_VPackageDescr *)psp(wm, sm_list_data(wm, vdescrElt));
-		for (elt = sm_list_first(wm, vdescr->applications[ARMUR_APPTYPE_DAEMON]);
-			elt; elt = sm_list_next(wm, elt))
-		{
-			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
-			if (vimage->as.lv2.vstat)
-			{
-				vimage->as.lv2.vstat = 0;
-			}
-		}
-	}
-
-	/*	Reset the vstat of the ARMUR VDB.		*/
-	armurvdb->vstat = ARMUR_VSTAT_IDLE;
-	sdr_exit_xn(sdr);
-
-	printf("Restart has been completed.\n");//dbg
-	return 0;
-}
+/*	MIGRATED TO ARMUR_RESTART.C MAIN THREAD 08/18/2020	*/
+//static int	stop(ARMUR_VImage *vimage, int level)
+//{
+//	PsmPartition	wm = getIonwm();
+//	Object		elt;
+//	ARMUR_VImage	*_vimage;
+//	int		layer;
+//
+//	switch (level)
+//	{
+//	case ARMUR_LEVEL_0:
+//		for (layer = ARMUR_LAYER_APPLICATION; layer <= ARMUR_LAYER_CONVERGENCE;
+//			layer++)
+//		{
+//			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
+//				elt; elt = sm_list_next(wm, elt))
+//			{
+//				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//				if (stop(_vimage, ARMUR_LEVEL_1) < 0)
+//				{
+//					return -1;
+//				}
+//			}
+//		}
+//		for (elt = sm_list_first(wm,
+//			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
+//			elt; elt = sm_list_next(wm, elt))
+//		{
+//			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//		break;
+//
+//	case ARMUR_LEVEL_1:
+//		for (elt = sm_list_first(wm,
+//			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
+//			elt; elt = sm_list_next(wm, elt))
+//		{
+//			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (stop(_vimage, ARMUR_LEVEL_2) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//		break;
+//
+//	case ARMUR_LEVEL_2:
+//		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STOPPED)
+//		{
+//			break;
+//		}
+//		if (vimage->as.lv2.stop() < 0)
+//		{
+//			return -1;
+//		}
+//		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STOPPED;
+//	}
+//
+//	return 0;
+//}
+//
+//static int	start(ARMUR_VImage *vimage, int level)
+//{
+//	PsmPartition	wm = getIonwm();
+//	Object		elt;
+//	ARMUR_VImage	*_vimage;
+//	int		layer;
+//
+//	/*	Start: reverse order of stop	*/
+//	switch (level)
+//	{
+//	case ARMUR_LEVEL_0:
+//		for (elt = sm_list_first(wm,
+//			vimage->as.lv0.applications[ARMUR_APPTYPE_DAEMON]);
+//			elt; elt = sm_list_next(wm, elt))
+//		{
+//			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (start(_vimage, ARMUR_LEVEL_2) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//		for (layer = ARMUR_LAYER_CONVERGENCE; layer >= ARMUR_LAYER_APPLICATION;
+//			layer--)
+//		{
+//			for (elt = sm_list_first(wm, vimage->as.lv0.packages[layer]);
+//				elt; elt = sm_list_next(wm, elt))
+//			{
+//				_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//				if (start(_vimage, ARMUR_LEVEL_1) < 0)
+//				{
+//					return -1;
+//				}
+//			}
+//		}
+//		break;
+//
+//	case ARMUR_LEVEL_1:
+//		for (elt = sm_list_first(wm,
+//			vimage->as.lv1.applications[ARMUR_APPTYPE_DAEMON]);
+//			elt; elt = sm_list_next(wm, elt))
+//		{
+//			_vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (start(_vimage, ARMUR_LEVEL_2) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//		break;
+//	
+//	case ARMUR_LEVEL_2:
+//		if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
+//		{
+//			break;
+//		}
+//		if (vimage->as.lv2.start() < 0)
+//		{
+//			return -1;
+//		}
+//		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STARTED;
+//	}
+//
+//	return 0;
+//}
+//
+//int	armurRestart()
+//{
+//	Sdr			sdr = getIonsdr();
+//	PsmPartition		wm = getIonwm();
+//	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
+//	PsmAddress		elt;
+//	PsmAddress		vdescrElt;
+//	ARMUR_VImage		*vimage;
+//	ARMUR_VPackageDescr	*vdescr;
+//	int			i;
+//
+//	/*	Lock until the restart procedure is completed.	*/
+//	CHKERR(sdr_begin_xn(sdr));
+//	/*	We will restart applications only if the vstat is not idle, i.e.,
+//	 *	if the restart procedure is still pending. The volatile state will
+//	 *	be ARMUR_VSTAT_IDLE, in case either 1) the restart queues are empty,
+//	 *	2) the items have been restarted by an unexpected system reboot that
+//	 *	reset it or 3) SDR recovery procedure has been conducted leading to
+//	 *	restart of the entire ION and reset of the volatile database.		*/
+//	if (armurvdb->vstat == ARMUR_VSTAT_IDLE)
+//	{
+//		sdr_exit_xn(sdr);
+//		return 0;
+//	}
+//
+//	/*	There ARE items to be restarted.		*/
+//	restartFnInit();
+//
+//	if (armurvdb->vstat & ARMUR_VSTAT_LV0_PENDING)
+//	{
+//		/*	Restart items from the queue of LEVEL 0.	*/
+//		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_0]); elt;
+//			elt = sm_list_next(wm, elt))
+//		{
+//			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (stop(vimage, ARMUR_LEVEL_0) < 0
+//			|| start(vimage, ARMUR_LEVEL_0) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//
+//		goto FIN;
+//	}
+//
+//	if (armurvdb->vstat & ARMUR_VSTAT_LV1_PENDING)
+//	{
+//		/*	Restart items from the queue of LEVEL 1.	*/
+//		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
+//			elt = sm_list_next(wm, elt))
+//		{
+//			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (stop(vimage, ARMUR_LEVEL_1) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//		for (elt = sm_list_last(wm, armurvdb->restartQueue[ARMUR_LEVEL_1]); elt;
+//			elt = sm_list_prev(wm, elt))
+//		{
+//			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (start(vimage, ARMUR_LEVEL_1) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//	}
+//	
+//	if (armurvdb->vstat & ARMUR_VSTAT_LV2_PENDING)
+//	{
+//		/*	Restart items from the queue of LEVEL 2.	*/
+//		for (elt = sm_list_first(wm, armurvdb->restartQueue[ARMUR_LEVEL_2]); elt;
+//			elt = sm_list_next(wm, elt))
+//		{
+//			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (vimage->as.lv2.vstat & ARMUR_VSTAT_LV2_STARTED)
+//			{
+//				/*	Items in level 2 will be restarted only
+//				 *	if they have not yet been restarted by the
+//				 *	upper level.					*/
+//				continue;
+//			}
+//
+//			/*	Stop & start	*/
+//			if (stop(vimage, ARMUR_LEVEL_2) < 0
+//			|| start(vimage, ARMUR_LEVEL_2) < 0)
+//			{
+//				return -1;
+//			}
+//		}
+//	}
+//
+//	/*	Now reset the volatile states of the VDB.	*/
+//FIN:
+//	/*	Reset the restart queues.			*/
+//	for (i = 0; i < ARMUR_LEVELS; i++)
+//	{
+//		while ((elt = sm_list_first(wm, armurvdb->restartQueue[i])) != 0)
+//		{
+//			oK(sm_list_delete(wm, elt, NULL, NULL));
+//		}
+//	}
+//
+//	/*	Reset the stop/start states of the lv2 images.	*/
+//	for (vdescrElt = sm_list_first(wm, armurvdb->applications); vdescrElt;
+//		vdescrElt = sm_list_next(wm, vdescrElt))
+//	{
+//		vdescr = (ARMUR_VPackageDescr *)psp(wm, sm_list_data(wm, vdescrElt));
+//		for (elt = sm_list_first(wm, vdescr->applications[ARMUR_APPTYPE_DAEMON]);
+//			elt; elt = sm_list_next(wm, elt))
+//		{
+//			vimage = (ARMUR_VImage *)psp(wm, sm_list_data(wm, elt));
+//			if (vimage->as.lv2.vstat)
+//			{
+//				vimage->as.lv2.vstat = 0;
+//			}
+//		}
+//	}
+//
+//	/*	Reset the vstat of the ARMUR VDB.		*/
+//	armurvdb->vstat = ARMUR_VSTAT_IDLE;
+//	sdr_exit_xn(sdr);
+//
+//	printf("Restart has been completed.\n");//dbg
+//	return 0;
+//}
