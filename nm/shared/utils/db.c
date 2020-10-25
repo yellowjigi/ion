@@ -273,68 +273,7 @@ int  db_persist_rule(void* item)
 {
 	int result;
 	rule_t *rule = (rule_t *) item;
-	int i;//DBG
-	printf("rule ari--------------------\n");//DBG
-	printf("  type: %d\n", rule->id.type);//DBG
-	printf("  flags: %hhu\n", rule->id.as_reg.flags);//DBG
-	printf("  nn_idx: %hu\n", rule->id.as_reg.nn_idx);//DBG
-	printf("  iss_idx: %hu\n", rule->id.as_reg.iss_idx);//DBG
-	printf("  tag_idx: %hu\n", rule->id.as_reg.tag_idx);//DBG
-	printf("  name: %s\n",
-		utils_hex_to_string(rule->id.as_reg.name.value,
-		rule->id.as_reg.name.length));//DBG
-	printf("  parms: skip\n");//DBG
-	printf("rule meta-------------------\n");//DBG
-	printf("  start: %lu\n", rule->start);//DBG
-	printf("rule meta-------expr--------\n");//DBG
-	printf("  type: %d\n", rule->def.as_sbr.expr.type);//DBG
-	i = 0;
-	for (vecit_t it = vecit_first(&(rule->def.as_sbr.expr.rpn.values)); vecit_valid(it); it = vecit_next(it), i++)
-	{
-		printf("  %d th ARI-------\n", i);//DBG
-		ari_t *cur_ari = (ari_t *)vecit_data(it);
-		if (cur_ari == NULL)
-		{
-			printf("    NULL\n");//DBG
-			continue;
-		}
-		printf("    type: %d\n", cur_ari->type);//DBG
-		printf("    flags: %hhu\n", cur_ari->as_reg.flags);//DBG
-		printf("    nn_idx: %hu\n", cur_ari->as_reg.nn_idx);//DBG
-		printf("    iss_idx: %hu\n", cur_ari->as_reg.iss_idx);//DBG
-		printf("    tag_idx: %hu\n", cur_ari->as_reg.tag_idx);//DBG
-		printf("    name: %s\n",
-			utils_hex_to_string(cur_ari->as_reg.name.value,
-			cur_ari->as_reg.name.length));//DBG
-		printf("    parms: skip\n");//DBG
-	}
-	printf("  max_fire: %lu\n", rule->def.as_sbr.max_fire);//DBG
-	printf("  max_eval: %lu\n", rule->def.as_sbr.max_eval);//DBG
-	printf("rule meta------action-------\n");//DBG
-	i = 0;
-	for (vecit_t it = vecit_first(&(rule->action.values)); vecit_valid(it); it = vecit_next(it), i++)
-	{
-		printf("  %d th ARI-------\n", i);//DBG
-		ari_t *cur_ari = (ari_t *)vecit_data(it);
-		if (cur_ari == NULL)
-		{
-			printf("    NULL\n");//DBG
-			continue;
-		}
-		printf("    type: %d\n", cur_ari->type);//DBG
-		printf("    flags: %hhu\n", cur_ari->as_reg.flags);//DBG
-		printf("    nn_idx: %hu\n", cur_ari->as_reg.nn_idx);//DBG
-		printf("    iss_idx: %hu\n", cur_ari->as_reg.iss_idx);//DBG
-		printf("    tag_idx: %hu\n", cur_ari->as_reg.tag_idx);//DBG
-		printf("    name: %s\n",
-			utils_hex_to_string(cur_ari->as_reg.name.value,
-			cur_ari->as_reg.name.length));//DBG
-		printf("    parms: skip\n");//DBG
-	}
 	blob_t *blob = rule_db_serialize_wrapper(rule);
-	printf("serialized- blob->value: %s.\n",
-		utils_hex_to_string(blob->value, blob->length));//DBG
-	printf("serialized- blob->length: %lu.\n", blob->length);//DBG
 
 	CHKERR(blob);
 	result = db_persist(blob, &(rule->desc), gDB.rules);

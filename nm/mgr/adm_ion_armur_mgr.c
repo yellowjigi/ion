@@ -109,12 +109,6 @@ void dtn_ion_armur_init_ctrl()
 	metadata_t *meta = NULL;
 
 
-	/* WAIT */
-
-	id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT);
-	adm_add_ctrldef_ari(id, 0, NULL);
-	meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "wait", "Trigger ARMUR and wait for the download to be finished.");
-
 	/* INSTALL */
 
 	id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL);
