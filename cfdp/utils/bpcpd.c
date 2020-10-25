@@ -5,6 +5,7 @@
  *	Author: Samuel Jero <sj323707@ohio.edu>, Ohio University
  */
 #include "bpcp.h"
+#include "nm/utils/armur.h"
 
 
 
@@ -63,6 +64,11 @@ int main(int argc, char **argv)
 	if (cfdp_attach() < 0)
 	{
 		dbgprintf(0, "Error: Can't initialize CFDP. Is ION running?\n");
+		exit(1);
+	}
+	if (armurAttach() < 0)//JIGI, 10-26-2020
+	{
+		dbgprintf(0, "Error: Can't initialize ARMUR.\n");
 		exit(1);
 	}
 	running=1;
@@ -126,8 +132,15 @@ void poll_cfdp_messages()
 	char			statusReportBuf[256];
 	unsigned char		usrmsgBuf[256];
 	MetadataList		filestoreResponses;
-	uvast 		TID11;
-	uvast		TID12;
+	uvast 			TID11;
+	uvast			TID12;
+	Sdr			sdr = getIonsdr();
+				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfoBuf);
+	int			armurStatDownloading = 0;
+	uvast			fsaId;
+	uvast			targetTid;
+	char			*cursor;
+	char			*archiveNameBuf;
 
 	/*Main Event loop*/
 	while (running) {
@@ -177,6 +190,57 @@ void poll_cfdp_messages()
 			{
 				usrmsgBuf[length] = '\0';
 				dbgprintf(2,"\tUser Message '%s'\n", usrmsgBuf);
+			}
+
+			/*	Added by JIGI 10-26-2020				*/
+
+			/*	Check if this is an ARMUR downloading indication
+			 *	message; ARMUR message must be 5 bytes, i.e., "armur"	*/
+			if (length == 5 || strncmp((char *)&usrmsgBuf, "armur", 5) == 0)
+			{
+				//armurHandleCfdpEvent(transactionId, sourceFileNameBuf);
+				cfdp_decompress_number(&fsaId, &transactionId.sourceEntityNbr);
+				cfdp_decompress_number(&targetTid, &transactionId.transactionNbr);
+
+				CHKVOID(sdr_begin_xn(sdr));
+				GET_OBJ_POINTER(sdr, ARMUR_CfdpInfo, cfdpInfoBuf,
+					(getArmurVdb())->cfdpInfo);
+				sdr_exit_xn(sdr);
+				if (cfdpInfoBuf->srcNbr != fsaId)
+				{
+					/* This is an untrusted FSA. We will not proceed. */
+					continue;
+				}
+
+				armurStatDownloading = 1;
+				cursor = strrchr(sourceFileNameBuf, ION_PATH_DELIMITER);
+				if (cursor == NULL)
+				{
+					archiveNameBuf = sourceFileNameBuf;
+				}
+				else
+				{
+					archiveNameBuf = cursor + 1;
+				}
+				armurUpdateCfdpArchiveName(archiveNameBuf);
+			}
+		}
+
+		/* Check for transaction finished indication events */
+		if (armurStatDownloading)
+		{
+			/* Only check if ARMUR file is being downloaded */
+			if (type == CfdpTransactionFinishedInd && TID12 == targetTid)
+			{
+				/* Download has been finished */
+				CHKVOID(sdr_begin_xn(sdr));
+				armurUpdateStat(ARMUR_STAT_DOWNLOADED);
+				if (sdr_end_xn(sdr) < 0)
+				{
+					putErrmsg("bpcpd can't update ARMUR stat.", NULL);
+					return;
+				}
+				printf("***Download has been completed.\n");//DBG
 			}
 		}
 

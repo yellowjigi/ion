@@ -1010,123 +1010,123 @@ int	armurUpdateCfdpArchiveName(char *archiveName)
 	return 0;
 }
 
-int	armurWait()
-{
-	CfdpEventType		type;
-	time_t			time;
-	int			reqNbr;
-	CfdpTransactionId	transactionId;
-	char			sourceFileNameBuf[256];
-	char			destFileNameBuf[256];
-	uvast			fileSize;
-	MetadataList		messagesToUser;
-	uvast			offset;
-	unsigned int		length;
-	unsigned int		recordBoundsRespected;
-	CfdpContinuationState	continuationState;
-	unsigned int		segMetadataLength;
-	char			segMetadata[63];
-	CfdpCondition		condition;
-	uvast			progress;
-	CfdpFileStatus		fileStatus;
-	CfdpDeliveryCode	deliveryCode;
-	CfdpTransactionId	originatingTransactionId;
-	char			statusReportBuf[256];
-	MetadataList		filestoreResponses;
-
-	Sdr			sdr = getIonsdr();
-	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
-	ARMUR_CfdpInfo		cfdpInfoBuf;
-	char			buf[SDRSTRING_BUFSZ];
-	int			len;
-	uvast			srcNbr;
-
-	/*	Fetch the cfdpInfo stored in the ARMUR DB.		*/
-	CHKERR(sdr_begin_xn(sdr));
-	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-	sdr_exit_xn(sdr);
-
-	while (1)
-	{
-		/*	Nested SDR transaction to enable recovery of CFDP event
-		 *	items in case of unexpected system crash and reboot.	*/
-		CHKERR(sdr_begin_xn(sdr));
-		
-		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
-				sourceFileNameBuf, destFileNameBuf,
-				&fileSize, &messagesToUser, &offset, &length,
-				&recordBoundsRespected, &continuationState,
-				&segMetadataLength, segMetadata,
-				&condition, &progress, &fileStatus,
-				&deliveryCode, &originatingTransactionId,
-				statusReportBuf, &filestoreResponses) < 0)
-		{
-			return -1;
-		}
-
-		/*	TODO: we need to check if any file data have been
-		 *	corrupted or something might cause the cfdp_get_event
-		 *	to block indefinitely. Implement it as a thread ?	*/
-
-		cfdp_decompress_number(&srcNbr, &transactionId.sourceEntityNbr);
-
-		if (type == CfdpMetadataRecvInd && srcNbr == cfdpInfoBuf.srcNbr)
-		{
-			while (messagesToUser)
-			{
-				if (cfdp_get_usrmsg(&messagesToUser,
-					(unsigned char *)buf, &len) < 0)
-				{
-					putErrmsg("Failed getting user msg.", NULL);
-					return -1;
-				}
-
-				if (len > 0)
-				{
-					buf[len] = '\0';
-					printf("\tMessage to user: %s\n", buf);//dbg
-					if (strcmp(buf, "armur") == 0)
-					{
-						/*	Confirmed downloading.		*/
-						printf("\tFilename: %s.\n",
-							destFileNameBuf);//dbg
-
-						/*	Configure CFDP information.	*/
-						cfdpInfoBuf.archiveName =
-							sdr_string_create(sdr,
-							destFileNameBuf);
-						sdr_write(sdr, armurvdb->cfdpInfo,
-							(char *)&cfdpInfoBuf,
-							sizeof(ARMUR_CfdpInfo));
-					}
-				}
-			}
-		}
-
-		if (type == CfdpTransactionFinishedInd && srcNbr == cfdpInfoBuf.srcNbr)
-		{
-			/*	Now the download has been finished.		*/
-			break;
-		}
-
-		if (sdr_end_xn(sdr) < 0)
-		{
-			return -1;
-		}
-	}
-
-	/*	Now the download has been finished.
-	 *	New archive name to install has been configured.
-	 *	Update the ARMUR stat and go to the next step.		*/
-	armurUpdateStat(ARMUR_STAT_DOWNLOADED);
-	if (sdr_end_xn(sdr) < 0)
-	{
-		return -1;
-	}
-
-	printf("***Download has been completed.\n");//dbg
-	return 0;
-}
+//int	armurWait()
+//{
+//	CfdpEventType		type;
+//	time_t			time;
+//	int			reqNbr;
+//	CfdpTransactionId	transactionId;
+//	char			sourceFileNameBuf[256];
+//	char			destFileNameBuf[256];
+//	uvast			fileSize;
+//	MetadataList		messagesToUser;
+//	uvast			offset;
+//	unsigned int		length;
+//	unsigned int		recordBoundsRespected;
+//	CfdpContinuationState	continuationState;
+//	unsigned int		segMetadataLength;
+//	char			segMetadata[63];
+//	CfdpCondition		condition;
+//	uvast			progress;
+//	CfdpFileStatus		fileStatus;
+//	CfdpDeliveryCode	deliveryCode;
+//	CfdpTransactionId	originatingTransactionId;
+//	char			statusReportBuf[256];
+//	MetadataList		filestoreResponses;
+//
+//	Sdr			sdr = getIonsdr();
+//	ARMUR_VDB		*armurvdb = _armurvdb(NULL);
+//	ARMUR_CfdpInfo		cfdpInfoBuf;
+//	char			buf[SDRSTRING_BUFSZ];
+//	int			len;
+//	uvast			srcNbr;
+//
+//	/*	Fetch the cfdpInfo stored in the ARMUR DB.		*/
+//	CHKERR(sdr_begin_xn(sdr));
+//	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+//	sdr_exit_xn(sdr);
+//
+//	while (1)
+//	{
+//		/*	Nested SDR transaction to enable recovery of CFDP event
+//		 *	items in case of unexpected system crash and reboot.	*/
+//		CHKERR(sdr_begin_xn(sdr));
+//		
+//		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
+//				sourceFileNameBuf, destFileNameBuf,
+//				&fileSize, &messagesToUser, &offset, &length,
+//				&recordBoundsRespected, &continuationState,
+//				&segMetadataLength, segMetadata,
+//				&condition, &progress, &fileStatus,
+//				&deliveryCode, &originatingTransactionId,
+//				statusReportBuf, &filestoreResponses) < 0)
+//		{
+//			return -1;
+//		}
+//
+//		/*	TODO: we need to check if any file data have been
+//		 *	corrupted or something might cause the cfdp_get_event
+//		 *	to block indefinitely. Implement it as a thread ?	*/
+//
+//		cfdp_decompress_number(&srcNbr, &transactionId.sourceEntityNbr);
+//
+//		if (type == CfdpMetadataRecvInd && srcNbr == cfdpInfoBuf.srcNbr)
+//		{
+//			while (messagesToUser)
+//			{
+//				if (cfdp_get_usrmsg(&messagesToUser,
+//					(unsigned char *)buf, &len) < 0)
+//				{
+//					putErrmsg("Failed getting user msg.", NULL);
+//					return -1;
+//				}
+//
+//				if (len > 0)
+//				{
+//					buf[len] = '\0';
+//					printf("\tMessage to user: %s\n", buf);//dbg
+//					if (strcmp(buf, "armur") == 0)
+//					{
+//						/*	Confirmed downloading.		*/
+//						printf("\tFilename: %s.\n",
+//							destFileNameBuf);//dbg
+//
+//						/*	Configure CFDP information.	*/
+//						cfdpInfoBuf.archiveName =
+//							sdr_string_create(sdr,
+//							destFileNameBuf);
+//						sdr_write(sdr, armurvdb->cfdpInfo,
+//							(char *)&cfdpInfoBuf,
+//							sizeof(ARMUR_CfdpInfo));
+//					}
+//				}
+//			}
+//		}
+//
+//		if (type == CfdpTransactionFinishedInd && srcNbr == cfdpInfoBuf.srcNbr)
+//		{
+//			/*	Now the download has been finished.		*/
+//			break;
+//		}
+//
+//		if (sdr_end_xn(sdr) < 0)
+//		{
+//			return -1;
+//		}
+//	}
+//
+//	/*	Now the download has been finished.
+//	 *	New archive name to install has been configured.
+//	 *	Update the ARMUR stat and go to the next step.		*/
+//	armurUpdateStat(ARMUR_STAT_DOWNLOADED);
+//	if (sdr_end_xn(sdr) < 0)
+//	{
+//		return -1;
+//	}
+//
+//	printf("***Download has been completed.\n");//dbg
+//	return 0;
+//}
 
 int	armurInstall()
 {

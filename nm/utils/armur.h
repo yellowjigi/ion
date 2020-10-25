@@ -4,10 +4,7 @@
 #ifndef _ARMUR_H_
 #define _ARMUR_H_
 
-#include "rfx.h"
-#include "bpP.h"
-#include "ltpP.h"
-#include "cfdpP.h"
+#include "ion.h"
 
 /*	Default install paths	*/
 #define ARMUR_PATH_LIB_DEFAULT	"/usr/local/lib"

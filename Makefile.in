@@ -608,7 +608,7 @@ bpcp_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_bpcpd_OBJECTS = cfdp/utils/bpcpd-bpcpd.$(OBJEXT)
 bpcpd_OBJECTS = $(am_bpcpd_OBJECTS)
-bpcpd_DEPENDENCIES = libcfdp.la libici.la $(LIBOBJS)
+bpcpd_DEPENDENCIES = libcfdp.la libici.la libarmur.la $(LIBOBJS)
 bpcpd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(bpcpd_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -3109,7 +3109,7 @@ bpcp_SOURCES = cfdp/utils/bpcp.c
 bpcp_LDADD = libcfdp.la libici.la -lm $(LIBOBJS) $(PTHREAD_LIBS)
 bpcp_CFLAGS = $(cfdpcflags) $(AM_CFLAGS)
 bpcpd_SOURCES = cfdp/utils/bpcpd.c
-bpcpd_LDADD = libcfdp.la libici.la -lm $(LIBOBJS)
+bpcpd_LDADD = libcfdp.la libici.la -lm libarmur.la $(LIBOBJS)#JIGI
 bpcpd_CFLAGS = $(cfdpcflags) $(AM_CFLAGS)
 
 # --- BP Programs --- #

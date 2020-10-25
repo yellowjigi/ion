@@ -128,54 +128,54 @@ tnv_t *dtn_ion_armur_get_armur_stat(tnvc_t *parms)
 /*
  * Trigger ARMUR and wait for the download to be finished.
  */
-tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
-{
-	tnv_t *result = NULL;
-	*status = CTRL_FAILURE;
-	/*
-	 * +-------------------------------------------------------------------------+
-	 * |START CUSTOM FUNCTION ctrl_wait BODY
-	 * +-------------------------------------------------------------------------+
-	 */
-	Sdr	sdr = getIonsdr();
-
-	printf("ctrl_wait in>\n");//dbg
-
-	if (cfdpAttach() < 0)
-	{
-		return result;
-	}
-
-	CHKNULL(sdr_begin_xn(sdr));
-	if (sdr_list_first(sdr, (getCfdpConstants())->events) == 0)
-	{
-		/*	No CFDP PDUs have yet been received until now.
-		 *	There is nothing to do and ARMUR is still idle.
-		 *	To avoid deadlock, we will exit.			*/
-		sdr_exit_xn(sdr);
-		*status = CTRL_SUCCESS;
-		//AMP_DEBUG_ALWAYS("dtn_ion_armur_ctrl_wait", "No CFDP events.", NULL);//dbg
-		return result;
-	}
-	sdr_exit_xn(sdr);
-
-	/*	Check CFDP events and block as necessary.		*/
-	if (armurWait() < 0)
-	{
-		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_wait", "ARMUR_WAIT failed.", NULL);
-		return result;
-	}
-
-	/*	Download has been finished.		*/
-	*status = CTRL_SUCCESS;
-	
-	/*
-	 * +-------------------------------------------------------------------------+
-	 * |STOP CUSTOM FUNCTION ctrl_wait BODY
-	 * +-------------------------------------------------------------------------+
-	 */
-	return result;
-}
+//tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
+//{
+//	tnv_t *result = NULL;
+//	*status = CTRL_FAILURE;
+//	/*
+//	 * +-------------------------------------------------------------------------+
+//	 * |START CUSTOM FUNCTION ctrl_wait BODY
+//	 * +-------------------------------------------------------------------------+
+//	 */
+//	Sdr	sdr = getIonsdr();
+//
+//	printf("ctrl_wait in>\n");//dbg
+//
+//	if (cfdpAttach() < 0)
+//	{
+//		return result;
+//	}
+//
+//	CHKNULL(sdr_begin_xn(sdr));
+//	if (sdr_list_first(sdr, (getCfdpConstants())->events) == 0)
+//	{
+//		/*	No CFDP PDUs have yet been received until now.
+//		 *	There is nothing to do and ARMUR is still idle.
+//		 *	To avoid deadlock, we will exit.			*/
+//		sdr_exit_xn(sdr);
+//		*status = CTRL_SUCCESS;
+//		//AMP_DEBUG_ALWAYS("dtn_ion_armur_ctrl_wait", "No CFDP events.", NULL);//dbg
+//		return result;
+//	}
+//	sdr_exit_xn(sdr);
+//
+//	/*	Check CFDP events and block as necessary.		*/
+//	if (armurWait() < 0)
+//	{
+//		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_wait", "ARMUR_WAIT failed.", NULL);
+//		return result;
+//	}
+//
+//	/*	Download has been finished.		*/
+//	*status = CTRL_SUCCESS;
+//	
+//	/*
+//	 * +-------------------------------------------------------------------------+
+//	 * |STOP CUSTOM FUNCTION ctrl_wait BODY
+//	 * +-------------------------------------------------------------------------+
+//	 */
+//	return result;
+//}
 
 /*
  * Extract the binary archive and install the images.

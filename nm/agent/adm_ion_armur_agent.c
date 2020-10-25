@@ -90,7 +90,7 @@ void dtn_ion_armur_init_var()
 void dtn_ion_armur_init_ctrl()
 {
 
-	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT, 0, dtn_ion_armur_ctrl_wait);
+	//adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT, 0, dtn_ion_armur_ctrl_wait);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL, 0, dtn_ion_armur_ctrl_install);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_RESTART, 0, dtn_ion_armur_ctrl_restart);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT, 0, dtn_ion_armur_ctrl_report);
@@ -119,17 +119,17 @@ void dtn_ion_armur_init_sbr()
 	
 	/* IDLE */
 
-	id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_IDLE);
-	state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT));
-	expr_add_item(state, adm_build_ari_lit_uint(0));
-	expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	action = ac_create();
-	ac_insert(action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT));
-	if (adm_add_sbr(id, 0, state, 1000, 1, action) == AMP_OK)
-	{
-		gAgentInstr.num_sbrs++;
-	}
+	//id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_IDLE);
+	//state = expr_create(AMP_TYPE_UINT);
+	//expr_add_item(state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT));
+	//expr_add_item(state, adm_build_ari_lit_uint(0));
+	//expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	//action = ac_create();
+	//ac_insert(action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_WAIT));
+	//if (adm_add_sbr(id, 0, state, 1000, 1, action) == AMP_OK)
+	//{
+	//	gAgentInstr.num_sbrs++;
+	//}
 
 	/* DOWNLOADED */
 
