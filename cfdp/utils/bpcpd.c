@@ -10,6 +10,7 @@
  *	2020-10-26  jigi             apply filtering CFDP events related to ARMUR.
  *
  */
+#include "cfdpP.h"
 #include "bpcp.h"
 #include "nm/utils/armur.h"
 
@@ -143,6 +144,9 @@ void poll_cfdp_messages()
 	uvast			TID12;
 #ifdef ARMUR
 	Sdr			sdr = getIonsdr();
+	CfdpVdb			*cfdpvdb = getCfdpVdb();
+	CfdpDB			*cfdpdb = getCfdpConstants();
+	Object			elt;
 				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfoBuf);
 	int			armurStatDownloading = 0;
 	uvast			fsaId;
@@ -153,7 +157,40 @@ void poll_cfdp_messages()
 
 	/*Main Event loop*/
 	while (running) {
+#ifdef ARMUR
+		/*	Nested SDR transaction to enable recovery
+		 *	of CFDP event items in case of unexpected
+		 *	system crash and reboot.			*/
+		CHKVOID(sdr_begin_xn(sdr));
+		elt = sdr_list_first(sdr, cfdpdb->events);
+		if (elt == 0)
+		{
+			sdr_exit_xn(sdr);
 
+			/*	Wait until CFDP entity announces an event
+			 *	by giving the event semaphore.			*/
+
+			if (sm_SemTake(cfdpvdb->eventSemaphore) < 0)
+			{
+				putErrmsg("CFDP user app can't take semaphore.", NULL);
+				return;
+			}
+
+			if (sm_SemEnded(cfdpvdb->eventSemaphore))
+			{
+				putErrmsg("CFDP user app access terminated.", NULL);
+				return;
+			}
+
+			CHKVOID(sdr_begin_xn(sdr));
+			elt = sdr_list_first(sdr, cfdpdb->events);
+			if (elt == 0)
+			{
+				sdr_exit_xn(sdr);
+				continue;	/*	Interrupted.		*/
+			}
+		}
+#endif
 		/*Grab a CFDP event*/
 		if (cfdp_get_event(&type, &time, &reqNbr, &transactionId,
 				sourceFileNameBuf, destFileNameBuf,
@@ -170,6 +207,13 @@ void poll_cfdp_messages()
 
 		if (type == CfdpNoEvent)
 		{
+#ifdef ARMUR
+			if (sdr_end_xn(sdr) < 0)
+			{
+				putErrmsg("poll_cfdp_messages transaction failed.", NULL);
+				return;
+			}
+#endif
 			continue;	/*	Interrupted.		*/
 		}
 
@@ -191,6 +235,13 @@ void poll_cfdp_messages()
 					(int *) &length) < 0)
 			{
 				putErrmsg("Failed getting user msg.", NULL);
+#ifdef ARMUR
+				if (sdr_end_xn(sdr) < 0)
+				{
+					putErrmsg("poll_cfdp_messages transaction failed.", NULL);
+					return;
+				}
+#endif
 				continue;
 			}
 
@@ -218,6 +269,11 @@ void poll_cfdp_messages()
 				if (cfdpInfoBuf->srcNbr != fsaId)
 				{
 					/* This is an untrusted FSA. We will not proceed. */
+					if (sdr_end_xn(sdr) < 0)
+					{
+						putErrmsg("poll_cfdp_messages transaction failed.", NULL);
+						return;
+					}
 					continue;
 				}
 
@@ -242,15 +298,15 @@ void poll_cfdp_messages()
 			if (type == CfdpTransactionFinishedInd && TID12 == targetTid)
 			{
 				/* Download has been finished */
-				CHKVOID(sdr_begin_xn(sdr));
 				armurUpdateStat(ARMUR_STAT_DOWNLOADED);
-				if (sdr_end_xn(sdr) < 0)
-				{
-					putErrmsg("bpcpd can't update ARMUR stat.", NULL);
-					return;
-				}
 				printf("***Download has been completed.\n");//DBG
 			}
+		}
+
+		if (sdr_end_xn(sdr) < 0)
+		{
+			putErrmsg("poll_cfdp_messages transaction failed.", NULL);
+			return;
 		}
 #endif
 	}

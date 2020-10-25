@@ -80,12 +80,14 @@ enum wait_status
 	rxn_fin			/*Result Status: Transaction Finished at rx side*/
 };
 
+#ifndef _CFDPP_H_//JIGI
 /*Message to user object*/
 typedef struct
 {
 	Object			text;		/*Text of Message*/
 	unsigned char	length;		/*Message Length*/
 } MsgToUser;
+#endif
 
 /*Transfer Information*/
 struct transfer{
