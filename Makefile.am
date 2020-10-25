@@ -1669,8 +1669,8 @@ bpcp_LDADD = libcfdp.la libici.la -lm $(LIBOBJS) $(PTHREAD_LIBS)
 bpcp_CFLAGS = $(cfdpcflags) $(AM_CFLAGS)
 
 bpcpd_SOURCES = cfdp/utils/bpcpd.c
-bpcpd_LDADD = libcfdp.la libici.la -lm libarmur.la $(LIBOBJS)#JIGI
-bpcpd_CFLAGS = $(cfdpcflags) $(AM_CFLAGS)
+bpcpd_LDADD = libcfdp.la libici.la -lm libarmur.la $(LIBOBJS) #JIGI
+bpcpd_CFLAGS = $(cfdpcflags) $(AM_CFLAGS) -DARMUR #JIGI
 
 # --- BP Programs --- #
 

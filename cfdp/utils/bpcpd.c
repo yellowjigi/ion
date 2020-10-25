@@ -13,7 +13,6 @@
 #include "bpcp.h"
 #include "nm/utils/armur.h"
 
-#define ARMUR
 
 int debug = 0;	/*Set to non-zero to enable debug output. */
 int running=1;
