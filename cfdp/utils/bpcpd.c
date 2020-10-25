@@ -3,11 +3,17 @@
  *	Copyright (c) 2012, California Institute of Technology.
  *	All rights reserved.
  *	Author: Samuel Jero <sj323707@ohio.edu>, Ohio University
+ *
+ *	Modification History: 
+ *	YYYY-MM-DD  AUTHOR           DESCRIPTION
+ *	----------  --------------   --------------------------------------------
+ *	2020-10-26  jigi             apply filtering CFDP events related to ARMUR.
+ *
  */
 #include "bpcp.h"
 #include "nm/utils/armur.h"
 
-
+#define ARMUR
 
 int debug = 0;	/*Set to non-zero to enable debug output. */
 int running=1;
@@ -66,11 +72,13 @@ int main(int argc, char **argv)
 		dbgprintf(0, "Error: Can't initialize CFDP. Is ION running?\n");
 		exit(1);
 	}
-	if (armurAttach() < 0)//JIGI, 10-26-2020
+#ifdef ARMUR
+	if (armurAttach() < 0)
 	{
 		dbgprintf(0, "Error: Can't initialize ARMUR.\n");
 		exit(1);
 	}
+#endif
 	running=1;
 
 #ifdef SIG_HANDLER
@@ -134,6 +142,7 @@ void poll_cfdp_messages()
 	MetadataList		filestoreResponses;
 	uvast 			TID11;
 	uvast			TID12;
+#ifdef ARMUR
 	Sdr			sdr = getIonsdr();
 				OBJ_POINTER(ARMUR_CfdpInfo, cfdpInfoBuf);
 	int			armurStatDownloading = 0;
@@ -141,6 +150,7 @@ void poll_cfdp_messages()
 	uvast			targetTid;
 	char			*cursor;
 	char			*archiveNameBuf;
+#endif
 
 	/*Main Event loop*/
 	while (running) {
@@ -191,7 +201,7 @@ void poll_cfdp_messages()
 				usrmsgBuf[length] = '\0';
 				dbgprintf(2,"\tUser Message '%s'\n", usrmsgBuf);
 			}
-
+#ifdef ARMUR
 			/*	Added by JIGI 10-26-2020				*/
 
 			/*	Check if this is an ARMUR downloading indication
@@ -243,7 +253,7 @@ void poll_cfdp_messages()
 				printf("***Download has been completed.\n");//DBG
 			}
 		}
-
+#endif
 	}
 	return;
 }
