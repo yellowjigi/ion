@@ -3,7 +3,6 @@
 .deps/
 .dirstamp
 /Makefile
-Makefile.in
 autom4te.cache/
 contrib/Makefile
 config.h
