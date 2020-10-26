@@ -92,7 +92,7 @@ void dtn_ion_armur_init_var()
 void dtn_ion_armur_init_ctrl()
 {
 
-	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT, 2, dtn_ion_armur_ctrl_init);
+	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT, 3, dtn_ion_armur_ctrl_init);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL, 0, dtn_ion_armur_ctrl_install);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_RESTART, 0, dtn_ion_armur_ctrl_restart);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT, 2, dtn_ion_armur_ctrl_report);

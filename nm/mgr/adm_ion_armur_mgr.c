@@ -119,8 +119,9 @@ void dtn_ion_armur_init_ctrl()
 	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT);
 	adm_add_ctrldef_ari(id, 2, NULL);
 	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "init", "Automate the full ARMUR procedures with a few parameters in a single control.");
-	meta_add_parm(meta, "remoteHostNbr", AMP_TYPE_UVAST);
+	meta_add_parm(meta, "remoteAgentEid", AMP_TYPE_STR);
 	meta_add_parm(meta, "archiveName", AMP_TYPE_STR);
+	meta_add_parm(meta, "sbrMaxEval", AMP_TYPE_UVAST);
 
 	/* INSTALL */
 
