@@ -63,10 +63,9 @@ tnv_t *dtn_ion_armur_get_armur_stat(tnvc_t *parms);
 tnv_t *dtn_ion_armur_get_armur_records(tnvc_t *parms);
 
 /* Control Functions */
-tnv_t *dtn_ion_armur_ctrl_wait(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 tnv_t *dtn_ion_armur_ctrl_install(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
-//tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
+tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 
 /* OP Functions */
 

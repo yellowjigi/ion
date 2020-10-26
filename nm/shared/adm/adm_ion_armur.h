@@ -117,24 +117,23 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |wait                 |458119014100  |Trigger ARMUR and wait for the downloa|       |
- * |                     |              |d to be finished.                     |       |
- * +---------------------+--------------+--------------------------------------+-------+
- * |install              |458119014101  |Extract the binary archive and install|       |
+ * |install              |458119014100  |Extract the binary archive and install|       |
  * |                     |              |the images.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |restart              |458119014102  |Restart daemon applications according |       |
+ * |restart              |458119014101  |Restart daemon applications according |       |
  * |                     |              |to the images on the restart queues fr|       |
  * |                     |              |om ARMUR VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |458119014103  |Generate a report indicating the resul|       |
- * |                     |              |t of the remote software update.      |       |
+ * |report               |458119014102  |Generate a report indicating the resul|       |
+ * |			 |		|t of the remote software update (amp_a|       |
+ * |			 |		|gent_ctrl_gen_rpts wrapper function) a|       |
+ * |			 |		|nd/or do some postprocessing jobs for |       |
+ * |			 |		|ARMUR DB/VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_ION_ARMUR_CTRL_WAIT 0x00
-#define DTN_ION_ARMUR_CTRL_INSTALL 0x01
-#define DTN_ION_ARMUR_CTRL_RESTART 0x02
-#define DTN_ION_ARMUR_CTRL_REPORT 0x03
+#define DTN_ION_ARMUR_CTRL_INSTALL 0x00
+#define DTN_ION_ARMUR_CTRL_RESTART 0x01
+#define DTN_ION_ARMUR_CTRL_REPORT 0x02
 
 
 /*
@@ -170,22 +169,17 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |idle                 |458819014600  |If the current state of ARMUR is idle,|       |
- * |                     |              | do CTRL_WAIT.                        |       |
+ * |downloaded           |458819014600  |Mainly for CTRL_INSTALL procedure.    |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |downloaded           |458819014601  |If the current state of ARMUR is downl|       |
- * |                     |              |oaded, do CTRL_INSTALL.               |       |
+ * |installed            |458819014601  |Mainly for CTRL_RESTART procedure.    |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |installed            |458819014602  |If the current state of ARMUR is insta|       |
- * |                     |              |lled, do CTRL_RESTART.                |       |
- * +---------------------+--------------+--------------------------------------+-------+
- * |TODO for CTRL_REPORT |458819014603  |If the current state of ARMUR is TODO |       |
+ * |fin                  |458819014602  |Mainly for CTRL_REPORT procedure.     |       |
  * |                     |              |                                      |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_ION_ARMUR_SBR_IDLE 0x00
-#define DTN_ION_ARMUR_SBR_DOWNLOADED 0x01
-#define DTN_ION_ARMUR_SBR_INSTALLED 0x02
+#define DTN_ION_ARMUR_SBR_DOWNLOADED 0x00
+#define DTN_ION_ARMUR_SBR_INSTALLED 0x01
+#define DTN_ION_ARMUR_SBR_FIN 0x02
 
 
 /* Initialization functions. */

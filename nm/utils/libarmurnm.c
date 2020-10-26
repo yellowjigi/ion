@@ -1,3 +1,4 @@
+//2020-10-26 --- implement armurnm_record_get
 //JIGI
 
 #include "armur.h"

@@ -126,11 +126,13 @@ void dtn_ion_armur_init_ctrl()
 	adm_add_ctrldef_ari(id, 0, NULL);
 	meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "restart", "Restart daemon applications according to the images on the restart queues from ARMUR DB.");
 
-	///* REPORT */
+	/* REPORT */
 
-	//id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
-	//adm_add_ctrldef_ari(id, 0, NULL);
-	//meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update.");
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	adm_add_ctrldef_ari(id, 2, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update (amp_agent_ctrl_gen_rpts wrapper function) and/or do some postprocessing jobs for ARMUR DB/VDB.");
+	meta_add_parm(meta, "ids", AMP_TYPE_AC);
+	meta_add_parm(meta, "rxmgrs", AMP_TYPE_TNVC);
 }
 
 void dtn_ion_armur_init_mac()

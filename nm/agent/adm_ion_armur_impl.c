@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -24,6 +25,7 @@
 
 #include "../shared/adm/adm.h"
 #include "adm_ion_armur_impl.h"
+#include "adm_amp_agent_impl.h"
 
 /*   START CUSTOM FUNCTIONS HERE */
 /*             TODO              */
@@ -239,31 +241,28 @@ tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	return result;
 }
 
-///*
-// * Generate a report indicating the result of the remote software update.
-// */
-//tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
-//{
-//	tnv_t *result = NULL;
-//	*status = CTRL_FAILURE;
-//	/*
-//	 * +-------------------------------------------------------------------------+
-//	 * |START CUSTOM FUNCTION ctrl_report BODY
-//	 * +-------------------------------------------------------------------------+
-//	 */
-//
-//	//if (armurReport() == 0)
-//	//{
-//		*status = CTRL_SUCCESS;
-//	//}
-//
-//	/*
-//	 * +-------------------------------------------------------------------------+
-//	 * |STOP CUSTOM FUNCTION ctrl_report BODY
-//	 * +-------------------------------------------------------------------------+
-//	 */
-//	return result;
-//}
+/*
+ * Generate a report indicating the result of the remote software update.
+ */
+tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
+{
+	tnv_t *result = NULL;
+	*status = CTRL_FAILURE;
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |START CUSTOM FUNCTION ctrl_report BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+
+	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, status);
+
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |STOP CUSTOM FUNCTION ctrl_report BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+	return result;
+}
 
 
 /* OP Functions */

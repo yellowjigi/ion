@@ -4,7 +4,6 @@
 // jigi
 
 #include "armur.h"
-//#include "armur_restart.h"
 #include "armur_rhht.h"
 #include <archive.h>
 #include <archive_entry.h>
@@ -497,7 +496,6 @@ int	armurStart(char *nmagentCmd)
 	Object		armurdbObj = _armurdbObject(NULL);
 	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 	ARMUR_DB	armurdbBuf;
-	//ARMUR_CfdpInfo	cfdpInfoBuf;
 	char		buf[SDRSTRING_BUFSZ];
 
 	if (nmagentCmd)
@@ -542,91 +540,6 @@ int	armurStart(char *nmagentCmd)
 		armurvdb->nmagentPid = pseudoshell(buf);
 	}
 	sdr_exit_xn(sdr);
-
-	//switch ((_armurConstants())->stat)
-	//{
-	//case ARMUR_STAT_IDLE:
-/*	MIGRATED TO ARMUR_CTRL_WAIT 08/18/2020		*/
-	//	if (cfdpAttach() < 0)
-	//	{
-	//		return -1;
-	//	}
-
-	//	CHKERR(sdr_begin_xn(sdr));
-	//	if (sdr_list_first(sdr, (getCfdpConstants())->events) == 0)
-	//	{
-	//		/*	No CFDP PDUs have yet been received
-	//		 *	until now. There is nothing to do
-	//		 *	and ARMUR is still idle. To avoid
-	//		 *	deadlock, we will exit.			*/
-	//		sdr_exit_xn(sdr);
-	//		return 0;
-	//	}
-	//	sdr_exit_xn(sdr);
-
-	//	/*	Check CFDP events and block as
-	//	 *	necessary.				*/
-
-	//	if (armurWait() < 0)
-	//	{
-	//		putErrmsg("ARMUR wait failed.", NULL);
-	//		return -1;
-	//	}
-	//	/*	Download has been finished.		*/
-
-	//case ARMUR_STAT_DOWNLOADED:
-/*	MIGRATED TO ARMUR_CTRL_INSTALL 08/18/2020	*/
-	//	/*	Start install procedure.		*/
-
-	//	if (armurInstall() < 0)
-	//	{
-	//		putErrmsg("ARMUR install failed.", NULL);
-	//		return -1;
-	//	}
-	//	/*	Install has been finished.		*/
-
-	//case ARMUR_STAT_INSTALLED:
-/*	MIGRATED TO ARMUR_CTRL_RESTART 08/18/2020	*/
-	//	/*	If we safely arrived here, the
-	//	 *	downloaded archive file is no longer
-	//	 *	needed. Delete it.			*/
-	//	CHKERR(sdr_begin_xn(sdr));
-	//	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo,
-	//		sizeof(ARMUR_CfdpInfo));
-	//	sdr_string_read(sdr, buf, cfdpInfoBuf.archiveName);
-	//	sdr_exit_xn(sdr);
-	//	if (fopen(buf, "r") != NULL)
-	//	{
-	//		oK(remove(buf));
-	//	}
-	//	/*	Start restart procedure.		*/
-
-	//	if (armurRestart() < 0)
-	//	{
-	//		putErrmsg("ARMUR restart failed.", NULL);
-	//		return -1;
-	//	}
-
-	//	/*	Restart has been finished.		*/
-	//}
-
-	///*	TODO: Send a report message.		*/
-
-	///*	The entire procedure has been completed.
-	// *	Reset the CFDP-related information and state.		*/
-	//CHKERR(sdr_begin_xn(sdr));
-	//sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-	//sdr_free(sdr, cfdpInfoBuf.archiveName);
-	//cfdpInfoBuf.archiveName = 0;
-	//sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-
-	//sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	//armurdbBuf.stat = ARMUR_STAT_IDLE;
-	//sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-	//if (sdr_end_xn(sdr) < 0)
-	//{
-	//	return -1;
-	//}
 
 	return 0;
 }
