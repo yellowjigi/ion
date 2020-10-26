@@ -36,7 +36,6 @@
 
 /*	ARMUR states		*/
 #define	ARMUR_STAT_IDLE			0
-//#define	ARMUR_STAT_DOWNLOADING	1
 #define	ARMUR_STAT_DOWNLOADED		1
 #define ARMUR_STAT_INSTALLED		2
 #define ARMUR_STAT_FIN			3
@@ -53,6 +52,16 @@
 /*	Buffer size		*/
 #define	ARMUR_PATHNAME_LEN_MAX		64
 #define	ARMUR_FILENAME_LEN_MAX		32
+
+/*	Report procedure	*/
+#define ARMUR_RPT_SUCCESS		0
+#define ARMUR_RPT_ERROR			1
+#define armurAppendRptMsg(msg, err)\
+if (err) _armurAppendRptMsg(msg, __FILE__, __LINE__);\
+else _armurAppendRptMsg(msg, NULL, 0)
+
+/*	CFDP user message	*/
+#define ARMUR_CFDP_USRMSG		"armur"
 
 /*	Others			*/
 #define	TMP_EXT				".tmp"
@@ -147,9 +156,6 @@ extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
 //extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
 extern int		armurUpdateCfdpArchiveName(char *archiveName);
 extern int		armurInstall();
-#define armurAppendRptMsg(msg, err)\
-if (err) _armurAppendRptMsg(msg, __FILE__, __LINE__);\
-else _armurAppendRptMsg(msg, NULL, 0)
 extern void		_armurAppendRptMsg(const char *msg, char *file, int line);
 
 #endif	/* _ARMUR_H_ */

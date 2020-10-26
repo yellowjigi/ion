@@ -11,7 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
- **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
+ **  2020-10-26  jigi             added EDD_RECORDS, CTRL_INIT.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -59,10 +59,11 @@ tnv_t *dtn_ion_armur_meta_organization(tnvc_t *parms);
 /* Constant Functions */
 
 /* Collect Functions */
-tnv_t *dtn_ion_armur_get_armur_stat(tnvc_t *parms);
-tnv_t *dtn_ion_armur_get_armur_records(tnvc_t *parms);
+tnv_t *dtn_ion_armur_get_state(tnvc_t *parms);
+tnv_t *dtn_ion_armur_get_records(tnvc_t *parms);
 
 /* Control Functions */
+tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 tnv_t *dtn_ion_armur_ctrl_install(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status);
 tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status);

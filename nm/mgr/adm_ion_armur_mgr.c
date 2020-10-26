@@ -11,7 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
- **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
+ **  2020-10-26  jigi             added EDD_RECORDS, CTRL_INIT.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -87,13 +87,13 @@ void dtn_ion_armur_init_edd()
 
 	ari_t *id = NULL;
 
-	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT);
+	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE);
 	adm_add_edd(id, NULL);
-	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "armur_stat", "The current state of ARMUR.");
+	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "state", "The current state of ARMUR.");
 
-	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_RECORDS);
+	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
 	adm_add_edd(id, NULL);
-	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "armur_records", "New line (LF) delimited list of ARMUR.");
+	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "records", "New line (LF) delimited list of ARMUR.");
 }
 
 void dtn_ion_armur_init_op()
@@ -113,6 +113,14 @@ void dtn_ion_armur_init_ctrl()
 
 	metadata_t *meta = NULL;
 
+
+	/* INIT */
+
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT);
+	adm_add_ctrldef_ari(id, 2, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "init", "Automate the full ARMUR procedures with a few parameters in a single control.");
+	meta_add_parm(meta, "remoteHostNbr", AMP_TYPE_UVAST);
+	meta_add_parm(meta, "archiveName", AMP_TYPE_STR);
 
 	/* INSTALL */
 

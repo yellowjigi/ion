@@ -11,7 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
- **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
+ **  2020-10-26  jigi             added EDD_RECORDS, CTRL_INIT.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -75,8 +75,8 @@ void dtn_ion_armur_init_cnst()
 void dtn_ion_armur_init_edd()
 {
 
-	adm_add_edd(adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT), dtn_ion_armur_get_armur_stat);
-	adm_add_edd(adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_RECORDS), dtn_ion_armur_get_armur_records);
+	adm_add_edd(adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE), dtn_ion_armur_get_state);
+	adm_add_edd(adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS), dtn_ion_armur_get_records);
 }
 
 void dtn_ion_armur_init_op()
@@ -92,6 +92,7 @@ void dtn_ion_armur_init_var()
 void dtn_ion_armur_init_ctrl()
 {
 
+	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT, 2, dtn_ion_armur_ctrl_init);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL, 0, dtn_ion_armur_ctrl_install);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_RESTART, 0, dtn_ion_armur_ctrl_restart);
 	adm_add_ctrldef(g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT, 2, dtn_ion_armur_ctrl_report);

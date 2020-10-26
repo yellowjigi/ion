@@ -11,7 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
- **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
+ **  2020-10-26  jigi             added EDD_RECORDS, CTRL_INIT.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -74,14 +74,14 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+----------------------------------------------+-------+
- * |armur_stat           |458219014200  |The current state of ARMUR            |UINT   |
+ * |state                |458219014200  |The current state of ARMUR            |UINT   |
  * +---------------------+--------------+--------------------------------------+-------+
- * |armur_records        |458219014201  |New line (LF) delimited list of ARMUR |UINT   |
+ * |records              |458219014201  |New line (LF) delimited list of ARMUR |UINT   |
  * |                     |              |log records in string                 |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_ION_ARMUR_EDD_ARMUR_STAT 0x00
-#define DTN_ION_ARMUR_EDD_ARMUR_RECORDS 0x01
+#define DTN_ION_ARMUR_EDD_STATE 0x00
+#define DTN_ION_ARMUR_EDD_RECORDS 0x01
 
 
 /*
@@ -117,23 +117,28 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |install              |458119014100  |Extract the binary archive and install|       |
+ * |init                 |458119014100  |Automate the full ARMUR procedures wit|       |
+ * |                     |              |h a few parameters in a single control|       |
+ * |                     |              |.                                     |       |
+ * +---------------------+--------------+--------------------------------------+-------+
+ * |install              |458119014101  |Extract the binary archive and install|       |
  * |                     |              |the images.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |restart              |458119014101  |Restart daemon applications according |       |
+ * |restart              |458119014102  |Restart daemon applications according |       |
  * |                     |              |to the images on the restart queues fr|       |
  * |                     |              |om ARMUR VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |458119014102  |Generate a report indicating the resul|       |
+ * |report               |458119014103  |Generate a report indicating the resul|       |
  * |			 |		|t of the remote software update (amp_a|       |
  * |			 |		|gent_ctrl_gen_rpts wrapper function) a|       |
  * |			 |		|nd/or do some postprocessing jobs for |       |
  * |			 |		|ARMUR DB/VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_ION_ARMUR_CTRL_INSTALL 0x00
-#define DTN_ION_ARMUR_CTRL_RESTART 0x01
-#define DTN_ION_ARMUR_CTRL_REPORT 0x02
+#define DTN_ION_ARMUR_CTRL_INIT 0x00
+#define DTN_ION_ARMUR_CTRL_INSTALL 0x01
+#define DTN_ION_ARMUR_CTRL_RESTART 0x02
+#define DTN_ION_ARMUR_CTRL_REPORT 0x03
 
 
 /*
