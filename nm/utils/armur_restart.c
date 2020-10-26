@@ -1361,14 +1361,10 @@ FIN:
 	armurvdb->vstat = ARMUR_VSTAT_IDLE;
 	sdr_exit_xn(sdr);
 
-	printf("***Restart has been completed.\n");//dbg
-
 	/*	The entire procedure has been completed.
 	 *	Reset the CFDP-related information and state.	*/
 	CHKERR(sdr_begin_xn(sdr));
-	armurAppendRptMsg("Successfully restarted.", 0);//JIGI
 	armurUpdateStat(ARMUR_STAT_FIN);
-	//armurUpdateStat(ARMUR_STAT_IDLE);
 	sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
 	sdr_free(sdr, cfdpInfoBuf.archiveName);
 	cfdpInfoBuf.archiveName = 0;
@@ -1377,6 +1373,9 @@ FIN:
 	{
 		return -1;
 	}
+
+	printf("***Restart has been completed.\n");//dbg
+	armurAppendRptMsg("Successfully restarted.", 0);//JIGI
 
 	return 0;
 }

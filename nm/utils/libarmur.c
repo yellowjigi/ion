@@ -1064,7 +1064,6 @@ int	armurInstall()
 	archive_read_free(a);
 
 	CHKERR(sdr_begin_xn(sdr));
-	_armurAppendRptMsg("Install has been completed", NULL, 0);
 	armurUpdateStat(ARMUR_STAT_INSTALLED);
 	if (sdr_end_xn(sdr) < 0)
 	{
@@ -1072,6 +1071,8 @@ int	armurInstall()
 	}
 
 	printf("***Install has been completed.\n");//dbg
+	_armurAppendRptMsg("Install has been completed", NULL, 0);
+
 	return 0;
 }
 
@@ -1082,8 +1083,8 @@ void	_armurAppendRptMsg(const char *msg, char *file, int line)
 	Object		recordObj;
 	char		buf[128];
 
-	CHKVOID(ionLocked());
 	CHKVOID(msg);
+	CHKVOID(sdr_begin_xn(sdr));
 
 	if (file == NULL && line == 0)
 	{
@@ -1095,4 +1096,10 @@ void	_armurAppendRptMsg(const char *msg, char *file, int line)
 	}
 	recordObj = sdr_string_create(sdr, buf);
 	sdr_list_insert_last(sdr, armurdb->records, recordObj);
+
+	if (sdr_end_xn(sdr) < 0)
+	{
+		/*	TODO: record in a log file	*/
+		return;
+	}
 }
