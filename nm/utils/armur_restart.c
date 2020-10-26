@@ -1366,7 +1366,9 @@ FIN:
 	/*	The entire procedure has been completed.
 	 *	Reset the CFDP-related information and state.	*/
 	CHKERR(sdr_begin_xn(sdr));
-	armurUpdateStat(ARMUR_STAT_IDLE);
+	armurAppendRptMsg("Successfully restarted.", 0);//JIGI
+	armurUpdateStat(ARMUR_STAT_FIN);
+	//armurUpdateStat(ARMUR_STAT_IDLE);
 	sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
 	sdr_free(sdr, cfdpInfoBuf.archiveName);
 	cfdpInfoBuf.archiveName = 0;

@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -75,8 +76,12 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +---------------------+--------------+----------------------------------------------+-------+
  * |armur_stat           |458219014200  |The current state of ARMUR            |UINT   |
  * +---------------------+--------------+--------------------------------------+-------+
+ * |armur_records        |458219014201  |New line (LF) delimited list of ARMUR |UINT   |
+ * |                     |              |log records in string                 |       |
+ * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_ARMUR_EDD_ARMUR_STAT 0x00
+#define DTN_ION_ARMUR_EDD_ARMUR_RECORDS 0x01
 
 
 /*

@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2020-10-26  jigi             added EDD_ARMUR_RECORDS.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
  ****************************************************************************/
@@ -89,6 +90,10 @@ void dtn_ion_armur_init_edd()
 	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_STAT);
 	adm_add_edd(id, NULL);
 	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "armur_stat", "The current state of ARMUR.");
+
+	id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_ARMUR_RECORDS);
+	adm_add_edd(id, NULL);
+	meta_add_edd(AMP_TYPE_STR, id, ADM_ENUM_DTN_ION_ARMUR, "armur_records", "New line (LF) delimited list of ARMUR.");
 }
 
 void dtn_ion_armur_init_op()
@@ -121,11 +126,11 @@ void dtn_ion_armur_init_ctrl()
 	adm_add_ctrldef_ari(id, 0, NULL);
 	meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "restart", "Restart daemon applications according to the images on the restart queues from ARMUR DB.");
 
-	/* REPORT */
+	///* REPORT */
 
-	id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
-	adm_add_ctrldef_ari(id, 0, NULL);
-	meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update.");
+	//id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	//adm_add_ctrldef_ari(id, 0, NULL);
+	//meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update.");
 }
 
 void dtn_ion_armur_init_mac()

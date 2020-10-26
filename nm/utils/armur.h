@@ -1,3 +1,5 @@
+// 2020-10-26 --- added records to ARMUR_DB
+// 2020-10-26 --- modified include files
 // 2020-06-29
 // jigi
 
@@ -7,19 +9,19 @@
 #include "ion.h"
 
 /*	Default install paths	*/
-#define ARMUR_PATH_LIB_DEFAULT	"/usr/local/lib"
-#define ARMUR_PATH_APP_DEFAULT	"/usr/local/bin"
+#define ARMUR_PATH_LIB_DEFAULT		"/usr/local/lib"
+#define ARMUR_PATH_APP_DEFAULT		"/usr/local/bin"
 
 /*	Image types		*/
-#define ARMUR_IMAGETYPE_LIB	0
-#define ARMUR_IMAGETYPE_APP	1
-#define ARMUR_IMAGETYPES	2
+#define ARMUR_IMAGETYPE_LIB		0
+#define ARMUR_IMAGETYPE_APP		1
+#define ARMUR_IMAGETYPES		2
 
 /*	Image levels		*/
-#define	ARMUR_LEVEL_0	0	/*	Core library		*/
-#define	ARMUR_LEVEL_1	1	/*	Protocol library	*/
-#define	ARMUR_LEVEL_2	2	/*	Applications		*/
-#define	ARMUR_LEVELS	3
+#define	ARMUR_LEVEL_0			0	/*	Core library		*/
+#define	ARMUR_LEVEL_1			1	/*	Protocol library	*/
+#define	ARMUR_LEVEL_2			2	/*	Applications		*/
+#define	ARMUR_LEVELS			3
 
 /*	Image layers		*/
 #define	ARMUR_LAYER_APPLICATION		0
@@ -33,26 +35,28 @@
 #define	ARMUR_APPTYPES			2
 
 /*	ARMUR states		*/
-#define	ARMUR_STAT_IDLE		0
+#define	ARMUR_STAT_IDLE			0
 //#define	ARMUR_STAT_DOWNLOADING	1
-#define	ARMUR_STAT_DOWNLOADED	1
-#define ARMUR_STAT_INSTALLED	2
+#define	ARMUR_STAT_DOWNLOADED		1
+#define ARMUR_STAT_INSTALLED		2
+#define ARMUR_STAT_FIN			3
 
 /*	ARMUR volatile states	*/
-#define	ARMUR_VSTAT_IDLE	0
-#define	ARMUR_VSTAT_LV0_PENDING	1
-#define	ARMUR_VSTAT_LV1_PENDING	2
-#define	ARMUR_VSTAT_LV2_PENDING	4
-#define ARMUR_VSTAT_LV2_STOPPED	1
-#define ARMUR_VSTAT_LV2_STARTED	2
-#define ARMUR_VSTAT(level)	(1 << level)
+#define	ARMUR_VSTAT_IDLE		0
+#define	ARMUR_VSTAT_LV0_PENDING		1
+#define	ARMUR_VSTAT_LV1_PENDING		2
+#define	ARMUR_VSTAT_LV2_PENDING		4
+#define ARMUR_VSTAT_LV2_STOPPED		1
+#define ARMUR_VSTAT_LV2_STARTED		2
+#define ARMUR_VSTAT(level)		(1 << level)
 
 /*	Buffer size		*/
-#define	ARMUR_PATHNAME_LEN_MAX	64
-#define	ARMUR_FILENAME_LEN_MAX	32
+#define	ARMUR_PATHNAME_LEN_MAX		64
+#define	ARMUR_FILENAME_LEN_MAX		32
 
 /*	Others			*/
-#define	TMP_EXT		".tmp"
+#define	TMP_EXT				".tmp"
+
 
 typedef int		(*ARMUR_StopFn)();
 typedef int		(*ARMUR_StartFn)();
@@ -77,6 +81,7 @@ typedef struct {
 	Object		images[ARMUR_LEVELS];		/*	SDR lists		*/
 	Object		cfdpInfo;			/*	CfdpInfo address	*/
 	Object		nmagentCmd;			/*	SDR string		*/
+	Object		records;			/*	SDR lists		*/
 } ARMUR_DB;
 
 typedef struct {
@@ -141,8 +146,10 @@ extern void		armurUpdateStat(int armurStat);
 extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
 //extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
 extern int		armurUpdateCfdpArchiveName(char *archiveName);
-extern int		armurWait();
 extern int		armurInstall();
-//extern int		armurRestart();
+#define armurAppendRptMsg(msg, err)\
+if (err) _armurAppendRptMsg(msg, __FILE__, __LINE__);\
+else _armurAppendRptMsg(msg, NULL, 0)
+extern void		_armurAppendRptMsg(const char *msg, char *file, int line);
 
 #endif	/* _ARMUR_H_ */
