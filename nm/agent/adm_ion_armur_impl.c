@@ -60,6 +60,67 @@ typedef struct {
 	char	*description;
 } SbrDef;
 
+static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, char *archiveName)
+{
+	memset((char *)cfdpReqParms, 0, sizeof(CfdpReqParms));
+
+	cfdp_compress_number(&(cfdpReqParms->destinationEntityNbr), destEntityNbr);
+	isprintf(cfdpReqParms->sourceFileNameBuf, 256, "%.255s", archiveName);
+	isprintf(cfdpReqParms->destFileNameBuf, 256, "%.255s", archiveName);
+	cfdpReqParms->sourceFileName = cfdpReqParms->sourceFileNameBuf;
+	cfdpReqParms->destFileName = cfdpReqParms->destFileNameBuf;
+
+	/*	Temporarily use default values		*/
+	cfdpReqParms->utParms.lifespan = 86400;
+	cfdpReqParms->utParms.classOfService = BP_STD_PRIORITY;
+	cfdpReqParms->utParms.custodySwitch = NoCustodyRequested;
+
+	cfdpReqParms->msgsToUser = cfdp_create_usrmsg_list();
+	cfdp_add_usrmsg(cfdpReqParms->msgsToUser, (unsigned char *)ARMUR_CFDP_USRMSG,
+		strlen(ARMUR_CFDP_USRMSG) + 1);
+}
+
+static void defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
+{
+	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
+	sbrDef->start = 0;
+	sbrDef->state = expr_create(AMP_TYPE_UINT);
+	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	expr_add_item(sbrDef->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
+	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	sbrDef->max_eval = sbrMaxEval;
+	sbrDef->count = 1;
+	sbrDef->action = ac_create();
+	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));//TODO:MACRO
+	sbrDef->description = "downloaded";
+}
+
+static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
+{
+	tnv_t *addSbrParms[7];
+	int i;
+
+	addSbrParms[0] = tnv_from_obj(AMP_TYPE_ARI, sbrDef.id);
+	addSbrParms[1] = tnv_from_uvast(sbrDef.start);
+	addSbrParms[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrDef.state);
+	addSbrParms[3] = tnv_from_uvast(sbrDef.max_eval);
+	addSbrParms[4] = tnv_from_uvast(sbrDef.count);
+	addSbrParms[5] = tnv_from_obj(AMP_TYPE_AC, sbrDef.action);
+	addSbrParms[6] = tnv_from_obj(AMP_TYPE_STR, sbrDef.description);
+	for (i = 0; i < 7; i++)
+	{
+		if (vec_push(&(addSbrId->as_reg.parms.values), addSbrParms[i]) != VEC_OK)
+		{
+			for (; i >= 0; i--)
+			{
+				tnv_release(addSbrParms[i], 1);
+			}
+			return -1;
+		}
+	}
+	return 0;
+}
+
 /*   STOP CUSTOM FUNCTIONS HERE  */
 
 void dtn_ion_armur_setup()
@@ -209,8 +270,6 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	uvast destEntityNbr;
 	SbrDef sbrDef;
 	ari_t *addSbrId;
-	tnv_t *addSbrParms[7];
-	int i;
 	msg_ctrl_t *msg;
 	char *remoteAgentEid = adm_get_parm_obj(parms, 0, AMP_TYPE_STR);
 	char *archiveName = adm_get_parm_obj(parms, 1, AMP_TYPE_STR);
@@ -225,29 +284,16 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		return result;
 	}
 
-	/*	Populate CFDP parameters		*/
-	memset((char *)&cfdpReqParms, 0, sizeof(CfdpReqParms));
-
 	if (sscanf(remoteAgentEid, "%*[^:]:" UVAST_FIELDSPEC ".", &destEntityNbr) != 1)
 	{
 		armurAppendRptMsg("invalid remote_agent_eid.", ARMUR_RPT_ERROR);
 		return result;
 	}
-	cfdp_compress_number(&(cfdpReqParms.destinationEntityNbr), destEntityNbr);
-	isprintf(cfdpReqParms.sourceFileNameBuf, 256, "%.255s", archiveName);
-	isprintf(cfdpReqParms.destFileNameBuf, 256, "%.255s", archiveName);
-	cfdpReqParms.sourceFileName = cfdpReqParms.sourceFileNameBuf;
-	cfdpReqParms.destFileName = cfdpReqParms.destFileNameBuf;
 
-	/*	Temporarily use default values		*/
-	cfdpReqParms.utParms.lifespan = 86400;
-	cfdpReqParms.utParms.classOfService = BP_STD_PRIORITY;
-	cfdpReqParms.utParms.custodySwitch = NoCustodyRequested;
+	/*	Populate CFDP parms	*/
+	populateCfdpParms(&cfdpReqParms, destEntityNbr, archiveName);
 
-	cfdpReqParms.msgsToUser = cfdp_create_usrmsg_list();
-	cfdp_add_usrmsg(cfdpReqParms.msgsToUser, (unsigned char *)ARMUR_CFDP_USRMSG, strlen(ARMUR_CFDP_USRMSG) + 1);
-
-	/*	CFDP put request			*/
+	/*	CFDP put request	*/
 	if (cfdp_put(&(cfdpReqParms.destinationEntityNbr),
 			sizeof(BpUtParms),
 			(unsigned char *)&(cfdpReqParms.utParms),
@@ -257,61 +303,25 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 			cfdpReqParms.msgsToUser, 0,
 			&(cfdpReqParms.transactionId)) < 0)
 	{
-		armurAppendRptMsg("cfdp_put_wrapper failed.", ARMUR_RPT_ERROR);
+		armurAppendRptMsg("cfdp_put failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
-	//if (cfdp_put_wrapper(86400, 0, 1,
-	//	archiveName, destEntityNbr, archiveName) < 0)
-	//{
-	//	armurAppendRptMsg("cfdp_put_wrapper failed.", ARMUR_RPT_ERROR);
-	//	return result;
-	//}
 
 	armurAppendRptMsg("cfdp_put successful.", ARMUR_RPT_SUCCESS);
 
 	/*	2. Define SBRs with proper CTRLs.	*/
 	// ADD_SBR(MACRO(ADD_SBR(CTRL_REPORT),CTRL_INSTALL,CTRL_RESTART))
-	/*	Define SBR	*/
-	addSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+	/*	Define SBR		*/
+	defineSbr(&sbrDef, sbrMaxEval);
 
-	sbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
-	sbrDef.start = 0;
-	sbrDef.state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(sbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(sbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
-	expr_add_item(sbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	sbrDef.max_eval = sbrMaxEval;
-	sbrDef.count = 1;
-	sbrDef.action = ac_create();
-	ac_insert(sbrDef.action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));//TODO:MACRO
-	sbrDef.description = "downloaded";
-	/*	Build parms	*/
-	addSbrParms[0] = tnv_from_obj(AMP_TYPE_ARI, sbrDef.id);
-	addSbrParms[1] = tnv_from_uvast(sbrDef.start);
-	addSbrParms[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrDef.state);
-	addSbrParms[3] = tnv_from_uvast(sbrDef.max_eval);
-	addSbrParms[4] = tnv_from_uvast(sbrDef.count);
-	addSbrParms[5] = tnv_from_obj(AMP_TYPE_AC, sbrDef.action);
-	addSbrParms[6] = tnv_from_obj(AMP_TYPE_STR, sbrDef.description);
-	for (i = 0; i < 7; i++)
+	/*	Build ARI & parms	*/
+	addSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+	if (buildSbrParms(addSbrId, sbrDef) < 0)
 	{
-		if (vec_push(&(addSbrId->as_reg.parms.values), addSbrParms[i]) != VEC_OK)
-		{
-			armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
-			for (; i >= 0; i--)
-			{
-				tnv_release(addSbrParms[i], 1);
-			}
-			ari_release(addSbrId, 1);
-			return result;
-		}
+		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
+		ari_release(addSbrId, 1);
+		return result;
 	}
-	//if(ui_input_parms(result) != AMP_OK)
-	//{
-	//	AMP_DEBUG_ERR("ui_input_ari","Unable to get parms.", NULL);
-	//	ari_release(result, 1);
-	//	result = NULL;
-	//}
 
 	/*	Send messasge	*/
 	if ((msg = msg_ctrl_create_ari(addSbrId)) == NULL)
