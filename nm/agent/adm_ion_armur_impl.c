@@ -117,7 +117,7 @@ static int buildReportParms(ari_t *reportId, ReportDef reportDef)
 	tnv_t *reportParms[2];
 	int i;
 
-	reportParms[0] = tnv_from_obj(AMP_TYPE_ARI, reportDef.id);
+	reportParms[0] = tnv_from_obj(AMP_TYPE_AC, reportDef.id);
 	reportParms[1] = tnv_from_obj(AMP_TYPE_TNVC, reportDef.rxmgrs);
 	for (i = 0; i < 2; i++)
 	{
@@ -143,7 +143,6 @@ static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 	/*	Prepare report def	*/
 	reportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
 
-	//reportDef.id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
 	reportDef.id = ac_create();
 	ac_insert(reportDef.id, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
 	reportDef.rxmgrs = tnvc_create(0);
