@@ -32,7 +32,7 @@
 #define RH_FULL      -4
 
 /*	ARMUR Hash values	*/
-#define ARMUR_VIMAGE_HASH_ENTRIES	31
+#define ARMUR_VIMAGE_HASH_ENTRIES	61
 
 
 /*
