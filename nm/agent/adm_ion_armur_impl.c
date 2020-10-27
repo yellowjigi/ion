@@ -80,21 +80,6 @@ static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, c
 		strlen(ARMUR_CFDP_USRMSG) + 1);
 }
 
-static void defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
-{
-	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
-	sbrDef->start = 0;
-	sbrDef->state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(sbrDef->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
-	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	sbrDef->max_eval = sbrMaxEval;
-	sbrDef->count = 1;
-	sbrDef->action = ac_create();
-	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));//TODO:MACRO
-	sbrDef->description = "downloaded";
-}
-
 static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
 {
 	tnv_t *addSbrParms[7];
@@ -118,6 +103,50 @@ static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
 			return -1;
 		}
 	}
+	return 0;
+}
+
+static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
+{
+	ari_t *innerAddSbrId;
+	SbrDef innerSbrDef;
+
+	/*	Inner SBR definition	*/
+	innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+
+	innerSbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
+	innerSbrDef.start = 0;
+	innerSbrDef.state = expr_create(AMP_TYPE_UINT);
+	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	expr_add_item(innerSbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
+	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
+	innerSbrDef.count = 1;
+	innerSbrDef.action = ac_create();
+	ac_insert(innerSbrDef.action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT));
+	innerSbrDef.description = "fin";
+
+	if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
+	{
+		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
+		ari_release(innerAddSbrId, 1);
+		return -1;
+	}
+
+	/*	Outer SBR definition	*/
+	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
+	sbrDef->start = 0;
+	sbrDef->state = expr_create(AMP_TYPE_UINT);
+	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	expr_add_item(sbrDef->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
+	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	sbrDef->max_eval = sbrMaxEval;
+	sbrDef->count = 1;
+	sbrDef->action = ac_create();
+	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));
+	ac_insert(sbrDef->action, innerAddSbrId);
+	sbrDef->description = "downloaded";
+
 	return 0;
 }
 
@@ -309,10 +338,13 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 
 	armurAppendRptMsg("cfdp_put successful.", ARMUR_RPT_SUCCESS);
 
-	/*	2. Define SBRs with proper CTRLs.	*/
-	// ADD_SBR(MACRO(ADD_SBR(CTRL_REPORT),CTRL_INSTALL,CTRL_RESTART))
+	/*	2. Define SBRs with proper parms.	*/
 	/*	Define SBR		*/
-	defineSbr(&sbrDef, sbrMaxEval);
+	if (defineSbr(&sbrDef, sbrMaxEval) < 0)
+	{
+		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
+		return result;
+	}
 
 	/*	Build ARI & parms	*/
 	addSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
@@ -323,7 +355,8 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		return result;
 	}
 
-	/*	Send messasge	*/
+	/*	3. Create a message and send it.	*/
+	/*	Create messasge		*/
 	if ((msg = msg_ctrl_create_ari(addSbrId)) == NULL)
 	{
 		armurAppendRptMsg("Can't create a message for add_sbr.", ARMUR_RPT_ERROR);
@@ -332,6 +365,7 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	}
 
 	msg->start = 0;
+	/*	Send messasge		*/
 	if (iif_send_msg(&ion_ptr, MSG_TYPE_PERF_CTRL, msg, remoteAgentEid) < 0)
 	{
 		armurAppendRptMsg("Can't send add_sbr.", ARMUR_RPT_ERROR);
@@ -344,6 +378,7 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	/*	Init procedure has been completed.	*/
 	*status = CTRL_SUCCESS;
 
+	printf("ctrl_init ok<\n");//dbg
 	/*
 	 * +-------------------------------------------------------------------------+
 	 * |STOP CUSTOM FUNCTION ctrl_init BODY
