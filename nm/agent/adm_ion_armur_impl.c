@@ -50,7 +50,6 @@ typedef struct {
 	CfdpTransactionId	transactionId;
 } CfdpReqParms;
 
-
 typedef struct {
 	ari_t	*id;
 	uvast	start;
@@ -135,8 +134,8 @@ static int buildReportParms(ari_t *reportId, ReportDef reportDef)
 
 static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 {
-	ari_t *innerAddSbrId;
-	SbrDef innerSbrDef;
+	//ari_t *innerAddSbrId;
+	//SbrDef innerSbrDef;
 	ari_t *reportId;
 	ReportDef reportDef;
 
@@ -154,27 +153,27 @@ static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 		return -1;
 	}
 
-	/*	Inner SBR definition	*/
-	innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+	///*	Inner SBR definition	*/
+	//innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
 
-	innerSbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
-	innerSbrDef.start = 0;
-	innerSbrDef.state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(innerSbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
-	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
-	innerSbrDef.count = 1;
-	innerSbrDef.action = ac_create();
-	ac_insert(innerSbrDef.action, reportId);
-	innerSbrDef.description = "fin";
+	//innerSbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
+	//innerSbrDef.start = 0;
+	//innerSbrDef.state = expr_create(AMP_TYPE_UINT);
+	//expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	//expr_add_item(innerSbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
+	//expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	//innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
+	//innerSbrDef.count = 1;
+	//innerSbrDef.action = ac_create();
+	//ac_insert(innerSbrDef.action, reportId);
+	//innerSbrDef.description = "fin";
 
-	if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
-	{
-		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
-		ari_release(innerAddSbrId, 1);
-		return -1;
-	}
+	//if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
+	//{
+	//	armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
+	//	ari_release(innerAddSbrId, 1);
+	//	return -1;
+	//}
 
 	/*	Outer SBR definition	*/
 	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
@@ -186,12 +185,72 @@ static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 	sbrDef->max_eval = sbrMaxEval;
 	sbrDef->count = 1;
 	sbrDef->action = ac_create();
-	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));
-	ac_insert(sbrDef->action, innerAddSbrId);
+	ac_insert(sbrDef->action, reportId); //adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));
+	//ac_insert(sbrDef->action, innerAddSbrId);
 	sbrDef->description = "downloaded";
 
 	return 0;
 }
+
+//static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
+//{
+//	ari_t *innerAddSbrId;
+//	SbrDef innerSbrDef;
+//	ari_t *reportId;
+//	ReportDef reportDef;
+//
+//	/*	Prepare report def	*/
+//	reportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+//
+//	reportDef.id = ac_create();
+//	ac_insert(reportDef.id, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
+//	reportDef.rxmgrs = tnvc_create(0);
+//
+//	if (buildReportParms(reportId, reportDef) < 0)
+//	{
+//		armurAppendRptMsg("Can't add Report parms.", ARMUR_RPT_ERROR);
+//		ari_release(reportId, 1);
+//		return -1;
+//	}
+//
+//	/*	Inner SBR definition	*/
+//	innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+//
+//	innerSbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
+//	innerSbrDef.start = 0;
+//	innerSbrDef.state = expr_create(AMP_TYPE_UINT);
+//	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+//	expr_add_item(innerSbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
+//	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+//	innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
+//	innerSbrDef.count = 1;
+//	innerSbrDef.action = ac_create();
+//	ac_insert(innerSbrDef.action, reportId);
+//	innerSbrDef.description = "fin";
+//
+//	if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
+//	{
+//		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
+//		ari_release(innerAddSbrId, 1);
+//		return -1;
+//	}
+//
+//	/*	Outer SBR definition	*/
+//	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
+//	sbrDef->start = 0;
+//	sbrDef->state = expr_create(AMP_TYPE_UINT);
+//	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+//	expr_add_item(sbrDef->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
+//	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+//	sbrDef->max_eval = sbrMaxEval;
+//	sbrDef->count = 1;
+//	sbrDef->action = ac_create();
+//	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));
+//	ac_insert(sbrDef->action, innerAddSbrId);
+//	sbrDef->description = "downloaded";
+//
+//	return 0;
+//}
 
 /*   STOP CUSTOM FUNCTIONS HERE  */
 
@@ -524,6 +583,7 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * +-------------------------------------------------------------------------+
 	 */
 
+	printf("ctrl_report in>\n");//dbg
 	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, status);
 
 	/*
