@@ -1222,6 +1222,8 @@ int	main(int argc, char *argv[])
 
 	if (armurAttach() < 0)
 	{
+		armurAppendRptMsg("armurAttach failed.", ARMUR_RPT_ERROR);
+		armurUpdateStat(ARMUR_STAT_FIN);
 		return -1;
 	}
 
@@ -1230,7 +1232,12 @@ int	main(int argc, char *argv[])
 	armurvdb = getArmurVdb();
 
 	/*	Lock until the restart procedure is completed.	*/
-	CHKERR(sdr_begin_xn(sdr));
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("sdr_begin_xn failed.", ARMUR_RPT_ERROR);
+		armurUpdateStat(ARMUR_STAT_FIN);
+		return -1;
+	}
 
 	/*	We will restart applications only if the vstat is not idle, i.e.,
 	 *	if the restart procedure is still pending. The volatile state will
@@ -1249,12 +1256,57 @@ int	main(int argc, char *argv[])
 			sizeof(ARMUR_CfdpInfo));
 		if (sdr_end_xn(sdr) < 0)
 		{
+			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
+			armurUpdateStat(ARMUR_STAT_FIN);
 			return -1;
 		}
+
+		armurAppendRptMsg("No need to restart", ARMUR_RPT_SUCCESS);
+		armurUpdateStat(ARMUR_STAT_FIN);
 		return 0;
 	}
 
-	/*	There ARE items to be restarted.		*/
+	/*	First check if this is a major update that is backward-incompatible,
+	 *	which requires the entire clearance of the existing data structures.	*/
+	if (getIonMajorVerNum() > getArmurConstants()->majorVerNum)
+	{
+		/*	This is a major version upgrade. We will completely
+		 *	purge the whole existing SDR and WM data structures.	*/
+		if (sdr_end_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
+			armurUpdateStat(ARMUR_STAT_FIN);
+			return -1;
+		}
+
+		if (udplsiStop() < 0)
+		{
+			armurAppendRptMsg("Cannot stop udplsi.", ARMUR_RPT_ERROR);
+			armurUpdateStat(ARMUR_STAT_FIN);
+			return -1;
+		}
+
+		/*	We will back up all the ARMUR report messages saved
+		 *	until now to a local file before the ION is shutdown.	*/
+		//TODO: back up ARMUR report messages
+		puts("Deleting SDR");
+		ionTerminate();
+		puts("Shutting down SDR");
+		sdr_shutdown();
+		puts("Calling sm_ipc_stop()");
+		sm_ipc_stop();
+
+		snooze(1);
+
+		if (pseudoshell("./ionstart.ipn") < 0)
+		{
+			puts("ionstart failed.");
+		}
+
+		return 0;
+ 	}
+
+	/*	Normal restart. There ARE items to be restarted.	*/
 	restartFnInit();
 
 	if (armurvdb->vstat & ARMUR_VSTAT_LV0_PENDING)

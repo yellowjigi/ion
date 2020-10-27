@@ -10,6 +10,21 @@
 
 /*	*	*	Utility functions	*	*	*/
 
+int	getIonMajorVerNum()
+{
+	char	*p;
+	int	majorVerNum;
+
+	if ((p = strchr(IONVERSIONNUMBER, '.')) == NULL)
+	{
+		return -1;
+	}
+
+	sscanf(p - 1, "%d.", &majorVerNum);
+
+	return majorVerNum;
+}
+
 static Object _armurdbObject(Object *newDbObj)
 {
 	static Object obj = 0;
@@ -341,6 +356,7 @@ int	armurInit()
 		/*	Initialize the non-volatile database.		*/
 
 		memset((char *)&armurdbBuf, 0, sizeof(ARMUR_DB));
+		armurdbBuf.majorVerNum = getIonMajorVerNum();
 		armurdbBuf.stat = ARMUR_STAT_IDLE;
 
 		/*	Default paths					*/

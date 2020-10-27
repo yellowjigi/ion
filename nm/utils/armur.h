@@ -8,6 +8,9 @@
 
 #include "ion.h"
 
+/*	ION version string	*/
+#define	ARMUR_ION_VERSION		"3.7.0"
+
 /*	Default install paths	*/
 #define ARMUR_PATH_LIB_DEFAULT		"/usr/local/lib"
 #define ARMUR_PATH_APP_DEFAULT		"/usr/local/bin"
@@ -84,6 +87,7 @@ typedef struct {
 } ARMUR_CfdpInfo;
 
 typedef struct {
+	char		majorVerNum;
 	char		stat;
 	char		numInstalled[ARMUR_IMAGETYPES];
 	Object		installPath[ARMUR_IMAGETYPES];	/*	SDR strings		*/
@@ -134,6 +138,7 @@ typedef struct {
 	pid_t		nmagentPid;			/*	For stopping nm_agent	*/
 } ARMUR_VDB;
 
+extern int		getIonMajorVerNum();
 extern int		armurInit();
 extern void		armurDropVdb();
 extern void		armurRaiseVdb();
