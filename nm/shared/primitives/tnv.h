@@ -76,7 +76,7 @@ typedef enum
 } tnv_enc_e;
 
 
-#define TNV_DEFAULT_ENC_SIZE (SMALL_SIZES * WORD_SIZE)
+#define TNV_DEFAULT_ENC_SIZE ((SMALL_SIZES * WORD_SIZE) * 2)
 #define TNVC_DEFAULT_ENC_SIZE ((SMALL_SIZES * WORD_SIZE) * 2)
 
 /*

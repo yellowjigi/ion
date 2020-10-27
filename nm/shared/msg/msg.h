@@ -35,7 +35,7 @@
 #include "../primitives/report.h"
 
 
-#define MSG_DEFAULT_ENC_SIZE 1024
+#define MSG_DEFAULT_ENC_SIZE (1024 * 2)
 
 #define MSG_TYPE_UNK       (-1)
 #define MSG_TYPE_REG_AGENT (0)

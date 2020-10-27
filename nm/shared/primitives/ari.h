@@ -62,7 +62,7 @@
 /*
  * When encoding an ARI, the default encoding size to try.
  */
-#define ARI_DEFAULT_ENC_SIZE 100
+#define ARI_DEFAULT_ENC_SIZE (100 * 2)
 
 
 
