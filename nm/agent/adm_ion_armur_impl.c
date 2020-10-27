@@ -50,6 +50,7 @@ typedef struct {
 	CfdpTransactionId	transactionId;
 } CfdpReqParms;
 
+
 typedef struct {
 	ari_t	*id;
 	uvast	start;
@@ -59,6 +60,11 @@ typedef struct {
 	ac_t	*action;
 	char	*description;
 } SbrDef;
+
+typedef struct {
+	ac_t	*id;
+	tnvc_t	*rxmgrs;
+} ReportDef;
 
 static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, char *archiveName)
 {
@@ -106,10 +112,48 @@ static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
 	return 0;
 }
 
+static int buildReportParms(ari_t *reportId, ReportDef reportDef)
+{
+	tnv_t *reportParms[2];
+	int i;
+
+	reportParms[0] = tnv_from_obj(AMP_TYPE_ARI, reportDef.id);
+	reportParms[1] = tnv_from_obj(AMP_TYPE_TNVC, reportDef.rxmgrs);
+	for (i = 0; i < 2; i++)
+	{
+		if (vec_push(&(reportId->as_reg.parms.values), reportParms[i]) != VEC_OK)
+		{
+			for (; i >= 0; i--)
+			{
+				tnv_release(reportParms[i], 1);
+			}
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 {
 	ari_t *innerAddSbrId;
 	SbrDef innerSbrDef;
+	ari_t *reportId;
+	ReportDef reportDef;
+
+	/*	Prepare report def	*/
+	reportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+
+	//reportDef.id = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
+	reportDef.id = ac_create();
+	ac_insert(reportDef.id, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
+	reportDef.rxmgrs = tnvc_create(0);
+
+	if (buildReportParms(reportId, reportDef) < 0)
+	{
+		armurAppendRptMsg("Can't add Report parms.", ARMUR_RPT_ERROR);
+		ari_release(reportId, 1);
+		return -1;
+	}
 
 	/*	Inner SBR definition	*/
 	innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
@@ -123,7 +167,7 @@ static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
 	innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
 	innerSbrDef.count = 1;
 	innerSbrDef.action = ac_create();
-	ac_insert(innerSbrDef.action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT));
+	ac_insert(innerSbrDef.action, reportId);
 	innerSbrDef.description = "fin";
 
 	if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
