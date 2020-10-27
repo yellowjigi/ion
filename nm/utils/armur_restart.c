@@ -1218,6 +1218,8 @@ int	main(int argc, char *argv[])
 	ARMUR_VImage		*vimage;
 	ARMUR_VPackageDescr	*vdescr;
 	ARMUR_CfdpInfo		cfdpInfoBuf;
+	char			archiveName[SDRSTRING_BUFSZ];
+	char			*ptr;
 	int			i;
 
 	if (armurAttach() < 0)
@@ -1267,8 +1269,12 @@ int	main(int argc, char *argv[])
 	}
 
 	/*	First check if this is a major update that is backward-incompatible,
-	 *	which requires the entire clearance of the existing data structures.	*/
-	if (getIonMajorVerNum() > getArmurConstants()->majorVerNum)
+	 *	which requires the entire clearance of the existing data structures.
+	 *	At the moment we decide it from the name of the archive downloaded.	*/
+	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+	sdr_string_read(sdr, archiveName, cfdpInfoBuf.archiveName);
+	ptr = strchr(archiveName, '.');
+	if (atoi(ptr - 1) > getArmurConstants()->majorVerNum)
 	{
 		/*	This is a major version upgrade. We will completely
 		 *	purge the whole existing SDR and WM data structures.	*/
