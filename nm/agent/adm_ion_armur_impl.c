@@ -609,8 +609,34 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |START CUSTOM FUNCTION ctrl_report BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+	Sdr		sdr = getIonsdr();
+	Object		armurdbObject = getArmurDbObject();
+	ARMUR_DB	armurdb;
+	Object		recordObj;
+	Object		elt;
+	int8_t		temp;
 
-	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, status);
+	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, &temp);
+
+	/*	Now the entire duty cycle of ARMUR processing has been
+	 *	completed. Do post-processing of some remaining tasks.	*/
+
+	CHKNULL(sdr_begin_xn(sdr));
+	sdr_read(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));
+	while ((elt = sdr_list_first(sdr, armurdb.records)) != 0)
+	{
+		recordObj = sdr_list_data(sdr, elt);
+		sdr_free(sdr, recordObj);
+		sdr_list_delete(sdr, elt, NULL, NULL);
+	}
+
+	if (sdr_end_xn(sdr) < 0)
+	{
+		*status = CTRL_FAILURE;
+		return result;
+	}
+
+	*status = CTRL_SUCCESS;
 
 	/*
 	 * +-------------------------------------------------------------------------+
