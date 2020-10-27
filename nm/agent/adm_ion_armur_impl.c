@@ -22,8 +22,6 @@
 #include "cfdp.h"
 #include "bputa.h"
 #include "../mgr/nm_mgr.h"
-//#include "../shared/msg/msg.h"
-//#include "../shared/msg/ion_if.h"
 #include "../shared/adm/adm_amp_agent.h"
 #include "../shared/adm/adm_ion_armur.h"
 
@@ -50,7 +48,6 @@ typedef struct {
 	CfdpTransactionId	transactionId;
 } CfdpReqParms;
 
-
 typedef struct {
 	ari_t	*id;
 	uvast	start;
@@ -59,12 +56,11 @@ typedef struct {
 	uvast	count;
 	ac_t	*action;
 	char	*description;
-} SbrDef;
+} SbrParms;
 
 typedef struct {
-	ac_t	*id;
-	tnvc_t	*rxmgrs;
-} ReportDef;
+	char	testString[16];
+} ArmurParms;
 
 static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, char *archiveName)
 {
@@ -86,25 +82,25 @@ static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, c
 		strlen(ARMUR_CFDP_USRMSG) + 1);
 }
 
-static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
+static int buildSbrParms(ari_t *ampCtrlAddSbrId, SbrParms sbrParms)
 {
-	tnv_t *addSbrParms[7];
+	tnv_t *parms[7];
 	int i;
 
-	addSbrParms[0] = tnv_from_obj(AMP_TYPE_ARI, sbrDef.id);
-	addSbrParms[1] = tnv_from_uvast(sbrDef.start);
-	addSbrParms[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrDef.state);
-	addSbrParms[3] = tnv_from_uvast(sbrDef.max_eval);
-	addSbrParms[4] = tnv_from_uvast(sbrDef.count);
-	addSbrParms[5] = tnv_from_obj(AMP_TYPE_AC, sbrDef.action);
-	addSbrParms[6] = tnv_from_obj(AMP_TYPE_STR, sbrDef.description);
+	parms[0] = tnv_from_obj(AMP_TYPE_ARI, sbrParms.id);
+	parms[1] = tnv_from_uvast(sbrParms.start);
+	parms[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrParms.state);
+	parms[3] = tnv_from_uvast(sbrParms.max_eval);
+	parms[4] = tnv_from_uvast(sbrParms.count);
+	parms[5] = tnv_from_obj(AMP_TYPE_AC, sbrParms.action);
+	parms[6] = tnv_from_obj(AMP_TYPE_STR, sbrParms.description);
 	for (i = 0; i < 7; i++)
 	{
-		if (vec_push(&(addSbrId->as_reg.parms.values), addSbrParms[i]) != VEC_OK)
+		if (vec_push(&(ampCtrlAddSbrId->as_reg.parms.values), parms[i]) != VEC_OK)
 		{
 			for (; i >= 0; i--)
 			{
-				tnv_release(addSbrParms[i], 1);
+				tnv_release(parms[i], 1);
 			}
 			return -1;
 		}
@@ -112,20 +108,19 @@ static int buildSbrParms(ari_t *addSbrId, SbrDef sbrDef)
 	return 0;
 }
 
-static int buildReportParms(ari_t *reportId, ReportDef reportDef)
+static int buildArmurParms(ari_t *armurCtrlStartId, ArmurParms armurParms)
 {
-	tnv_t *reportParms[2];
+	tnv_t *parms[1];
 	int i;
 
-	reportParms[0] = tnv_from_obj(AMP_TYPE_AC, reportDef.id);
-	reportParms[1] = tnv_from_obj(AMP_TYPE_TNVC, reportDef.rxmgrs);
-	for (i = 0; i < 2; i++)
+	parms[0] = tnv_from_obj(AMP_TYPE_STR, armurParms.testString);
+	for (i = 0; i < 1; i++)
 	{
-		if (vec_push(&(reportId->as_reg.parms.values), reportParms[i]) != VEC_OK)
+		if (vec_push(&(armurCtrlStartId->as_reg.parms.values), parms[i]) != VEC_OK)
 		{
 			for (; i >= 0; i--)
 			{
-				tnv_release(reportParms[i], 1);
+				tnv_release(parms[i], 1);
 			}
 			return -1;
 		}
@@ -133,62 +128,37 @@ static int buildReportParms(ari_t *reportId, ReportDef reportDef)
 	return 0;
 }
 
-static int defineSbr(SbrDef *sbrDef, uvast sbrMaxEval)
+static int populateSbrParms(SbrParms *sbrParms, uvast sbrMaxEval)
 {
-	ari_t *innerAddSbrId;
-	SbrDef innerSbrDef;
-	ari_t *reportId;
-	ReportDef reportDef;
+	ari_t *armurCtrlStartId;
+	ArmurParms armurParms;
 
-	/*	Prepare report def	*/
-	reportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	/*	Prepare armur_ctrl_start	*/
+	armurCtrlStartId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_START);
 
-	reportDef.id = ac_create();
-	ac_insert(reportDef.id, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
-	reportDef.rxmgrs = tnvc_create(0);
+	armurParms.testString[0] = 'J';
+	armurParms.testString[1] = '\0';
+	//armurParms.reportToEid = tnvc_create(0);
 
-	if (buildReportParms(reportId, reportDef) < 0)
+	if (buildArmurParms(armurCtrlStartId, armurParms) < 0)
 	{
-		armurAppendRptMsg("Can't add Report parms.", ARMUR_RPT_ERROR);
-		ari_release(reportId, 1);
+		armurAppendRptMsg("Can't add ARMUR parms.", ARMUR_RPT_ERROR);
+		ari_release(armurCtrlStartId, 1);
 		return -1;
 	}
 
-	/*	Inner SBR definition	*/
-	innerAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
-
-	innerSbrDef.id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
-	innerSbrDef.start = 0;
-	innerSbrDef.state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(innerSbrDef.state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
-	expr_add_item(innerSbrDef.state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	innerSbrDef.max_eval = 2; // put a margin for a possible delay during the restart procedure.
-	innerSbrDef.count = 1;
-	innerSbrDef.action = ac_create();
-	ac_insert(innerSbrDef.action, reportId);
-	innerSbrDef.description = "fin";
-
-	if (buildSbrParms(innerAddSbrId, innerSbrDef) < 0)
-	{
-		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
-		ari_release(innerAddSbrId, 1);
-		return -1;
-	}
-
-	/*	Outer SBR definition	*/
-	sbrDef->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
-	sbrDef->start = 0;
-	sbrDef->state = expr_create(AMP_TYPE_UINT);
-	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(sbrDef->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
-	expr_add_item(sbrDef->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
-	sbrDef->max_eval = sbrMaxEval;
-	sbrDef->count = 1;
-	sbrDef->action = ac_create();
-	ac_insert(sbrDef->action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL));
-	ac_insert(sbrDef->action, innerAddSbrId);
-	sbrDef->description = "downloaded";
+	/*	SBR definition			*/
+	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
+	sbrParms->start = 0;
+	sbrParms->state = expr_create(AMP_TYPE_UINT);
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	sbrParms->max_eval = sbrMaxEval;
+	sbrParms->count = 1;
+	sbrParms->action = ac_create();
+	ac_insert(sbrParms->action, armurCtrlStartId);
+	sbrParms->description = "downloaded";
 
 	return 0;
 }
@@ -340,8 +310,8 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	int success;
 	CfdpReqParms cfdpReqParms;
 	uvast destEntityNbr;
-	SbrDef sbrDef;
-	ari_t *addSbrId;
+	SbrParms sbrParms;
+	ari_t *ampCtrlAddSbrId;
 	msg_ctrl_t *msg;
 	char *remoteAgentEid = adm_get_parm_obj(parms, 0, AMP_TYPE_STR);
 	char *archiveName = adm_get_parm_obj(parms, 1, AMP_TYPE_STR);
@@ -382,28 +352,29 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	armurAppendRptMsg("cfdp_put successful.", ARMUR_RPT_SUCCESS);
 
 	/*	2. Define SBRs with proper parms.	*/
-	/*	Define SBR		*/
-	if (defineSbr(&sbrDef, sbrMaxEval) < 0)
+	ampCtrlAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
+
+	/*	Prepare SBR parms	*/
+	if (populateSbrParms(&sbrParms, sbrMaxEval) < 0)
 	{
 		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
 	/*	Build ARI & parms	*/
-	addSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
-	if (buildSbrParms(addSbrId, sbrDef) < 0)
+	if (buildSbrParms(ampCtrlAddSbrId, sbrParms) < 0)
 	{
 		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
-		ari_release(addSbrId, 1);
+		ari_release(ampCtrlAddSbrId, 1);
 		return result;
 	}
 
 	/*	3. Create a message and send it.	*/
 	/*	Create messasge		*/
-	if ((msg = msg_ctrl_create_ari(addSbrId)) == NULL)
+	if ((msg = msg_ctrl_create_ari(ampCtrlAddSbrId)) == NULL)
 	{
 		armurAppendRptMsg("Can't create a message for add_sbr.", ARMUR_RPT_ERROR);
-		ari_release(addSbrId, 1);
+		ari_release(ampCtrlAddSbrId, 1);
 		return result;
 	}
 
@@ -425,6 +396,67 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	/*
 	 * +-------------------------------------------------------------------------+
 	 * |STOP CUSTOM FUNCTION ctrl_init BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+	return result;
+}
+
+/*
+ * Extract the binary archive and install the images.
+ */
+tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
+{
+	tnv_t *result = NULL;
+	*status = CTRL_FAILURE;
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |START CUSTOM FUNCTION ctrl_start BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+	Sdr		sdr = getIonsdr();
+	ARMUR_VDB	*armurvdb = getArmurVdb();
+	ARMUR_CfdpInfo	cfdpInfoBuf;
+	char		archiveNameBuf[SDRSTRING_BUFSZ];
+
+	char *testString = adm_get_parm_obj(parms, 0, AMP_TYPE_STR);
+
+	printf("ctrl_start in>\n");//dbg
+	if (armurInstall() < 0)
+	{
+		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_install", "ARMUR_INSTALL failed.", NULL);
+		return result;
+	}
+
+	/*	Install has been finished.		*/
+
+	/*	If we safely arrived here, the downloaded
+	 *	archive file is no longer needed. Delete it.		*/
+	CHKNULL(sdr_begin_xn(sdr));
+	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+	sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
+	sdr_exit_xn(sdr);
+	//if (fopen(buf, "r") != NULL)
+	//{
+		/*	If the file has been already removed, call to remove
+		 *	will throw a file-not-exist error and then return.
+		 *	So we skip the call to fopen to check if it exists.	*/
+		remove(archiveNameBuf);
+	//}
+
+	/*	Start a restart program.		*/
+	if (pseudoshell("armurrestart") < 0)
+	{
+		AMP_DEBUG_ERR("dtn_ion_armur_ctrl_restart", "ARMUR_RESTART failed.", NULL);
+		return result;
+	}
+
+	printf("testString: %s.\n", testString);//dbg
+
+	*status = CTRL_SUCCESS;
+	
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |STOP CUSTOM FUNCTION ctrl_start BODY
 	 * +-------------------------------------------------------------------------+
 	 */
 	return result;

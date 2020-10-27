@@ -123,6 +123,13 @@ void dtn_ion_armur_init_ctrl()
 	meta_add_parm(meta, "archiveName", AMP_TYPE_STR);
 	meta_add_parm(meta, "sbrMaxEval", AMP_TYPE_UVAST);
 
+	/* START */
+
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_START);
+	adm_add_ctrldef_ari(id, 1, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "start", "Install the downloaded archive, restart the applicable daemon programs and activate the armur_sbr_fin to report the results.");
+	meta_add_parm(meta, "testString", AMP_TYPE_STR);
+
 	/* INSTALL */
 
 	id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INSTALL);
