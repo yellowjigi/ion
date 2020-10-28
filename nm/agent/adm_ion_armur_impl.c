@@ -480,36 +480,6 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
 	printf("ctrl_start in>\n");//dbg
-	/*	Store the parameters		*/
-	if (sdr_begin_xn(sdr) < 0)
-	{
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-		return result;
-	}
-	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
-	{
-		armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
-		return result;
-	}
-
-	sdr_write(sdr, armurdbBuf.reportToEids, (char *)reportToEids, sizeof(tnvc_t));
-	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-	if (sdr_end_xn(sdr) < 0)
-	{
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-		return result;
-	}
-
-	if (armurStart(NULL) < 0)
-	{
-		armurAppendRptMsg("armurStart failed.", ARMUR_RPT_ERROR);
-		oK(sdr_begin_xn(sdr));
-		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
-		oK(sdr_end_xn(sdr));
-		return result;
-	}
-	/*	Install/Restart procedures have been completed.	*/
 
 	/*	Activate armur_sbr_report.	*/
 	if (populateArmurSbrReportParms(&sbrParms, reportToEids) < 0)
@@ -529,15 +499,61 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	if (populateArmurSbrFinParms(&sbrParms) < 0)
 	{
 		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
 		return result;
 	}
 
 	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
 	{
 		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
 		return result;
 	}
 	gAgentInstr.num_sbrs++;
+
+	/*	Store the parameters		*/
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
+		return result;
+	}
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
+	{
+		armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
+		return result;
+	}
+
+	sdr_write(sdr, armurdbBuf.reportToEids, (char *)reportToEids, sizeof(tnvc_t));
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
+		return result;
+	}
+
+	if (armurStart(NULL) < 0)
+	{
+		armurAppendRptMsg("armurStart failed.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
+		return result;
+	}
+	/*	Install/Restart procedures have been completed.	*/
 
 	*status = CTRL_SUCCESS;
 
