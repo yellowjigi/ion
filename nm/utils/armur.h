@@ -160,7 +160,7 @@ extern void		armurFindImage(char *imageName, ARMUR_VImage **vimage,
 extern int		armurAddImageLv0(char *imageName, char *packageName);
 extern int		armurAddImageLv1(char *imageName, char *packageName, int layer);
 extern int		armurAddImageLv2(char *imageName, char *packageName, int apptype);
-extern void		armurUpdateStat(int armurStat, int method);
+extern int		armurUpdateStat(int armurStat, int method);
 extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
 //extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
 extern int		armurUpdateCfdpArchiveName(char *archiveName);
