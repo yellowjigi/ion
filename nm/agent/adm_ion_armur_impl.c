@@ -467,12 +467,19 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Object		armurdbObj = getArmurDbObject();
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
-	//tnvc_t			*armurReportParms;
-	//ac_t			*ids;
-	//tnv_t			*parm[2];
+	//tnvc_t	*armurReportParms;
+	//ac_t		*ids;
+	//tnv_t		*parm[2];
 	printf("ctrl_start in>\n");//dbg
 
-	switch ((getArmurConstants())->stat)
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+	sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	sdr_exit_xn(sdr);
+	switch (armurdbBuf.stat)
 	{
 	case ARMUR_STAT_DOWNLOADED:
 		/*	Start install procedure.	*/
