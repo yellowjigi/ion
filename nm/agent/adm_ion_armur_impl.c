@@ -63,7 +63,6 @@ typedef struct {
 } ArmurStartParms;
 
 typedef struct {
-	ac_t *ids;
 	tnvc_t *rxmgrs;
 } ArmurReportParms;
 
@@ -130,10 +129,9 @@ static int buildArmurStartParms(ari_t *id, ArmurStartParms armurStartParms)
 
 static int buildArmurReportParms(ari_t *id, ArmurReportParms armurReportParms)
 {
-	tnv_t *parm[2];
+	tnv_t *parm[1];
 
-	parm[0] = tnv_from_obj(AMP_TYPE_AC, armurReportParms.ids);
-	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, armurReportParms.rxmgrs);
+	parm[0] = tnv_from_obj(AMP_TYPE_TNVC, armurReportParms.rxmgrs);
 
 	return buildParms(&(id->as_reg.parms), parm, 2);
 }
@@ -172,18 +170,12 @@ static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc
 
 static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 {
-	ari_t *armurEddRecordsId;
 	ari_t *armurCtrlReportId;
 	ArmurReportParms armurReportParms;
-
-	/*	Prepare armur_edd_records	*/
-	armurEddRecordsId = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
 
 	/*	Prepare armur_ctrl_report	*/
 	armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
 
-	armurReportParms.ids = ac_create();
-	ac_insert(armurReportParms.ids, armurEddRecordsId);
 	armurReportParms.rxmgrs = reportToEids;
 
 	if (buildArmurReportParms(armurCtrlReportId, armurReportParms) < 0)

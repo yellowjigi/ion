@@ -229,6 +229,14 @@ static void	printStat(char stat)
 		buffer = "restarting...";
 		break;
 
+	case ARMUR_STAT_REPORT_PENDING:
+		buffer = "reporting...";
+		break;
+
+	case ARMUR_STAT_FIN:
+		buffer = "finishing...";
+		break;
+
 	default:
 		buffer = "unknown";
 	}

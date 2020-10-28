@@ -145,9 +145,10 @@ void dtn_ion_armur_init_ctrl()
 
 	/* REPORT */
 
-	id = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
-	adm_add_ctrldef_ari(id, 0, NULL);
-	meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update (amp_agent_ctrl_gen_rpts wrapper function)");
+	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	adm_add_ctrldef_ari(id, 1, NULL);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "report", "Generate a report indicating the result of the remote software update (amp_agent_ctrl_gen_rpts wrapper function)");
+	meta_add_parm(meta, "reportToEids", AMP_TYPE_TNVC);
 
 	/* FIN */
 
