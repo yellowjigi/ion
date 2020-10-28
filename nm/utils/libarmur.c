@@ -908,22 +908,23 @@ static void	getInstallDir(ARMUR_Image image, char *installDir)
 	istrcpy(installDir, buf, ARMUR_PATHNAME_LEN_MAX);
 }
 
-void	armurUpdateStat(int armurStat)
+int	armurUpdateStat(int armurStat)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	armurdbBuf;
 	Object		armurdbObj = _armurdbObject(NULL);
 
-	CHKVOID(armurStat == ARMUR_STAT_IDLE
+	CHKERR(armurStat == ARMUR_STAT_IDLE
 		|| armurStat == ARMUR_STAT_DOWNLOADED
 		|| armurStat == ARMUR_STAT_INSTALLED
 		|| armurStat == ARMUR_STAT_REPORT_PENDING
 		|| armurStat == ARMUR_STAT_FIN);
 
-	CHKVOID(ionLocked());
+	CHKERR(sdr_begin_xn(sdr));
 	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 	armurdbBuf.stat = armurStat;
 	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	return sdr_end_xn(sdr);
 }
 
 int	armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr)
@@ -1131,15 +1132,9 @@ int	armurInstall()
 	/*	TODO: Increment the number of images installed.		*/
 	archive_read_free(a);
 
-	CHKERR(sdr_begin_xn(sdr));
-	armurUpdateStat(ARMUR_STAT_INSTALLED);
-	if (sdr_end_xn(sdr) < 0)
-	{
-		return -1;
-	}
-
 	printf("***Install has been completed.\n");//dbg
 	_armurAppendRptMsg("Install has been completed", NULL, 0);
+	oK(armurUpdateStat(ARMUR_STAT_INSTALLED));
 
 	return 0;
 }
