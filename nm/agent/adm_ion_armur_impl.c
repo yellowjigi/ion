@@ -643,7 +643,6 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	ARMUR_DB	armurdb;
 	Object		recordObj;
 	Object		elt;
-	int8_t		temp;
 
 	printf("ctrl_report in>\n");//dbg
 	//	/*	Start report procedure.			*/
@@ -665,21 +664,17 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	//	result = dtn_ion_armur_ctrl_report(def_mgr, armurReportParms, status);
 	//}
 
-	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, &temp);
+	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, status);
 
 	/*	Now the entire duty cycle of ARMUR processing has been
 	 *	completed. Do post-processing of some remaining tasks.	*/
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		*status = CTRL_FAILURE;
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
 
-	//sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	//armurdbBuf.stat = ARMUR_STAT_IDLE;
-	//sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-	//if (sdr_end_xn(sdr) < 0)
-	//{
-	//	armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-	//	break;
-	//}
-
-	CHKNULL(sdr_begin_xn(sdr));
 	sdr_read(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));
 	while ((elt = sdr_list_first(sdr, armurdb.records)) != 0)
 	{
@@ -688,9 +683,12 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		sdr_list_delete(sdr, elt, NULL, NULL);
 	}
 
+	armurdb.stat = ARMUR_STAT_IDLE;
+	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
 	{
 		*status = CTRL_FAILURE;
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
