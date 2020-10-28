@@ -133,7 +133,7 @@ static int buildArmurReportParms(ari_t *id, ArmurReportParms armurReportParms)
 
 	parm[0] = tnv_from_obj(AMP_TYPE_TNVC, armurReportParms.rxmgrs);
 
-	return buildParms(&(id->as_reg.parms), parm, 2);
+	return buildParms(&(id->as_reg.parms), parm, 1);
 }
 
 static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc_t *reportToEids)
