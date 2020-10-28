@@ -917,6 +917,7 @@ int	armurUpdateStat(int armurStat, int method)
 		|| armurStat == ARMUR_STAT_INSTALLED
 		|| armurStat == ARMUR_STAT_REPORT_PENDING
 		|| armurStat == ARMUR_STAT_FIN);
+	CHKERR(method == SWITCH || method == CHANGE);
 
 	CHKERR(sdr_begin_xn(sdr));
 	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
