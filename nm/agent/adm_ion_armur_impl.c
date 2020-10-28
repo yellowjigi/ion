@@ -504,6 +504,9 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	if (armurStart(NULL) < 0)
 	{
 		armurAppendRptMsg("armurStart failed.", ARMUR_RPT_ERROR);
+		oK(sdr_begin_xn(sdr));
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		oK(sdr_end_xn(sdr));
 		return result;
 	}
 	/*	Install/Restart procedures have been completed.	*/
