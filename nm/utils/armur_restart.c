@@ -1225,7 +1225,7 @@ int	main(int argc, char *argv[])
 	if (armurAttach() < 0)
 	{
 		armurAppendRptMsg("armurAttach failed.", ARMUR_RPT_ERROR);
-		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
 		return -1;
 	}
 
@@ -1237,7 +1237,7 @@ int	main(int argc, char *argv[])
 	if (sdr_begin_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("sdr_begin_xn failed.", ARMUR_RPT_ERROR);
-		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
 		return -1;
 	}
 
@@ -1249,7 +1249,6 @@ int	main(int argc, char *argv[])
 	 *	restart of the entire ION and reset of the volatile database.		*/
 	if (armurvdb->vstat == ARMUR_VSTAT_IDLE)
 	{
-		armurUpdateStat(ARMUR_STAT_IDLE);
 		sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo,
 			sizeof(ARMUR_CfdpInfo));
 		sdr_free(sdr, cfdpInfoBuf.archiveName);
@@ -1259,12 +1258,12 @@ int	main(int argc, char *argv[])
 		if (sdr_end_xn(sdr) < 0)
 		{
 			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
 			return -1;
 		}
 
 		armurAppendRptMsg("No need to restart", ARMUR_RPT_SUCCESS);
-		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING, CHANGE);
 		return 0;
 	}
 
@@ -1281,14 +1280,14 @@ int	main(int argc, char *argv[])
 		if (sdr_end_xn(sdr) < 0)
 		{
 			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
 			return -1;
 		}
 
 		if (udplsiStop() < 0)
 		{
 			armurAppendRptMsg("Cannot stop udplsi.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
 			return -1;
 		}
 
@@ -1430,7 +1429,7 @@ FIN:
 	sdr_free(sdr, cfdpInfoBuf.archiveName);
 	cfdpInfoBuf.archiveName = 0;
 	sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-	armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
+	armurUpdateStat(ARMUR_STAT_REPORT_PENDING, CHANGE);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		return -1;

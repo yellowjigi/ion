@@ -708,7 +708,8 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
-	armurUpdateStat(ARMUR_STAT_FIN);
+	armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH);
+	armurUpdateStat(ARMUR_STAT_FIN, SWITCH);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		*status = CTRL_FAILURE;
@@ -763,7 +764,7 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 
 	sdr_free(sdr, armurdb.reportToEids);
 
-	armurdb.stat = ARMUR_STAT_IDLE;
+	armurUpdateStat(ARMUR_STAT_FIN, SWITCH);
 	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
 	{

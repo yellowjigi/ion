@@ -41,8 +41,10 @@
 #define	ARMUR_STAT_IDLE			0
 #define	ARMUR_STAT_DOWNLOADED		1
 #define ARMUR_STAT_INSTALLED		2
-#define ARMUR_STAT_REPORT_PENDING	3
-#define ARMUR_STAT_FIN			4
+#define ARMUR_STAT_REPORT_PENDING	4
+#define ARMUR_STAT_FIN			8
+#define	SWITCH				0
+#define CHANGE				1
 
 /*	ARMUR volatile states	*/
 #define	ARMUR_VSTAT_IDLE		0
@@ -158,7 +160,7 @@ extern void		armurFindImage(char *imageName, ARMUR_VImage **vimage,
 extern int		armurAddImageLv0(char *imageName, char *packageName);
 extern int		armurAddImageLv1(char *imageName, char *packageName, int layer);
 extern int		armurAddImageLv2(char *imageName, char *packageName, int apptype);
-extern void		armurUpdateStat(int armurStat);
+extern void		armurUpdateStat(int armurStat, int method);
 extern int		armurUpdateCfdpSrcNbr(uvast cfdpSrcNbr);
 //extern int		armurUpdateCfdpTxnNbr(uvast cfdpTxnNbr);
 extern int		armurUpdateCfdpArchiveName(char *archiveName);

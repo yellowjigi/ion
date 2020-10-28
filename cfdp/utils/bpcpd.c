@@ -298,7 +298,7 @@ void poll_cfdp_messages()
 			if (type == CfdpTransactionFinishedInd && TID12 == targetTid)
 			{
 				/* Download has been finished */
-				armurUpdateStat(ARMUR_STAT_DOWNLOADED);
+				armurUpdateStat(ARMUR_STAT_DOWNLOADED, CHANGE);
 				printf("***Download has been completed.\n");//DBG
 			}
 		}

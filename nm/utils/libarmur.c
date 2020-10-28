@@ -906,7 +906,7 @@ static void	getInstallDir(ARMUR_Image image, char *installDir)
 	istrcpy(installDir, buf, ARMUR_PATHNAME_LEN_MAX);
 }
 
-void	armurUpdateStat(int armurStat)
+void	armurUpdateStat(int armurStat, int method)
 {
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	armurdbBuf;
@@ -920,7 +920,16 @@ void	armurUpdateStat(int armurStat)
 
 	CHKVOID(ionLocked());
 	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	armurdbBuf.stat = armurStat;
+	switch (method)
+	{
+	case SWITCH:
+		armurdbBuf.stat ^= armurStat;
+		break;
+	case CHANGE:
+		armurdbBuf.stat = 0;
+		armurdbBuf.stat |= armurStat;
+		break;
+	}
 	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 }
 
@@ -1125,7 +1134,7 @@ int	armurInstall()
 	archive_read_free(a);
 
 	CHKERR(sdr_begin_xn(sdr));
-	armurUpdateStat(ARMUR_STAT_INSTALLED);
+	armurUpdateStat(ARMUR_STAT_INSTALLED, CHANGE);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		return -1;
