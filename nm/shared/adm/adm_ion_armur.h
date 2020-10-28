@@ -121,19 +121,19 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * |                     |              |h a few parameters in a single control|       |
  * |                     |              |.                                     |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |start                |458119014101  |Install the downloaded archive, restar|       |
- * |			 |		|t the applicable daemon programs and a|       |
- * |			 |		|ctivate the armur_sbr_fin to report th|       |
- * |                     |              |e results.                            |       |
+ * |start                |458119014101  |Triggered by Manager, install the down|       |
+ * |			 |		|loaded archive, restart the applicable|       |
+ * |			 |		| daemon programs and activate the armu|       |
+ * |			 |		|r_sbr_fin to report the results.      |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |install              |458119014102  |Extract the binary archive and install|       |
+ * |install              |458119014103  |Extract the binary archive and install|       |
  * |                     |              |the images.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |restart              |458119014103  |Restart daemon applications according |       |
+ * |restart              |458119014104  |Restart daemon applications according |       |
  * |                     |              |to the images on the restart queues fr|       |
  * |                     |              |om ARMUR VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |458119014104  |Generate a report indicating the resul|       |
+ * |report               |458119014105  |Generate a report indicating the resul|       |
  * |			 |		|t of the remote software update (amp_a|       |
  * |			 |		|gent_ctrl_gen_rpts wrapper function) a|       |
  * |			 |		|nd/or do some postprocessing jobs for |       |

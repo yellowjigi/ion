@@ -117,18 +117,19 @@ void dtn_ion_armur_init_ctrl()
 	/* INIT */
 
 	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_INIT);
-	adm_add_ctrldef_ari(id, 2, NULL);
+	adm_add_ctrldef_ari(id, 4, NULL);
 	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "init", "Automate the full ARMUR procedures with a few parameters in a single control.");
 	meta_add_parm(meta, "remoteAgentEid", AMP_TYPE_STR);
 	meta_add_parm(meta, "archiveName", AMP_TYPE_STR);
 	meta_add_parm(meta, "sbrMaxEval", AMP_TYPE_UVAST);
+	meta_add_parm(meta, "reportToEids", AMP_TYPE_TNVC);
 
 	/* START */
 
 	id = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_START);
 	adm_add_ctrldef_ari(id, 1, NULL);
-	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "start", "Install the downloaded archive, restart the applicable daemon programs and activate the armur_sbr_fin to report the results.");
-	meta_add_parm(meta, "testString", AMP_TYPE_STR);
+	meta = meta_add_ctrl(id, ADM_ENUM_DTN_ION_ARMUR, "start", "Triggered by Manager, install the downloaded archive, restart the applicable daemon programs and activate the armur_sbr_fin to report the results.");
+	meta_add_parm(meta, "reportToEids", AMP_TYPE_TNVC);
 
 	/* INSTALL */
 

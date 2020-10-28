@@ -512,6 +512,7 @@ int	armurStart(char *nmagentCmd)
 	Object		armurdbObj = _armurdbObject(NULL);
 	ARMUR_VDB	*armurvdb = _armurvdb(NULL);
 	ARMUR_DB	armurdbBuf;
+	ARMUR_CfdpInfo	cfdpInfoBuf;
 	char		buf[SDRSTRING_BUFSZ];
 
 	if (nmagentCmd)
@@ -556,6 +557,49 @@ int	armurStart(char *nmagentCmd)
 		armurvdb->nmagentPid = pseudoshell(buf);
 	}
 	sdr_exit_xn(sdr);
+
+	switch (armurdbBuf.stat)
+	{
+	case ARMUR_STAT_DOWNLOADED:
+		/*	Start install procedure.	*/
+
+		if (armurInstall() < 0)
+		{
+			armurAppendRptMsg("armurInstall failed.", ARMUR_RPT_ERROR);
+			return -1;
+		}
+		/*	Install has been finished.	*/
+	case ARMUR_STAT_INSTALLED:
+		/*	Start restart procedure.	*/
+
+		/*	If we safely arrived here, the downloaded
+		 *	archive file is no longer needed. Delete it.		*/
+		if (sdr_begin_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+			return -1;
+		}
+		sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+		sdr_string_read(sdr, buf, cfdpInfoBuf.archiveName);
+		sdr_exit_xn(sdr);
+		//if (fopen(buf, "r") != NULL)
+		//{
+			/*	If the file has been already removed, call to remove
+			 *	will throw a file-not-exist error and then return.
+			 *	So we skip the call to fopen to check if it exists.	*/
+			remove(buf);
+		//}
+
+		/*	Start a restart program.	*/
+		if (pseudoshell("armurrestart") < 0)
+		{
+			armurAppendRptMsg("armurRestart failed.", ARMUR_RPT_ERROR);
+		}
+
+		/*	Restart has been finished.	*/
+	//default: ARMUR_STAT_IDLE or ARMUR_STAT_FIN
+		/*	Will be handled by nm_agent	*/
+	}
 
 	return 0;
 }

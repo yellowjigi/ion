@@ -105,7 +105,7 @@ static int buildParms(tnvc_t *parms/*ari_t *id*/, tnv_t *parm[], int num)
 	return 0;
 }
 
-static int buildSbrParms(ari_t *id, SbrParms sbrParms)
+static int buildArmurSbrStartParms(ari_t *id, SbrParms sbrParms)
 {
 	tnv_t *parm[6];
 
@@ -138,7 +138,7 @@ static int buildArmurReportParms(ari_t *id, ArmurReportParms armurReportParms)
 	return buildParms(&(id->as_reg.parms), parm, 2);
 }
 
-static int populateArmurSbrDownloadedParms(SbrParms *sbrParms, uvast sbrMaxEval)
+static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc_t *reportToEids)
 {
 	ari_t *armurCtrlStartId;
 	ArmurStartParms armurStartParms;
@@ -146,7 +146,7 @@ static int populateArmurSbrDownloadedParms(SbrParms *sbrParms, uvast sbrMaxEval)
 	/*	Prepare armur_ctrl_start	*/
 	armurCtrlStartId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_START);
 
-	armurStartParms.reportToEids = tnvc_create(0);
+	armurStartParms.reportToEids = reportToEids;
 
 	if (buildArmurStartParms(armurCtrlStartId, armurStartParms) < 0)
 	{
@@ -170,7 +170,7 @@ static int populateArmurSbrDownloadedParms(SbrParms *sbrParms, uvast sbrMaxEval)
 	return 0;
 }
 
-static int populateArmurSbrFinParms(SbrParms *sbrParms, tnvc_t *reportToEids)
+static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 {
 	ari_t *armurEddRecordsId;
 	ari_t *armurCtrlReportId;
@@ -204,6 +204,26 @@ static int populateArmurSbrFinParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
 	ac_insert(sbrParms->action, armurCtrlReportId);
+
+	return 0;
+}
+
+static int addArmurSbrReport(tnvc_t *reportToEids)
+{
+	SbrParms	sbrParms;
+
+	/*	Activate add_sbr_fin.		*/
+	if (populateArmurSbrReportParms(&sbrParms, reportToEids) < 0)
+	{
+		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
+		return -1;
+	}
+
+	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
+	{
+		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		return -1;
+	}
 
 	return 0;
 }
@@ -361,6 +381,7 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	char *remoteAgentEid = adm_get_parm_obj(parms, 0, AMP_TYPE_STR);
 	char *archiveName = adm_get_parm_obj(parms, 1, AMP_TYPE_STR);
 	uvast sbrMaxEval = adm_get_parm_uvast(parms, 2, &success);
+	tnvc_t *reportToEids = adm_get_parm_obj(parms, 3, AMP_TYPE_TNVC);
 
 	printf("ctrl_init in>\n");//dbg
 
@@ -400,14 +421,14 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	ampCtrlAddSbrId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_ADD_SBR);
 
 	/*	Prepare SBR parms	*/
-	if (populateArmurSbrDownloadedParms(&sbrParms, sbrMaxEval) < 0)
+	if (populateArmurSbrStartParms(&sbrParms, sbrMaxEval, reportToEids) < 0)
 	{
 		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
 	/*	Build ARI & parms	*/
-	if (buildSbrParms(ampCtrlAddSbrId, sbrParms) < 0)
+	if (buildArmurSbrStartParms(ampCtrlAddSbrId, sbrParms) < 0)
 	{
 		armurAppendRptMsg("Can't add SBR parms.", ARMUR_RPT_ERROR);
 		ari_release(ampCtrlAddSbrId, 1);
@@ -447,7 +468,8 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 }
 
 /*
- * Extract the binary archive and install the images.
+ * Triggered by Manager, install the downloaded archive, restart the applicable daemon programs and activate
+ * the armur_sbr_fin to report the results.
  */
 tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
@@ -459,77 +481,42 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * +-------------------------------------------------------------------------+
 	 */
 	Sdr		sdr = getIonsdr();
-	ARMUR_VDB	*armurvdb = getArmurVdb();
-	ARMUR_CfdpInfo	cfdpInfoBuf;
-	char		archiveNameBuf[SDRSTRING_BUFSZ];
-	SbrParms	sbrParms;
 	ARMUR_DB	armurdbBuf;
 	Object		armurdbObj = getArmurDbObject();
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
-	//tnvc_t	*armurReportParms;
-	//ac_t		*ids;
-	//tnv_t		*parm[2];
 	printf("ctrl_start in>\n");//dbg
-
+	/*	Store the parameters		*/
 	if (sdr_begin_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
-	sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	sdr_exit_xn(sdr);
-	switch (armurdbBuf.stat)
+	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
 	{
-	case ARMUR_STAT_DOWNLOADED:
-		/*	Start install procedure.	*/
-
-		if (armurInstall() < 0)
-		{
-			armurAppendRptMsg("armurInstall failed.", ARMUR_RPT_ERROR);
-			break;
-		}
-		/*	Install has been finished.	*/
-	case ARMUR_STAT_INSTALLED:
-		/*	Start restart procedure.	*/
-
-		/*	If we safely arrived here, the downloaded
-		 *	archive file is no longer needed. Delete it.		*/
-		if (sdr_begin_xn(sdr) < 0)
-		{
-			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-			break;
-		}
-		sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-		sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
-		sdr_exit_xn(sdr);
-		//if (fopen(buf, "r") != NULL)
-		//{
-			/*	If the file has been already removed, call to remove
-			 *	will throw a file-not-exist error and then return.
-			 *	So we skip the call to fopen to check if it exists.	*/
-			remove(archiveNameBuf);
-		//}
-
-		/*	Start a restart program.	*/
-		if (pseudoshell("armurrestart") < 0)
-		{
-			armurAppendRptMsg("armurRestart failed.", ARMUR_RPT_ERROR);
-		}
-
-		/*	Restart has been finished.	*/
-	}
-
-	/*	Activate add_sbr_fin.		*/
-	if (populateArmurSbrFinParms(&sbrParms, reportToEids) < 0)
-	{
-		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
+		armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
-	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
+	sdr_write(sdr, armurdbBuf.reportToEids, (char *)reportToEids, sizeof(tnvc_t));
+	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	if (sdr_end_xn(sdr) < 0)
 	{
-		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	if (armurStart(NULL) < 0)
+	{
+		armurAppendRptMsg("armurStart failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	/*	Add armur_sbr_report	*/
+	if (addArmurSbrReport(reportToEids) < 0)
+	{
+		armurAppendRptMsg("addArmurSbrReport failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
@@ -645,6 +632,18 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Object		elt;
 
 	printf("ctrl_report in>\n");//dbg
+	//tnvc_t		reportToEids;
+	///*	Retrieve the parameters		*/
+	//if (sdr_begin_xn(sdr) < 0)
+	//{
+	//	armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+	//	return result;
+	//}
+	//sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	//reportToEids = armurdbBuf.reportToEids;
+	////if (reportToEids == 0) //TODO: when the SDR is deleted and then restarted: send to default mgrs.
+	//sdr_exit_xn(sdr);
+
 	//	/*	Start report procedure.			*/
 
 	//	/*	Prepare parms for armur_ctrl_report	*/
