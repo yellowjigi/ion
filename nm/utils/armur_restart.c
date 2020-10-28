@@ -1225,7 +1225,7 @@ int	main(int argc, char *argv[])
 	if (armurAttach() < 0)
 	{
 		armurAppendRptMsg("armurAttach failed.", ARMUR_RPT_ERROR);
-		armurUpdateStat(ARMUR_STAT_FIN);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 		return -1;
 	}
 
@@ -1237,7 +1237,7 @@ int	main(int argc, char *argv[])
 	if (sdr_begin_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("sdr_begin_xn failed.", ARMUR_RPT_ERROR);
-		armurUpdateStat(ARMUR_STAT_FIN);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 		return -1;
 	}
 
@@ -1259,12 +1259,12 @@ int	main(int argc, char *argv[])
 		if (sdr_end_xn(sdr) < 0)
 		{
 			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_FIN);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 			return -1;
 		}
 
 		armurAppendRptMsg("No need to restart", ARMUR_RPT_SUCCESS);
-		armurUpdateStat(ARMUR_STAT_FIN);
+		armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 		return 0;
 	}
 
@@ -1281,14 +1281,14 @@ int	main(int argc, char *argv[])
 		if (sdr_end_xn(sdr) < 0)
 		{
 			armurAppendRptMsg("sdr_end_xn failed.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_FIN);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 			return -1;
 		}
 
 		if (udplsiStop() < 0)
 		{
 			armurAppendRptMsg("Cannot stop udplsi.", ARMUR_RPT_ERROR);
-			armurUpdateStat(ARMUR_STAT_FIN);
+			armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 			return -1;
 		}
 
@@ -1426,11 +1426,11 @@ FIN:
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return -1;
 	}
-	armurUpdateStat(ARMUR_STAT_FIN);
 	sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
 	sdr_free(sdr, cfdpInfoBuf.archiveName);
 	cfdpInfoBuf.archiveName = 0;
 	sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+	armurUpdateStat(ARMUR_STAT_REPORT_PENDING);
 	if (sdr_end_xn(sdr) < 0)
 	{
 		return -1;

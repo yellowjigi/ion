@@ -597,7 +597,7 @@ int	armurStart(char *nmagentCmd)
 		}
 
 		/*	Restart has been finished.	*/
-	//default: ARMUR_STAT_IDLE or ARMUR_STAT_FIN
+	//default: ARMUR_STAT_IDLE, ARMUR_STAT_REPORT_PENDING or ARMUR_STAT_FIN
 		/*	Will be handled by nm_agent	*/
 	}
 
@@ -915,6 +915,7 @@ void	armurUpdateStat(int armurStat)
 	CHKVOID(armurStat == ARMUR_STAT_IDLE
 		|| armurStat == ARMUR_STAT_DOWNLOADED
 		|| armurStat == ARMUR_STAT_INSTALLED
+		|| armurStat == ARMUR_STAT_REPORT_PENDING
 		|| armurStat == ARMUR_STAT_FIN);
 
 	CHKVOID(ionLocked());

@@ -173,30 +173,23 @@ static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc
 static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 {
 	ari_t *armurEddRecordsId;
-	ari_t *ampCtrlGenRptId;
+	ari_t *armurCtrlReportId;
 	ArmurReportParms armurReportParms;
 
 	/*	Prepare armur_edd_records	*/
 	armurEddRecordsId = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
 
 	/*	Prepare armur_ctrl_report	*/
-	//armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
-
-	//armurReportParms.ids = ac_create();
-	//ac_insert(armurReportParms.ids, armurEddRecordsId);
-	//armurReportParms.rxmgrs = reportToEids;
-
-	//if (buildArmurReportParms(armurCtrlReportId, armurReportParms) < 0)
-	ampCtrlGenRptId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_GEN_RPTS);
+	armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
 
 	armurReportParms.ids = ac_create();
 	ac_insert(armurReportParms.ids, armurEddRecordsId);
 	armurReportParms.rxmgrs = reportToEids;
 
-	if (buildArmurReportParms(ampCtrlGenRptId, armurReportParms) < 0)
+	if (buildArmurReportParms(armurCtrlReportId, armurReportParms) < 0)
 	{
 		armurAppendRptMsg("Can't add ARMUR parms.", ARMUR_RPT_ERROR);
-		ari_release(ampCtrlGenRptId, 1);
+		ari_release(armurCtrlReportId, 1);
 		return -1;
 	}
 
@@ -210,7 +203,7 @@ static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 	sbrParms->max_eval = 2; // Provide a margin for possible delay in restart procedure.
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
-	ac_insert(sbrParms->action, ampCtrlGenRptId);
+	ac_insert(sbrParms->action, armurCtrlReportId);
 
 	return 0;
 }
@@ -660,27 +653,39 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Object		armurdbObj = getArmurDbObject();
 	ARMUR_DB	armurdb;
 	tnvc_t		*armurReportParms;
-	tnvc_t		reportToEids;
 	ac_t		*ids;
 	tnv_t		*parm[2];
+	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
 	printf("ctrl_report in>\n");//dbg
-	/*	Retrieve the parameters.		*/
-	if (sdr_begin_xn(sdr) < 0)
+
+	if (reportToEids == NULL)
 	{
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-		return result;
+		/*	Retrieve the parameters.		*/
+		if (sdr_begin_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+			return result;
+		}
+		sdr_read(sdr, (char *)&armurdb, armurdbObj, sizeof(ARMUR_DB));
+		if (armurdb.reportToEids)
+		{
+			if ((reportToEids = (tnvc_t *)STAKE(sizeof(tnvc_t))) == NULL)
+			{
+				armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+				return result;
+			}
+			sdr_read(sdr, (char *)reportToEids, armurdb.reportToEids, sizeof(tnvc_t));
+		}
+		else
+		{
+			//TODO: when the SDR is deleted and then restarted: send to default mgrs.
+			sdr_exit_xn(sdr);
+			printf("Can't find reportToEids.\n");
+			return result;
+		}
+		sdr_exit_xn(sdr);
 	}
-	sdr_read(sdr, (char *)&armurdb, armurdbObj, sizeof(ARMUR_DB));
-	if (armurdb.reportToEids)
-	{
-		sdr_read(sdr, (char *)&reportToEids, armurdb.reportToEids, sizeof(tnvc_t));
-	}
-	else
-	{
-		//TODO: when the SDR is deleted and then restarted: send to default mgrs.
-	}
-	sdr_exit_xn(sdr);
 
 	/*	Start report procedure.			*/
 
@@ -689,7 +694,7 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	ids = ac_create();
 	ac_insert(ids, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
 	parm[0] = tnv_from_obj(AMP_TYPE_AC, ids);
-	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, &reportToEids);
+	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, reportToEids);
 	if (buildParms(armurReportParms, parm, 2) < 0)
 	{
 		armurAppendRptMsg("Can't add parms for gen_rpts.", ARMUR_RPT_ERROR);
@@ -697,10 +702,25 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		return result;
 	}
 
+	/*	Now call amp_agent_ctrl_gen_rpts.	*/
 	result = amp_agent_ctrl_gen_rpts(def_mgr, armurReportParms, status);
 	if (*status == CTRL_FAILURE)
 	{
 		armurAppendRptMsg("amp_agent_ctrl_gen_rpts failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		*status = CTRL_FAILURE;
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+	armurUpdateStat(ARMUR_STAT_FIN);
+	if (sdr_end_xn(sdr) < 0)
+	{
+		*status = CTRL_FAILURE;
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
