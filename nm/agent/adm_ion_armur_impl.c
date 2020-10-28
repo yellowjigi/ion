@@ -87,17 +87,17 @@ static void populateCfdpParms(CfdpReqParms *cfdpReqParms, uvast destEntityNbr, c
 		strlen(ARMUR_CFDP_USRMSG) + 1);
 }
 
-static int buildParms(ari_t *id, tnv_t *parms[], int num)
+static int buildParms(tnvc_t *parms/*ari_t *id*/, tnv_t *parm[], int num)
 {
 	int i;
 
 	for (i = 0; i < num; i++)
 	{
-		if (vec_push(&(id->as_reg.parms.values), parms[i]) != VEC_OK)
+		if (vec_push(&(parms->values), parm[i]) != VEC_OK)
 		{
 			for (; i >= 0; i--)
 			{
-				tnv_release(parms[i], 1);
+				tnv_release(parm[i], 1);
 			}
 			return -1;
 		}
@@ -107,35 +107,35 @@ static int buildParms(ari_t *id, tnv_t *parms[], int num)
 
 static int buildSbrParms(ari_t *id, SbrParms sbrParms)
 {
-	tnv_t *parms[6];
+	tnv_t *parm[6];
 
-	parms[0] = tnv_from_obj(AMP_TYPE_ARI, sbrParms.id);
-	parms[1] = tnv_from_uvast(sbrParms.start);
-	parms[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrParms.state);
-	parms[3] = tnv_from_uvast(sbrParms.max_eval);
-	parms[4] = tnv_from_uvast(sbrParms.count);
-	parms[5] = tnv_from_obj(AMP_TYPE_AC, sbrParms.action);
+	parm[0] = tnv_from_obj(AMP_TYPE_ARI, sbrParms.id);
+	parm[1] = tnv_from_uvast(sbrParms.start);
+	parm[2] = tnv_from_obj(AMP_TYPE_EXPR, sbrParms.state);
+	parm[3] = tnv_from_uvast(sbrParms.max_eval);
+	parm[4] = tnv_from_uvast(sbrParms.count);
+	parm[5] = tnv_from_obj(AMP_TYPE_AC, sbrParms.action);
 
-	return buildParms(id, parms, 6);
+	return buildParms(&(id->as_reg.parms), parm, 6);
 }
 
 static int buildArmurStartParms(ari_t *id, ArmurStartParms armurStartParms)
 {
-	tnv_t *parms[1];
+	tnv_t *parm[1];
 
-	parms[0] = tnv_from_obj(AMP_TYPE_TNVC, armurStartParms.reportToEids);
+	parm[0] = tnv_from_obj(AMP_TYPE_TNVC, armurStartParms.reportToEids);
 
-	return buildParms(id, parms, 1);
+	return buildParms(&(id->as_reg.parms), parm, 1);
 }
 
 static int buildArmurReportParms(ari_t *id, ArmurReportParms armurReportParms)
 {
-	tnv_t *parms[2];
+	tnv_t *parm[2];
 
-	parms[0] = tnv_from_obj(AMP_TYPE_AC, armurReportParms.ids);
-	parms[1] = tnv_from_obj(AMP_TYPE_TNVC, armurReportParms.rxmgrs);
+	parm[0] = tnv_from_obj(AMP_TYPE_AC, armurReportParms.ids);
+	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, armurReportParms.rxmgrs);
 
-	return buildParms(id, parms, 2);
+	return buildParms(&(id->as_reg.parms), parm, 2);
 }
 
 static int populateArmurSbrDownloadedParms(SbrParms *sbrParms, uvast sbrMaxEval)
@@ -156,7 +156,7 @@ static int populateArmurSbrDownloadedParms(SbrParms *sbrParms, uvast sbrMaxEval)
 	}
 
 	/*	SBR definition			*/
-	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_DOWNLOADED);
+	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_START);
 	sbrParms->start = 0;
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
@@ -194,7 +194,7 @@ static int populateArmurSbrFinParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 	}
 
 	/*	SBR definition			*/
-	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
+	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_REPORT);
 	sbrParms->start = 0;
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
@@ -463,51 +463,95 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	ARMUR_CfdpInfo	cfdpInfoBuf;
 	char		archiveNameBuf[SDRSTRING_BUFSZ];
 	SbrParms	sbrParms;
+	ARMUR_DB	armurdbBuf;
+	Object		armurdbObj = getArmurDbObject();
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
+	//tnvc_t			*armurReportParms;
+	//ac_t			*ids;
+	//tnv_t			*parm[2];
 	printf("ctrl_start in>\n");//dbg
-	if (armurInstall() < 0)
+
+	switch ((getArmurConstants())->stat)
 	{
-		armurAppendRptMsg("armurInstall failed.", ARMUR_RPT_ERROR);
-		return result;
+	case ARMUR_STAT_DOWNLOADED:
+		/*	Start install procedure.	*/
+
+		if (armurInstall() < 0)
+		{
+			armurAppendRptMsg("armurInstall failed.", ARMUR_RPT_ERROR);
+			break;
+		}
+		/*	Install has been finished.	*/
+	case ARMUR_STAT_INSTALLED:
+		/*	Start restart procedure.	*/
+
+		/*	If we safely arrived here, the downloaded
+		 *	archive file is no longer needed. Delete it.		*/
+		if (sdr_begin_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+			break;
+		}
+		sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+		sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
+		sdr_exit_xn(sdr);
+		//if (fopen(buf, "r") != NULL)
+		//{
+			/*	If the file has been already removed, call to remove
+			 *	will throw a file-not-exist error and then return.
+			 *	So we skip the call to fopen to check if it exists.	*/
+			remove(archiveNameBuf);
+		//}
+
+		/*	Start a restart program.	*/
+		if (pseudoshell("armurrestart") < 0)
+		{
+			armurAppendRptMsg("armurRestart failed.", ARMUR_RPT_ERROR);
+			break;
+		}
+
+		/*	Restart has been finished.	*/
+	default:
+		/*	The entire procedure has been (successfully) completed.
+		 *	Reset the CFDP-related information and state.		*/
+		if (sdr_begin_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+			break;
+		}
+		sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
+		sdr_free(sdr, cfdpInfoBuf.archiveName);
+		cfdpInfoBuf.archiveName = 0;
+		sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
+
+		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+		armurdbBuf.stat = ARMUR_STAT_IDLE;
+		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+		if (sdr_end_xn(sdr) < 0)
+		{
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+			break;
+		}
 	}
 
-	/*	Install has been finished.		*/
-
-	/*	If we safely arrived here, the downloaded
-	 *	archive file is no longer needed. Delete it.		*/
-	CHKNULL(sdr_begin_xn(sdr));
-	sdr_read(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-	sdr_string_read(sdr, archiveNameBuf, cfdpInfoBuf.archiveName);
-	sdr_exit_xn(sdr);
-	//if (fopen(buf, "r") != NULL)
-	//{
-		/*	If the file has been already removed, call to remove
-		 *	will throw a file-not-exist error and then return.
-		 *	So we skip the call to fopen to check if it exists.	*/
-		remove(archiveNameBuf);
-	//}
-
-	/*	Start a restart program.		*/
-	if (pseudoshell("armurrestart") < 0)
-	{
-		armurAppendRptMsg("armurRestart failed.", ARMUR_RPT_ERROR);
-		return result;
-	}
-
+	/*	Activate add_sbr_fin.		*/
 	if (populateArmurSbrFinParms(&sbrParms, reportToEids) < 0)
 	{
 		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
-	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) == AMP_OK)
+	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
 	{
-		gAgentInstr.num_sbrs++;
+		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		return result;
 	}
 
+	/*	Install/Restart procedures have been completed.	*/
 	*status = CTRL_SUCCESS;
-	
+
+	printf("ctrl_start ok<\n");//dbg
 	/*
 	 * +-------------------------------------------------------------------------+
 	 * |STOP CUSTOM FUNCTION ctrl_start BODY
@@ -616,6 +660,26 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Object		elt;
 	int8_t		temp;
 
+	printf("ctrl_report in>\n");//dbg
+	//	/*	Start report procedure.			*/
+
+	//	/*	Prepare parms for armur_ctrl_report	*/
+	//	armurReportParms = tnvc_create(2);
+
+	//	ids = ac_create();
+	//	ac_insert(ids, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
+	//	parm[0] = tnv_from_obj(AMP_TYPE_AC, ids);
+	//	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, reportToEids);
+	//	if (buildParms(armurReportParms, parm, 2) < 0)
+	//	{
+	//		armurAppendRptMsg("Can't add parms for armur_ctrl_report.", ARMUR_RPT_ERROR);
+	//		tnvc_release(armurReportParms, 1);
+	//		return result;
+	//	}
+
+	//	result = dtn_ion_armur_ctrl_report(def_mgr, armurReportParms, status);
+	//}
+
 	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, &temp);
 
 	/*	Now the entire duty cycle of ARMUR processing has been
@@ -638,6 +702,7 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 
 	*status = CTRL_SUCCESS;
 
+	printf("ctrl_report ok<\n");//dbg
 	/*
 	 * +-------------------------------------------------------------------------+
 	 * |STOP CUSTOM FUNCTION ctrl_report BODY

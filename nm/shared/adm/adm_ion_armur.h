@@ -180,17 +180,21 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * +-----------------------------------------------------------------------------------------------------------+
  * |        NAME         |     ARI      |             DESCRIPTION              | TYPE  |
  * +---------------------+--------------+--------------------------------------+-------+
- * |downloaded           |458819014600  |Mainly for CTRL_INSTALL procedure.    |       |
+ * |start                |458819014600  |Predefined for armur_ctrl_start proced|       |
+ * |                     |              |ure at the very beginning.            |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |installed            |458819014601  |Mainly for CTRL_RESTART procedure.    |       |
+ * |continue             |458819014601  |Predefined for armur_ctrl_start proced|       |
+ * |                     |              |ure, especially when the node has been|       |
+ * |			 |		|rebooted, to continue from the last AR|       |
+ * |                     |              |MUR state.                            |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |fin                  |458819014602  |Mainly for CTRL_REPORT procedure.     |       |
- * |                     |              |                                      |       |
+ * |report               |458819014602  |Predefined for armur_ctrl_report proce|       |
+ * |                     |              |dure at the final stage.              |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
-#define DTN_ION_ARMUR_SBR_DOWNLOADED 0x00
-#define DTN_ION_ARMUR_SBR_INSTALLED 0x01
-#define DTN_ION_ARMUR_SBR_FIN 0x02
+#define DTN_ION_ARMUR_SBR_START 0x00
+#define DTN_ION_ARMUR_SBR_CONTINUE 0x01
+#define DTN_ION_ARMUR_SBR_REPORT 0x02
 
 
 /* Initialization functions. */
