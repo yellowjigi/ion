@@ -126,18 +126,19 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * |			 |		| daemon programs and activate the armu|       |
  * |			 |		|r_sbr_fin to report the results.      |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |install              |458119014103  |Extract the binary archive and install|       |
+ * |install              |458119014102  |Extract the binary archive and install|       |
  * |                     |              |the images.                           |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |restart              |458119014104  |Restart daemon applications according |       |
+ * |restart              |458119014103  |Restart daemon applications according |       |
  * |                     |              |to the images on the restart queues fr|       |
  * |                     |              |om ARMUR VDB.                         |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |458119014105  |Generate a report indicating the resul|       |
+ * |report               |458119014104  |Generate a report indicating the resul|       |
  * |			 |		|t of the remote software update (amp_a|       |
- * |			 |		|gent_ctrl_gen_rpts wrapper function) a|       |
- * |			 |		|nd/or do some postprocessing jobs for |       |
- * |			 |		|ARMUR DB/VDB.                         |       |
+ * |			 |		|gent_ctrl_gen_rpts wrapper function). |       |
+ * +---------------------+--------------+--------------------------------------+-------+
+ * |fin                  |458119014105  |Do some postprocessing jobs for ARMUR |       |
+ * |			 |		|DB/VDB.                               |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_ARMUR_CTRL_INIT 0x00
@@ -145,6 +146,7 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
 #define DTN_ION_ARMUR_CTRL_INSTALL 0x02
 #define DTN_ION_ARMUR_CTRL_RESTART 0x03
 #define DTN_ION_ARMUR_CTRL_REPORT 0x04
+#define DTN_ION_ARMUR_CTRL_FIN 0x05
 
 
 /*
@@ -183,18 +185,16 @@ extern vec_idx_t g_dtn_ion_armur_idx[11];
  * |start                |458819014600  |Predefined for armur_ctrl_start proced|       |
  * |                     |              |ure at the very beginning.            |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |continue             |458819014601  |Predefined for armur_ctrl_start proced|       |
- * |                     |              |ure, especially when the node has been|       |
- * |			 |		|rebooted, to continue from the last AR|       |
- * |                     |              |MUR state.                            |       |
+ * |report               |458819014601  |Predefined for armur_ctrl_report proce|       |
+ * |                     |              |dure.                                 |       |
  * +---------------------+--------------+--------------------------------------+-------+
- * |report               |458819014602  |Predefined for armur_ctrl_report proce|       |
- * |                     |              |dure at the final stage.              |       |
+ * |fin                  |458819014602  |Predefined for armur_ctrl_fin procedur|       |
+ * |			 |		|e at the final stage.                 |       |
  * +---------------------+--------------+--------------------------------------+-------+
  */
 #define DTN_ION_ARMUR_SBR_START 0x00
-#define DTN_ION_ARMUR_SBR_CONTINUE 0x01
-#define DTN_ION_ARMUR_SBR_REPORT 0x02
+#define DTN_ION_ARMUR_SBR_REPORT 0x01
+#define DTN_ION_ARMUR_SBR_FIN 0x02
 
 
 /* Initialization functions. */

@@ -173,23 +173,30 @@ static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc
 static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 {
 	ari_t *armurEddRecordsId;
-	ari_t *armurCtrlReportId;
+	ari_t *ampCtrlGenRptId;
 	ArmurReportParms armurReportParms;
 
 	/*	Prepare armur_edd_records	*/
 	armurEddRecordsId = adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS);
 
 	/*	Prepare armur_ctrl_report	*/
-	armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	//armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+
+	//armurReportParms.ids = ac_create();
+	//ac_insert(armurReportParms.ids, armurEddRecordsId);
+	//armurReportParms.rxmgrs = reportToEids;
+
+	//if (buildArmurReportParms(armurCtrlReportId, armurReportParms) < 0)
+	ampCtrlGenRptId = adm_build_ari(AMP_TYPE_CTRL, 1, g_amp_agent_idx[ADM_CTRL_IDX], AMP_AGENT_CTRL_GEN_RPTS);
 
 	armurReportParms.ids = ac_create();
 	ac_insert(armurReportParms.ids, armurEddRecordsId);
 	armurReportParms.rxmgrs = reportToEids;
 
-	if (buildArmurReportParms(armurCtrlReportId, armurReportParms) < 0)
+	if (buildArmurReportParms(ampCtrlGenRptId, armurReportParms) < 0)
 	{
 		armurAppendRptMsg("Can't add ARMUR parms.", ARMUR_RPT_ERROR);
-		ari_release(armurCtrlReportId, 1);
+		ari_release(ampCtrlGenRptId, 1);
 		return -1;
 	}
 
@@ -198,32 +205,33 @@ static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 	sbrParms->start = 0;
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
+	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_REPORT_PENDING));
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	sbrParms->max_eval = 2; // Provide a margin for possible delay in restart procedure.
+	sbrParms->count = 1;
+	sbrParms->action = ac_create();
+	ac_insert(sbrParms->action, ampCtrlGenRptId);
+
+	return 0;
+}
+
+static int populateArmurSbrFinParms(SbrParms *sbrParms)
+{
+	ari_t *armurCtrlFinId;
+
+	armurCtrlFinId = adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_FIN);
+
+	/*	SBR definition			*/
+	sbrParms->id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_FIN);
+	sbrParms->start = 0;
+	sbrParms->state = expr_create(AMP_TYPE_UINT);
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
 	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
 	sbrParms->max_eval = 2; // Provide a margin for possible delay in restart procedure.
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
-	ac_insert(sbrParms->action, armurCtrlReportId);
-
-	return 0;
-}
-
-static int addArmurSbrReport(tnvc_t *reportToEids)
-{
-	SbrParms	sbrParms;
-
-	/*	Activate add_sbr_fin.		*/
-	if (populateArmurSbrReportParms(&sbrParms, reportToEids) < 0)
-	{
-		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
-		return -1;
-	}
-
-	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
-	{
-		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
-		return -1;
-	}
+	ac_insert(sbrParms->action, armurCtrlFinId);
 
 	return 0;
 }
@@ -483,6 +491,7 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Sdr		sdr = getIonsdr();
 	ARMUR_DB	armurdbBuf;
 	Object		armurdbObj = getArmurDbObject();
+	SbrParms	sbrParms;
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
 	printf("ctrl_start in>\n");//dbg
@@ -512,15 +521,36 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		armurAppendRptMsg("armurStart failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
+	/*	Install/Restart procedures have been completed.	*/
 
-	/*	Add armur_sbr_report	*/
-	if (addArmurSbrReport(reportToEids) < 0)
+	/*	Activate armur_sbr_report.	*/
+	if (populateArmurSbrReportParms(&sbrParms, reportToEids) < 0)
 	{
-		armurAppendRptMsg("addArmurSbrReport failed.", ARMUR_RPT_ERROR);
+		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
 		return result;
 	}
 
-	/*	Install/Restart procedures have been completed.	*/
+	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
+	{
+		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+	gAgentInstr.num_sbrs++;
+
+	/*	Activate armur_sbr_fin.		*/
+	if (populateArmurSbrFinParms(&sbrParms) < 0)
+	{
+		armurAppendRptMsg("Can't define SBR parms.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	if (adm_add_sbr(sbrParms.id, sbrParms.start, sbrParms.state, sbrParms.max_eval, sbrParms.count, sbrParms.action) != AMP_OK)
+	{
+		armurAppendRptMsg("adm_add_sbr failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+	gAgentInstr.num_sbrs++;
+
 	*status = CTRL_SUCCESS;
 
 	printf("ctrl_start ok<\n");//dbg
@@ -614,7 +644,8 @@ tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 }
 
 /*
- * Generate a report indicating the result of the remote software update.
+ * Generate a report indicating the result of the remote software update
+ * (amp_agent_ctrl_gen_rpts wrapper function).
  */
 tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
@@ -626,72 +657,52 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * +-------------------------------------------------------------------------+
 	 */
 	Sdr		sdr = getIonsdr();
-	Object		armurdbObject = getArmurDbObject();
+	Object		armurdbObj = getArmurDbObject();
 	ARMUR_DB	armurdb;
-	Object		recordObj;
-	Object		elt;
+	tnvc_t		*armurReportParms;
+	tnvc_t		reportToEids;
+	ac_t		*ids;
+	tnv_t		*parm[2];
 
 	printf("ctrl_report in>\n");//dbg
-	//tnvc_t		reportToEids;
-	///*	Retrieve the parameters		*/
-	//if (sdr_begin_xn(sdr) < 0)
-	//{
-	//	armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-	//	return result;
-	//}
-	//sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	//reportToEids = armurdbBuf.reportToEids;
-	////if (reportToEids == 0) //TODO: when the SDR is deleted and then restarted: send to default mgrs.
-	//sdr_exit_xn(sdr);
-
-	//	/*	Start report procedure.			*/
-
-	//	/*	Prepare parms for armur_ctrl_report	*/
-	//	armurReportParms = tnvc_create(2);
-
-	//	ids = ac_create();
-	//	ac_insert(ids, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
-	//	parm[0] = tnv_from_obj(AMP_TYPE_AC, ids);
-	//	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, reportToEids);
-	//	if (buildParms(armurReportParms, parm, 2) < 0)
-	//	{
-	//		armurAppendRptMsg("Can't add parms for armur_ctrl_report.", ARMUR_RPT_ERROR);
-	//		tnvc_release(armurReportParms, 1);
-	//		return result;
-	//	}
-
-	//	result = dtn_ion_armur_ctrl_report(def_mgr, armurReportParms, status);
-	//}
-
-	result = amp_agent_ctrl_gen_rpts(def_mgr, parms, status);
-
-	/*	Now the entire duty cycle of ARMUR processing has been
-	 *	completed. Do post-processing of some remaining tasks.	*/
+	/*	Retrieve the parameters.		*/
 	if (sdr_begin_xn(sdr) < 0)
 	{
-		*status = CTRL_FAILURE;
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
-
-	sdr_read(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));
-	while ((elt = sdr_list_first(sdr, armurdb.records)) != 0)
+	sdr_read(sdr, (char *)&armurdb, armurdbObj, sizeof(ARMUR_DB));
+	if (armurdb.reportToEids)
 	{
-		recordObj = sdr_list_data(sdr, elt);
-		sdr_free(sdr, recordObj);
-		sdr_list_delete(sdr, elt, NULL, NULL);
+		sdr_read(sdr, (char *)&reportToEids, armurdb.reportToEids, sizeof(tnvc_t));
 	}
-
-	armurdb.stat = ARMUR_STAT_IDLE;
-	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
-	if (sdr_end_xn(sdr) < 0)
+	else
 	{
-		*status = CTRL_FAILURE;
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		//TODO: when the SDR is deleted and then restarted: send to default mgrs.
+	}
+	sdr_exit_xn(sdr);
+
+	/*	Start report procedure.			*/
+
+	/*	Prepare parms for gen_rpts.		*/
+	armurReportParms = tnvc_create(2);
+	ids = ac_create();
+	ac_insert(ids, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_RECORDS));
+	parm[0] = tnv_from_obj(AMP_TYPE_AC, ids);
+	parm[1] = tnv_from_obj(AMP_TYPE_TNVC, &reportToEids);
+	if (buildParms(armurReportParms, parm, 2) < 0)
+	{
+		armurAppendRptMsg("Can't add parms for gen_rpts.", ARMUR_RPT_ERROR);
+		tnvc_release(armurReportParms, 1);
 		return result;
 	}
 
-	*status = CTRL_SUCCESS;
+	result = amp_agent_ctrl_gen_rpts(def_mgr, armurReportParms, status);
+	if (*status == CTRL_FAILURE)
+	{
+		armurAppendRptMsg("amp_agent_ctrl_gen_rpts failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
 
 	printf("ctrl_report ok<\n");//dbg
 	/*
@@ -702,6 +713,62 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	return result;
 }
 
+/*
+ * Do some postprocessing jobs for ARMUR DB/VDB.
+ */
+tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
+{
+	tnv_t *result = NULL;
+	*status = CTRL_FAILURE;
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |START CUSTOM FUNCTION ctrl_fin BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+	Sdr		sdr = getIonsdr();
+	Object		armurdbObject = getArmurDbObject();
+	ARMUR_DB	armurdb;
+	Object		recordObj;
+	Object		elt;
+
+	printf("ctrl_fin in>\n");//dbg
+
+	/*	Now the entire duty cycle of ARMUR processing has been
+	 *	completed. Do post-processing of some remaining tasks.	*/
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	sdr_stage(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));
+	while ((elt = sdr_list_first(sdr, armurdb.records)) != 0)
+	{
+		recordObj = sdr_list_data(sdr, elt);
+		sdr_free(sdr, recordObj);
+		sdr_list_delete(sdr, elt, NULL, NULL);
+	}
+
+	sdr_free(sdr, armurdb.reportToEids);
+
+	armurdb.stat = ARMUR_STAT_IDLE;
+	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return result;
+	}
+
+	*status = CTRL_SUCCESS;
+
+	printf("ctrl_fin ok<\n");//dbg
+	/*
+	 * +-------------------------------------------------------------------------+
+	 * |STOP CUSTOM FUNCTION ctrl_fin BODY
+	 * +-------------------------------------------------------------------------+
+	 */
+	return result;
+}
+
 
 /* OP Functions */
-

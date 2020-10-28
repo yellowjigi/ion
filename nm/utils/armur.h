@@ -41,7 +41,8 @@
 #define	ARMUR_STAT_IDLE			0
 #define	ARMUR_STAT_DOWNLOADED		1
 #define ARMUR_STAT_INSTALLED		2
-#define ARMUR_STAT_FIN			3
+#define ARMUR_STAT_REPORT_PENDING	3
+#define ARMUR_STAT_FIN			4
 
 /*	ARMUR volatile states	*/
 #define	ARMUR_VSTAT_IDLE		0
