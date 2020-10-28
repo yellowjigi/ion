@@ -515,31 +515,9 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		if (pseudoshell("armurrestart") < 0)
 		{
 			armurAppendRptMsg("armurRestart failed.", ARMUR_RPT_ERROR);
-			break;
 		}
 
 		/*	Restart has been finished.	*/
-	default:
-		/*	The entire procedure has been (successfully) completed.
-		 *	Reset the CFDP-related information and state.		*/
-		if (sdr_begin_xn(sdr) < 0)
-		{
-			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-			break;
-		}
-		sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
-		sdr_free(sdr, cfdpInfoBuf.archiveName);
-		cfdpInfoBuf.archiveName = 0;
-		sdr_write(sdr, armurvdb->cfdpInfo, (char *)&cfdpInfoBuf, sizeof(ARMUR_CfdpInfo));
-
-		sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-		armurdbBuf.stat = ARMUR_STAT_IDLE;
-		sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
-		if (sdr_end_xn(sdr) < 0)
-		{
-			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-			break;
-		}
 	}
 
 	/*	Activate add_sbr_fin.		*/
@@ -691,6 +669,15 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 
 	/*	Now the entire duty cycle of ARMUR processing has been
 	 *	completed. Do post-processing of some remaining tasks.	*/
+
+	//sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	//armurdbBuf.stat = ARMUR_STAT_IDLE;
+	//sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	//if (sdr_end_xn(sdr) < 0)
+	//{
+	//	armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+	//	break;
+	//}
 
 	CHKNULL(sdr_begin_xn(sdr));
 	sdr_read(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));

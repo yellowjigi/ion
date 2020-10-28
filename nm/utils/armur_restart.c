@@ -1419,9 +1419,13 @@ FIN:
 	armurvdb->vstat = ARMUR_VSTAT_IDLE;
 	sdr_exit_xn(sdr);
 
-	/*	The entire procedure has been completed.
-	 *	Reset the CFDP-related information and state.	*/
-	CHKERR(sdr_begin_xn(sdr));
+	/*	The entire procedure has been (successfully) completed.
+	 *	Reset the CFDP-related information and state.		*/
+	if (sdr_begin_xn(sdr) < 0)
+	{
+		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
+		return -1;
+	}
 	armurUpdateStat(ARMUR_STAT_FIN);
 	sdr_stage(sdr, (char *)&cfdpInfoBuf, armurvdb->cfdpInfo, sizeof(ARMUR_CfdpInfo));
 	sdr_free(sdr, cfdpInfoBuf.archiveName);
