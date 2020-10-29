@@ -136,6 +136,9 @@ void dtn_ion_armur_init_sbr()
 	//}
 
 	/* REPORT */
+	ari_t	*armurCtrlReportId;
+	tnvc_t	*reportToEids;
+	tnv_t	*parm;
 
 	id = adm_build_ari(AMP_TYPE_SBR, 0, g_dtn_ion_armur_idx[ADM_SBR_IDX], DTN_ION_ARMUR_SBR_REPORT);
 	state = expr_create(AMP_TYPE_UINT);
@@ -144,10 +147,22 @@ void dtn_ion_armur_init_sbr()
 	expr_add_item(state, adm_build_ari_lit_uint(3));
 	expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	action = ac_create();
-	ac_insert(action, adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT));
-	if (adm_add_sbr(id, 0, state, 3, 1, action) == AMP_OK)
+	armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
+	reportToEids = tnvc_create(0);
+	parm = tnv_from_obj(AMP_TYPE_TNVC, reportToEids);
+	if (vec_push(&(armurCtrlReportId->as_reg.parms.values), parm) != VEC_OK)
 	{
-		gAgentInstr.num_sbrs++;
+		tnv_release(parm, 1);
+		tnvc_release(reportToEids, 1);
+		ari_release(armurCtrlReportId, 1);
+	}
+	else
+	{
+		ac_insert(action, armurCtrlReportId);
+		if (adm_add_sbr(id, 0, state, 3, 1, action) == AMP_OK)
+		{
+			gAgentInstr.num_sbrs++;
+		}
 	}
 
 	/* FIN */

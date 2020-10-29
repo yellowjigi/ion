@@ -658,9 +658,9 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 
 	printf("ctrl_report in>\n");//dbg
 
-	if (reportToEids == NULL)
+	if (tnvc_get_count(reportToEids) == 0)
 	{
-		/*	Retrieve the parameters.		*/
+		/*	Might have been rebooted. Retrieve the parameters.	*/
 		if (sdr_begin_xn(sdr) < 0)
 		{
 			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
@@ -678,7 +678,7 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		}
 		else
 		{
-			//TODO: when the SDR is deleted and then restarted: send to default mgrs.
+			//TODO: Send to default mgrs.
 			sdr_exit_xn(sdr);
 			printf("Can't find reportToEids.\n");
 			return result;
