@@ -928,7 +928,7 @@ int	armurUpdateStat(int armurStat, int method)
 		break;
 	case CHANGE:
 		armurdbBuf.stat = 0;
-		armurdbBuf.stat |= armurStat;
+		armurdbBuf.stat = armurStat;
 		break;
 	}
 	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));

@@ -159,7 +159,7 @@ static int populateArmurSbrStartParms(SbrParms *sbrParms, uvast sbrMaxEval, tnvc
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
 	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_DOWNLOADED));
-	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	sbrParms->max_eval = sbrMaxEval;
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
@@ -191,7 +191,7 @@ static int populateArmurSbrReportParms(SbrParms *sbrParms, tnvc_t *reportToEids)
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
 	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_REPORT_PENDING));
-	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	sbrParms->max_eval = 2; // Provide a margin for possible delay in restart procedure.
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
@@ -212,7 +212,7 @@ static int populateArmurSbrFinParms(SbrParms *sbrParms)
 	sbrParms->state = expr_create(AMP_TYPE_UINT);
 	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
 	expr_add_item(sbrParms->state, adm_build_ari_lit_uint(ARMUR_STAT_FIN));
-	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_EQUAL));
+	expr_add_item(sbrParms->state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	sbrParms->max_eval = 2; // Provide a margin for possible delay in restart procedure.
 	sbrParms->count = 1;
 	sbrParms->action = ac_create();
@@ -305,7 +305,6 @@ tnv_t *dtn_ion_armur_get_state(tnvc_t *parms)
 
 	armurnm_state_get(&snapshot);
 	result = tnv_from_uint(snapshot.currentStat);
-	//result = tnv_from_byte(snapshot.currentStat);
 
 	/*
 	 * +-------------------------------------------------------------------------+
@@ -521,6 +520,7 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
 	if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
 	{
+		sdr_exit_xn(sdr);
 		armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
 		oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
 		return result;
@@ -709,20 +709,8 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		return result;
 	}
 
-	if (sdr_begin_xn(sdr) < 0)
-	{
-		*status = CTRL_FAILURE;
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-		return result;
-	}
 	oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
 	oK(armurUpdateStat(ARMUR_STAT_FIN, SWITCH));
-	if (sdr_end_xn(sdr) < 0)
-	{
-		*status = CTRL_FAILURE;
-		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-		return result;
-	}
 
 	printf("ctrl_report ok<\n");//dbg
 	/*
@@ -768,16 +756,15 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 		sdr_free(sdr, recordObj);
 		sdr_list_delete(sdr, elt, NULL, NULL);
 	}
-
 	sdr_free(sdr, armurdb.reportToEids);
-
-	oK(armurUpdateStat(ARMUR_STAT_FIN, SWITCH));
 	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		return result;
 	}
+
+	oK(armurUpdateStat(ARMUR_STAT_FIN, SWITCH));
 
 	*status = CTRL_SUCCESS;
 
