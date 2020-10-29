@@ -98,7 +98,7 @@ typedef struct {
 	Object		cfdpInfo;			/*	CfdpInfo address	*/
 	Object		nmagentCmd;			/*	SDR string		*/
 	Object		records;			/*	SDR lists		*/
-	Object		reportToEids;			/*	tnvc_t address		*/
+	Object		reportToEids;			/*	SDR lists		*/
 } ARMUR_DB;
 
 typedef struct {

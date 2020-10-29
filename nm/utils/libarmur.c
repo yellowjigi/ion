@@ -8,7 +8,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#define	CRASH
+//#define	CRASH
 
 /*	*	*	Utility functions	*	*	*/
 
@@ -383,6 +383,9 @@ int	armurInit()
 
 		/*	Prepare lists of log records.			*/
 		armurdbBuf.records = sdr_list_create(sdr);
+
+		/*	Prepare lists of report-to mgr eids.		*/
+		armurdbBuf.reportToEids = sdr_list_create(sdr);
 
 		/*	Write to SDR and catalogue it.			*/
 		sdr_write(sdr, armurdbObject, (char *)&armurdbBuf, sizeof(ARMUR_DB));

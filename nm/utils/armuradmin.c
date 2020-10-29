@@ -211,6 +211,7 @@ static void	printStat(char stat)
 {
 	char	*buffer;
 
+	printf("stat: %hhd.\n", stat);
 	switch (stat)
 	{
 	case ARMUR_STAT_IDLE:

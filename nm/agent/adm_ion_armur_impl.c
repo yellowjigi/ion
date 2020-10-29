@@ -476,9 +476,21 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	ARMUR_DB	armurdbBuf;
 	Object		armurdbObj = getArmurDbObject();
 	SbrParms	sbrParms;
+	vecit_t		it;
+	tnv_t		*curEid;
+	eid_t		eid;
+	Object		eidObj;
+	tnvc_t		*eids;
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
 
 	printf("ctrl_start in>\n");//dbg
+	eids = tnvc_copy(reportToEids);
+
+	/*	Store the parameters		*/
+	if(tnvc_get_count(reportToEids) == 0)
+	{
+		//TODO: Get the default rxmgrs Eids from the database.
+	}
 
 	/*	Activate armur_sbr_report.	*/
 	if (populateArmurSbrReportParms(&sbrParms, reportToEids) < 0)
@@ -510,24 +522,38 @@ tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	}
 	gAgentInstr.num_sbrs++;
 
-	/*	Store the parameters		*/
 	if (sdr_begin_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 		oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
 		return result;
 	}
-	sdr_stage(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
-	if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
-	{
-		sdr_exit_xn(sdr);
-		armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
-		oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
-		return result;
-	}
+	sdr_read(sdr, (char *)&armurdbBuf, armurdbObj, sizeof(ARMUR_DB));
+	//if ((armurdbBuf.reportToEids = sdr_malloc(sdr, sizeof(tnvc_t))) == 0)
+	//{
+	//	sdr_exit_xn(sdr);
+	//	armurAppendRptMsg("Can't store parameters.", ARMUR_RPT_ERROR);
+	//	oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
+	//	return result;
+	//}
 
-	sdr_write(sdr, armurdbBuf.reportToEids, (char *)reportToEids, sizeof(tnvc_t));
-	sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
+	for (it = vecit_first(&(eids->values)); vecit_valid(it); it = vecit_next(it))
+	{
+		curEid = (tnv_t *)vecit_data(it);
+		strncpy(eid.name, curEid->value.as_ptr, AMP_MAX_EID_LEN - 1);
+		if ((eidObj = sdr_malloc(sdr, sizeof(eid_t))) == 0)
+		{
+			sdr_exit_xn(sdr);
+			armurAppendRptMsg("Can't store reportToEids.", ARMUR_RPT_ERROR);
+			oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, SWITCH));
+			return result;
+		}
+		sdr_list_insert_last(sdr, armurdbBuf.reportToEids, eidObj);
+		sdr_write(sdr, eidObj, (char *)&eid, sizeof(eid_t));
+	}
+	
+	//sdr_write(sdr, armurdbBuf.reportToEids, (char *)reportToEids, sizeof(tnvc_t));
+	//sdr_write(sdr, armurdbObj, (char *)&armurdbBuf, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
 	{
 		armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
@@ -652,6 +678,11 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Object		armurdbObj = getArmurDbObject();
 	ARMUR_DB	armurdb;
 	tnvc_t		*armurReportParms;
+	int		len;
+	Object		eidObj;
+	Object		elt;
+	eid_t		curEid;
+	tnv_t		*eid;
 	ac_t		*ids;
 	tnv_t		*parm[2];
 	tnvc_t		*reportToEids = adm_get_parm_obj(parms, 0, AMP_TYPE_TNVC);
@@ -667,20 +698,34 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 			return result;
 		}
 		sdr_read(sdr, (char *)&armurdb, armurdbObj, sizeof(ARMUR_DB));
-		if (armurdb.reportToEids)
+
+		if ((len = sdr_list_length(sdr, armurdb.reportToEids)) > 0)
 		{
-			if ((reportToEids = (tnvc_t *)STAKE(sizeof(tnvc_t))) == NULL)
+			for (elt = sdr_list_first(sdr, armurdb.reportToEids); elt; elt = sdr_list_next(sdr, elt))
 			{
-				armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
-				return result;
+				eidObj = sdr_list_data(sdr, elt);
+				sdr_read(sdr, (char *)&curEid, eidObj, sizeof(eid_t));
+				eid = tnv_from_obj(AMP_TYPE_STR, curEid.name);
+				if (vec_push(&(reportToEids->values), eid) != VEC_OK)
+				{
+					sdr_exit_xn(sdr);
+					tnvc_release(reportToEids, 1);
+					armurAppendRptMsg("Can't retrieve reportToEids.", ARMUR_RPT_ERROR);
+					return result;
+				}
 			}
-			sdr_read(sdr, (char *)reportToEids, armurdb.reportToEids, sizeof(tnvc_t));
 		}
-		else
+		else if (len == 0)
 		{
 			//TODO: Send to default mgrs.
 			sdr_exit_xn(sdr);
 			printf("Can't find reportToEids.\n");
+			return result;
+		}
+		else
+		{
+			sdr_exit_xn(sdr);
+			armurAppendRptMsg("SDR transaction failed.", ARMUR_RPT_ERROR);
 			return result;
 		}
 		sdr_exit_xn(sdr);
@@ -736,7 +781,6 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	Sdr		sdr = getIonsdr();
 	Object		armurdbObject = getArmurDbObject();
 	ARMUR_DB	armurdb;
-	Object		recordObj;
 	Object		elt;
 
 	printf("ctrl_fin in>\n");//dbg
@@ -752,11 +796,24 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	sdr_stage(sdr, (char *)&armurdb, armurdbObject, sizeof(ARMUR_DB));
 	while ((elt = sdr_list_first(sdr, armurdb.records)) != 0)
 	{
-		recordObj = sdr_list_data(sdr, elt);
-		sdr_free(sdr, recordObj);
+		sdr_free(sdr, sdr_list_data(sdr, elt));
 		sdr_list_delete(sdr, elt, NULL, NULL);
 	}
-	sdr_free(sdr, armurdb.reportToEids);
+
+	/*	Unless at this moment the ARMUR state only holds
+	 *	ARMUR_STAT_FIN flag, there has been an error
+	 *	during either install, restart, or report procedure.
+	 *	So we will free the reportToEids object only if
+	 *	it holds ARMUR_STAT_FIN alone.				*/
+	if (armurdb.stat == ARMUR_STAT_FIN)
+	{
+		while ((elt = sdr_list_first(sdr, armurdb.reportToEids)) != 0)
+		{
+			sdr_free(sdr, sdr_list_data(sdr, elt));
+			sdr_list_delete(sdr, elt, NULL, NULL);
+		}
+		armurdb.reportToEids = 0;
+	}
 	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
 	{

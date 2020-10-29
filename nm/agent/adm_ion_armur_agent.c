@@ -144,7 +144,7 @@ void dtn_ion_armur_init_sbr()
 	state = expr_create(AMP_TYPE_UINT);
 	/*	(current ARMUR state) & ARMUR_STAT_REPORT_PENDING	*/
 	expr_add_item(state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(state, adm_build_ari_lit_uint(3));
+	expr_add_item(state, adm_build_ari_lit_uint(4));
 	expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	action = ac_create();
 	armurCtrlReportId = adm_build_ari(AMP_TYPE_CTRL, 1, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_REPORT);
@@ -171,7 +171,7 @@ void dtn_ion_armur_init_sbr()
 	state = expr_create(AMP_TYPE_UINT);
 	/*	(current ARMUR state) & ARMUR_STAT_FIN		*/
 	expr_add_item(state, adm_build_ari(AMP_TYPE_EDD, 0, g_dtn_ion_armur_idx[ADM_EDD_IDX], DTN_ION_ARMUR_EDD_STATE));
-	expr_add_item(state, adm_build_ari_lit_uint(4));
+	expr_add_item(state, adm_build_ari_lit_uint(8));
 	expr_add_item(state, adm_build_ari(AMP_TYPE_OPER, 1, g_amp_agent_idx[ADM_OPER_IDX], AMP_AGENT_OP_BITAND));
 	action = ac_create();
 	ac_insert(action, adm_build_ari(AMP_TYPE_CTRL, 0, g_dtn_ion_armur_idx[ADM_CTRL_IDX], DTN_ION_ARMUR_CTRL_FIN));
