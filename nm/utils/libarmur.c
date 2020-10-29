@@ -8,6 +8,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#define CRASH
+
 /*	*	*	Utility functions	*	*	*/
 
 int	getIonMajorVerNum()
@@ -1065,7 +1067,10 @@ int	armurInstall()
 				ext[3] = '\0';
 			}
 		}
-
+#ifdef	CRASH
+		_armurAppendRptMsg("Decomp failed.", __FILE__, __LINE__);
+		return -1;
+#endif
 		CHKERR(sdr_begin_xn(sdr));
 		armurFindImage(imageNameTmp, &vimage, &vimageAddr);
 		if (vimageAddr == 0)
