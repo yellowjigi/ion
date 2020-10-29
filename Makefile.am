@@ -1670,7 +1670,7 @@ bpcp_CFLAGS = $(cfdpcflags) $(AM_CFLAGS)
 
 bpcpd_SOURCES = cfdp/utils/bpcpd.c
 bpcpd_LDADD = libcfdp.la libici.la -lm libarmur.la $(LIBOBJS) #JIGI
-bpcpd_CFLAGS = $(cfdpcflags) $(AM_CFLAGS) -DARMUR -DCRASH #JIGI
+bpcpd_CFLAGS = $(cfdpcflags) $(AM_CFLAGS) -DARMUR #JIGI
 
 # --- BP Programs --- #
 
@@ -2129,7 +2129,7 @@ libarmur_la_SOURCES = \
 	nm/utils/libarmur.c \
 	nm/utils/libarmurnm.c \
 	nm/utils/armur_rhht.c
-libarmur_la_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+libarmur_la_CFLAGS = $(armurcflags) $(AM_CFLAGS) -DCRASH #JIGI
 libarmur_la_LIBADD = $(ION_LIBS) -larchive
 #armur_LDFLAGS = -L/usr/local/lib -lm -lpthread -larchive
 
