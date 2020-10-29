@@ -8,6 +8,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#define	CRASH
+
 /*	*	*	Utility functions	*	*	*/
 
 int	getIonMajorVerNum()
