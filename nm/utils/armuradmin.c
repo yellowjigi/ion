@@ -161,7 +161,7 @@ static void	executeAdd(int tokenCount, char **tokens)
 				break;
 
 			case 'n':
-				apptype = ARMUR_APPTYPE_DAEMON;
+				apptype = ARMUR_APPTYPE_NORMAL;
 				break;
 
 			default:
