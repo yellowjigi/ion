@@ -247,7 +247,9 @@ static void	printStat(char stat)
 
 static void	infoStat(int tokenCount, char **tokens)
 {
-	Sdr	sdr = getIonsdr();
+	Sdr		sdr = getIonsdr();
+	Object		armurdbObj = getArmurDbObject();
+	ARMUR_DB	armurdb;
 
 	if (tokenCount != 2)
 	{
@@ -257,7 +259,8 @@ static void	infoStat(int tokenCount, char **tokens)
 
 	CHKVOID(sdr_begin_xn(sdr));
 
-	printStat((getArmurConstants())->stat);
+	sdr_read(sdr, (char *)&armurdb, armurdbObj, sizeof(ARMUR_DB));
+	printStat(armurdb.stat);
 
 	sdr_exit_xn(sdr);
 }
