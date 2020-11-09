@@ -812,7 +812,7 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 			sdr_free(sdr, sdr_list_data(sdr, elt));
 			sdr_list_delete(sdr, elt, NULL, NULL);
 		}
-		armurdb.reportToEids = 0;
+		//armurdb.reportToEids = 0;
 	}
 	sdr_write(sdr, armurdbObject, (char *)&armurdb, sizeof(ARMUR_DB));
 	if (sdr_end_xn(sdr) < 0)
