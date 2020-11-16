@@ -5,6 +5,8 @@
 #include "armur_restart.h"
 #include "armur_rhht.h"
 
+char gMsg[512];
+
 /*	*	*	Restart functions	*	*	*/
 
 /*------------------------------*
@@ -1126,7 +1128,9 @@ static int	stop(ARMUR_VImage *vimage, int level)
 		ARMUR_Image	imageBuf;
 		Sdr		sdr = getIonsdr();
 		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
-		printf("\tStop %s.\n", imageBuf.name);//dbg
+		strcat(gMsg, imageBuf.name);//dbg
+		strcat(gMsg, ",");//dbg
+		//printf("\tStop %s.\n", imageBuf.name);//dbg
 		if (vimage->as.lv2.stop() < 0)
 		{
 			return -1;
@@ -1196,7 +1200,9 @@ static int	start(ARMUR_VImage *vimage, int level)
 		ARMUR_Image	imageBuf;
 		Sdr		sdr = getIonsdr();
 		sdr_read(sdr, (char *)&imageBuf, vimage->addr, sizeof(ARMUR_Image));
-		printf("\tStart %s.\n", imageBuf.name);//dbg
+		strcat(gMsg, imageBuf.name);//dbg
+		strcat(gMsg, ",");//dbg
+		//printf("\t%s.\n", imageBuf.name);//dbg
 		if (vimage->as.lv2.start() < 0)
 		{
 			return -1;
@@ -1324,11 +1330,21 @@ int	main(int argc, char *argv[])
 			OBJ_POINTER(ARMUR_Image, image);//dbg
 			GET_OBJ_POINTER(sdr, ARMUR_Image, image, vimage->addr);//dbg
 			printf("\trestart image: %s.\n", image->name);//dbg
-			if (stop(vimage, ARMUR_LEVEL_0) < 0
-			|| start(vimage, ARMUR_LEVEL_0) < 0)
+			printf("\t[Stop] ");//dbg
+			if (stop(vimage, ARMUR_LEVEL_0) < 0)
 			{
 				return -1;
 			}
+			gMsg[strlen(gMsg) - 1] = '\0';
+			printf("%s\n", gMsg);//dbg
+			gMsg[0] = '\0';
+			printf("\t[Start] ");//dbg
+			if (start(vimage, ARMUR_LEVEL_0) < 0)
+			{
+				return -1;
+			}
+			gMsg[strlen(gMsg) - 1] = '\0';
+			printf("%s\n", gMsg);//dbg
 		}
 
 		goto FIN;
