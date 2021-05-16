@@ -359,6 +359,9 @@ tnv_t *dtn_ion_armur_get_records(tnvc_t *parms)
  */
 tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(0);
+#endif
 	tnv_t *result = NULL;
 	*status = CTRL_FAILURE;
 	/*
@@ -459,6 +462,9 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |STOP CUSTOM FUNCTION ctrl_init BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+#ifdef AMPSU_PERF
+	CLOCK_END(0, "fsa_all");
+#endif
 	return result;
 }
 
