@@ -546,7 +546,8 @@ armuradmin_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(armuradmin_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_armurrestart_OBJECTS =  \
-	nm/utils/armurrestart-armur_restart.$(OBJEXT)
+	nm/utils/armurrestart-armur_restart.$(OBJEXT) \
+	nm/shared/utils/armurrestart-tictoc.$(OBJEXT)
 armurrestart_OBJECTS = $(am_armurrestart_OBJECTS)
 armurrestart_DEPENDENCIES = libarmur.la $(ION_LIBS) $(LIBOBJS)
 armurrestart_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -1089,7 +1090,8 @@ am__objects_6 = nm/shared/adm/nm_agent-adm.$(OBJEXT) \
 	nm/shared/utils/nm_agent-nm_types.$(OBJEXT) \
 	nm/shared/utils/nm_agent-rhht.$(OBJEXT) \
 	nm/shared/utils/nm_agent-utils.$(OBJEXT) \
-	nm/shared/utils/nm_agent-vector.$(OBJEXT) $(am__objects_5)
+	nm/shared/utils/nm_agent-vector.$(OBJEXT) \
+	nm/shared/utils/nm_agent-tictoc.$(OBJEXT) $(am__objects_5)
 am_nm_agent_OBJECTS = $(am__objects_6) \
 	nm/agent/nm_agent-ingest.$(OBJEXT) \
 	nm/agent/nm_agent-instr.$(OBJEXT) \
@@ -1144,7 +1146,8 @@ am__objects_8 = nm/shared/adm/nm_mgr-adm.$(OBJEXT) \
 	nm/shared/utils/nm_mgr-nm_types.$(OBJEXT) \
 	nm/shared/utils/nm_mgr-rhht.$(OBJEXT) \
 	nm/shared/utils/nm_mgr-utils.$(OBJEXT) \
-	nm/shared/utils/nm_mgr-vector.$(OBJEXT) $(am__objects_7)
+	nm/shared/utils/nm_mgr-vector.$(OBJEXT) \
+	nm/shared/utils/nm_mgr-tictoc.$(OBJEXT) $(am__objects_7)
 am_nm_mgr_OBJECTS = $(am__objects_8) nm/mgr/nm_mgr-agents.$(OBJEXT) \
 	nm/mgr/nm_mgr-metadata.$(OBJEXT) \
 	nm/mgr/nm_mgr-nm_mgr_print.$(OBJEXT) \
@@ -1402,6 +1405,7 @@ am__objects_10 = nm/shared/adm/tests_nm_unit_dotest-adm.$(OBJEXT) \
 	nm/shared/utils/tests_nm_unit_dotest-rhht.$(OBJEXT) \
 	nm/shared/utils/tests_nm_unit_dotest-utils.$(OBJEXT) \
 	nm/shared/utils/tests_nm_unit_dotest-vector.$(OBJEXT) \
+	nm/shared/utils/tests_nm_unit_dotest-tictoc.$(OBJEXT) \
 	$(am__objects_9)
 am__objects_11 = $(am__objects_10) \
 	nm/agent/tests_nm_unit_dotest-ingest.$(OBJEXT) \
@@ -3392,6 +3396,7 @@ nm_shared_src = nm/shared/adm/adm.c	\
 			nm/shared/utils/rhht.c			\
 			nm/shared/utils/utils.c			\
 			nm/shared/utils/vector.c		\
+			nm/shared/utils/tictoc.c		\
 			$(nm_cbor_src)
 
 nm_agent_SOURCES = $(nm_shared_src)		\
@@ -3434,7 +3439,7 @@ nm_agent_LDADD = libici.la libbp.la libltp.la libcfdp.la libarmur.la $(LIBOBJS) 
 nm_agent_LDFLAGS = -L/usr/local/lib -lm -lpthread 
 nm_agent_CFLAGS = -I/usr/include -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils -I$(srcdir)/nm \
                   -I$(srcdir)/nm/agent -I$(srcdir)/bp/library/ext/sbsp $(AM_CFLAGS) $(NO_UNUSED_VARIABLE) \
-                  -DAGENT_ROLE $(CBOR_CFLAGS)
+                  -DAGENT_ROLE -DAMPSU_PERF $(CBOR_CFLAGS)
 
 # libcfdp.la, libarmur.la & -I$(srcdir)/cfdp/library, -I$(srcdir)/nm/utils added //JIGI
 nm_mgr_SOURCES = $(nm_shared_src)		\
@@ -3507,9 +3512,9 @@ libarmur_la_LIBADD = $(ION_LIBS) -larchive
 armuradmin_SOURCES = nm/utils/armuradmin.c
 armuradmin_LDADD = libarmur.la libici.la $(LIBOBJS)
 armuradmin_CFLAGS = $(armurcflags) $(AM_CFLAGS)
-armurrestart_SOURCES = nm/utils/armur_restart.c
+armurrestart_SOURCES = nm/utils/armur_restart.c nm/shared/utils/tictoc.c
 armurrestart_LDADD = libarmur.la $(ION_LIBS) $(LIBOBJS)
-armurrestart_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+armurrestart_CFLAGS = $(armurcflags) -DAMPSU_PERF $(AM_CFLAGS)
 
 # This library contains utility code that's helpful for tests in C.
 TESTUTILOBJS = tests/library/libtestutil.la
@@ -4301,6 +4306,15 @@ armuradmin$(EXEEXT): $(armuradmin_OBJECTS) $(armuradmin_DEPENDENCIES) $(EXTRA_ar
 	$(AM_V_CCLD)$(armuradmin_LINK) $(armuradmin_OBJECTS) $(armuradmin_LDADD) $(LIBS)
 nm/utils/armurrestart-armur_restart.$(OBJEXT):  \
 	nm/utils/$(am__dirstamp) nm/utils/$(DEPDIR)/$(am__dirstamp)
+nm/shared/utils/$(am__dirstamp):
+	@$(MKDIR_P) nm/shared/utils
+	@: > nm/shared/utils/$(am__dirstamp)
+nm/shared/utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) nm/shared/utils/$(DEPDIR)
+	@: > nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
+nm/shared/utils/armurrestart-tictoc.$(OBJEXT):  \
+	nm/shared/utils/$(am__dirstamp) \
+	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 
 armurrestart$(EXEEXT): $(armurrestart_OBJECTS) $(armurrestart_DEPENDENCIES) $(EXTRA_armurrestart_DEPENDENCIES) 
 	@rm -f armurrestart$(EXEEXT)
@@ -5027,12 +5041,6 @@ nm/shared/primitives/nm_agent-table.$(OBJEXT):  \
 nm/shared/primitives/nm_agent-tnv.$(OBJEXT):  \
 	nm/shared/primitives/$(am__dirstamp) \
 	nm/shared/primitives/$(DEPDIR)/$(am__dirstamp)
-nm/shared/utils/$(am__dirstamp):
-	@$(MKDIR_P) nm/shared/utils
-	@: > nm/shared/utils/$(am__dirstamp)
-nm/shared/utils/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) nm/shared/utils/$(DEPDIR)
-	@: > nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/shared/utils/nm_agent-cbor_utils.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
@@ -5049,6 +5057,9 @@ nm/shared/utils/nm_agent-utils.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/shared/utils/nm_agent-vector.$(OBJEXT):  \
+	nm/shared/utils/$(am__dirstamp) \
+	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
+nm/shared/utils/nm_agent-tictoc.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/contrib/QCBOR/src/$(am__dirstamp):
@@ -5179,6 +5190,9 @@ nm/shared/utils/nm_mgr-utils.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/shared/utils/nm_mgr-vector.$(OBJEXT):  \
+	nm/shared/utils/$(am__dirstamp) \
+	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
+nm/shared/utils/nm_mgr-tictoc.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/contrib/QCBOR/src/nm_mgr-UsefulBuf.$(OBJEXT):  \
@@ -5564,6 +5578,9 @@ nm/shared/utils/tests_nm_unit_dotest-utils.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/shared/utils/tests_nm_unit_dotest-vector.$(OBJEXT):  \
+	nm/shared/utils/$(am__dirstamp) \
+	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
+nm/shared/utils/tests_nm_unit_dotest-tictoc.$(OBJEXT):  \
 	nm/shared/utils/$(am__dirstamp) \
 	nm/shared/utils/$(DEPDIR)/$(am__dirstamp)
 nm/contrib/QCBOR/src/tests_nm_unit_dotest-UsefulBuf.$(OBJEXT):  \
@@ -6185,22 +6202,26 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/primitives/$(DEPDIR)/tests_nm_unit_dotest-rules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/primitives/$(DEPDIR)/tests_nm_unit_dotest-table.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/primitives/$(DEPDIR)/tests_nm_unit_dotest-tnv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-cbor_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-nm_types.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-rhht.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_agent-vector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-cbor_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-nm_types.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-rhht.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/nm_mgr-vector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-cbor_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-nm_types.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-rhht.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-vector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@nm/utils/$(DEPDIR)/armuradmin-armuradmin.Po@am__quote@
@@ -7163,6 +7184,20 @@ nm/utils/armurrestart-armur_restart.obj: nm/utils/armur_restart.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/utils/armur_restart.c' object='nm/utils/armurrestart-armur_restart.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -c -o nm/utils/armurrestart-armur_restart.obj `if test -f 'nm/utils/armur_restart.c'; then $(CYGPATH_W) 'nm/utils/armur_restart.c'; else $(CYGPATH_W) '$(srcdir)/nm/utils/armur_restart.c'; fi`
+
+nm/shared/utils/armurrestart-tictoc.o: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -MT nm/shared/utils/armurrestart-tictoc.o -MD -MP -MF nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Tpo -c -o nm/shared/utils/armurrestart-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Tpo nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/armurrestart-tictoc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/armurrestart-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+
+nm/shared/utils/armurrestart-tictoc.obj: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -MT nm/shared/utils/armurrestart-tictoc.obj -MD -MP -MF nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Tpo -c -o nm/shared/utils/armurrestart-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Tpo nm/shared/utils/$(DEPDIR)/armurrestart-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/armurrestart-tictoc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(armurrestart_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/armurrestart-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
 
 bp/ipnd/beacon-beacon.o: bp/ipnd/beacon.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(beacon_CFLAGS) $(CFLAGS) -MT bp/ipnd/beacon-beacon.o -MD -MP -MF bp/ipnd/$(DEPDIR)/beacon-beacon.Tpo -c -o bp/ipnd/beacon-beacon.o `test -f 'bp/ipnd/beacon.c' || echo '$(srcdir)/'`bp/ipnd/beacon.c
@@ -8606,6 +8641,20 @@ nm/shared/utils/nm_agent-vector.obj: nm/shared/utils/vector.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_agent-vector.obj `if test -f 'nm/shared/utils/vector.c'; then $(CYGPATH_W) 'nm/shared/utils/vector.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/vector.c'; fi`
 
+nm/shared/utils/nm_agent-tictoc.o: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/shared/utils/nm_agent-tictoc.o -MD -MP -MF nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Tpo -c -o nm/shared/utils/nm_agent-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Tpo nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/nm_agent-tictoc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_agent-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+
+nm/shared/utils/nm_agent-tictoc.obj: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/shared/utils/nm_agent-tictoc.obj -MD -MP -MF nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Tpo -c -o nm/shared/utils/nm_agent-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Tpo nm/shared/utils/$(DEPDIR)/nm_agent-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/nm_agent-tictoc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_agent-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
+
 nm/contrib/QCBOR/src/nm_agent-UsefulBuf.o: nm/contrib/QCBOR/src/UsefulBuf.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_agent_CFLAGS) $(CFLAGS) -MT nm/contrib/QCBOR/src/nm_agent-UsefulBuf.o -MD -MP -MF nm/contrib/QCBOR/src/$(DEPDIR)/nm_agent-UsefulBuf.Tpo -c -o nm/contrib/QCBOR/src/nm_agent-UsefulBuf.o `test -f 'nm/contrib/QCBOR/src/UsefulBuf.c' || echo '$(srcdir)/'`nm/contrib/QCBOR/src/UsefulBuf.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/contrib/QCBOR/src/$(DEPDIR)/nm_agent-UsefulBuf.Tpo nm/contrib/QCBOR/src/$(DEPDIR)/nm_agent-UsefulBuf.Po
@@ -9277,6 +9326,20 @@ nm/shared/utils/nm_mgr-vector.obj: nm/shared/utils/vector.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/vector.c' object='nm/shared/utils/nm_mgr-vector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_mgr-vector.obj `if test -f 'nm/shared/utils/vector.c'; then $(CYGPATH_W) 'nm/shared/utils/vector.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/vector.c'; fi`
+
+nm/shared/utils/nm_mgr-tictoc.o: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -MT nm/shared/utils/nm_mgr-tictoc.o -MD -MP -MF nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Tpo -c -o nm/shared/utils/nm_mgr-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Tpo nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/nm_mgr-tictoc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_mgr-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+
+nm/shared/utils/nm_mgr-tictoc.obj: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -MT nm/shared/utils/nm_mgr-tictoc.obj -MD -MP -MF nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Tpo -c -o nm/shared/utils/nm_mgr-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Tpo nm/shared/utils/$(DEPDIR)/nm_mgr-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/nm_mgr-tictoc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/nm_mgr-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
 
 nm/contrib/QCBOR/src/nm_mgr-UsefulBuf.o: nm/contrib/QCBOR/src/UsefulBuf.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(nm_mgr_CFLAGS) $(CFLAGS) -MT nm/contrib/QCBOR/src/nm_mgr-UsefulBuf.o -MD -MP -MF nm/contrib/QCBOR/src/$(DEPDIR)/nm_mgr-UsefulBuf.Tpo -c -o nm/contrib/QCBOR/src/nm_mgr-UsefulBuf.o `test -f 'nm/contrib/QCBOR/src/UsefulBuf.c' || echo '$(srcdir)/'`nm/contrib/QCBOR/src/UsefulBuf.c
@@ -10299,6 +10362,20 @@ nm/shared/utils/tests_nm_unit_dotest-vector.obj: nm/shared/utils/vector.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/vector.c' object='nm/shared/utils/tests_nm_unit_dotest-vector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/tests_nm_unit_dotest-vector.obj `if test -f 'nm/shared/utils/vector.c'; then $(CYGPATH_W) 'nm/shared/utils/vector.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/vector.c'; fi`
+
+nm/shared/utils/tests_nm_unit_dotest-tictoc.o: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/shared/utils/tests_nm_unit_dotest-tictoc.o -MD -MP -MF nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Tpo -c -o nm/shared/utils/tests_nm_unit_dotest-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Tpo nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/tests_nm_unit_dotest-tictoc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/tests_nm_unit_dotest-tictoc.o `test -f 'nm/shared/utils/tictoc.c' || echo '$(srcdir)/'`nm/shared/utils/tictoc.c
+
+nm/shared/utils/tests_nm_unit_dotest-tictoc.obj: nm/shared/utils/tictoc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/shared/utils/tests_nm_unit_dotest-tictoc.obj -MD -MP -MF nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Tpo -c -o nm/shared/utils/tests_nm_unit_dotest-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Tpo nm/shared/utils/$(DEPDIR)/tests_nm_unit_dotest-tictoc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='nm/shared/utils/tictoc.c' object='nm/shared/utils/tests_nm_unit_dotest-tictoc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -c -o nm/shared/utils/tests_nm_unit_dotest-tictoc.obj `if test -f 'nm/shared/utils/tictoc.c'; then $(CYGPATH_W) 'nm/shared/utils/tictoc.c'; else $(CYGPATH_W) '$(srcdir)/nm/shared/utils/tictoc.c'; fi`
 
 nm/contrib/QCBOR/src/tests_nm_unit_dotest-UsefulBuf.o: nm/contrib/QCBOR/src/UsefulBuf.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_nm_unit_dotest_CFLAGS) $(CFLAGS) -MT nm/contrib/QCBOR/src/tests_nm_unit_dotest-UsefulBuf.o -MD -MP -MF nm/contrib/QCBOR/src/$(DEPDIR)/tests_nm_unit_dotest-UsefulBuf.Tpo -c -o nm/contrib/QCBOR/src/tests_nm_unit_dotest-UsefulBuf.o `test -f 'nm/contrib/QCBOR/src/UsefulBuf.c' || echo '$(srcdir)/'`nm/contrib/QCBOR/src/UsefulBuf.c

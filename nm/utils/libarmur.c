@@ -7,6 +7,9 @@
 #include "armur_rhht.h"
 #include <archive.h>
 #include <archive_entry.h>
+#ifdef AMPSU_PERF
+#include "../shared/utils/tictoc.h"
+#endif
 
 //#define	CRASH
 
@@ -566,6 +569,9 @@ int	armurStart(char *nmagentCmd)
 	switch (armurdbBuf.stat)
 	{
 	case ARMUR_STAT_DOWNLOADED:
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(1);
+#endif
 		/*	Start install procedure.	*/
 
 		if (armurInstall() < 0)
@@ -574,6 +580,9 @@ int	armurStart(char *nmagentCmd)
 			return -1;
 		}
 		/*	Install has been finished.	*/
+#ifdef AMPSU_PERF
+	CLOCK_END(1, "install_all");
+#endif
 	case ARMUR_STAT_INSTALLED:
 		/*	Start restart procedure.	*/
 

@@ -2015,6 +2015,7 @@ nm_shared_src	 =		nm/shared/adm/adm.c	\
 			nm/shared/utils/rhht.c			\
 			nm/shared/utils/utils.c			\
 			nm/shared/utils/vector.c		\
+			nm/shared/utils/tictoc.c		\
 			$(nm_cbor_src)
 
 nm_agent_SOURCES =  	$(nm_shared_src)		\
@@ -2059,7 +2060,7 @@ nm_agent_LDFLAGS = -L/usr/local/lib -lm -lpthread
 
 nm_agent_CFLAGS = -I/usr/include -I$(srcdir)/ici/library -I$(srcdir)/bp/library -I$(srcdir)/ltp/library -I$(srcdir)/cfdp/library -I$(srcdir)/nm/utils -I$(srcdir)/nm \
                   -I$(srcdir)/nm/agent -I$(srcdir)/bp/library/ext/sbsp $(AM_CFLAGS) $(NO_UNUSED_VARIABLE) \
-                  -DAGENT_ROLE $(CBOR_CFLAGS)
+                  -DAGENT_ROLE -DAMPSU_PERF $(CBOR_CFLAGS)
 # libcfdp.la, libarmur.la & -I$(srcdir)/cfdp/library, -I$(srcdir)/nm/utils added //JIGI
 
 nm_mgr_SOURCES =	$(nm_shared_src)		\
@@ -2139,9 +2140,9 @@ armuradmin_SOURCES = nm/utils/armuradmin.c
 armuradmin_LDADD = libarmur.la libici.la $(LIBOBJS)
 armuradmin_CFLAGS = $(armurcflags) $(AM_CFLAGS)
 
-armurrestart_SOURCES = nm/utils/armur_restart.c
+armurrestart_SOURCES = nm/utils/armur_restart.c nm/shared/utils/tictoc.c
 armurrestart_LDADD = libarmur.la $(ION_LIBS) $(LIBOBJS)
-armurrestart_CFLAGS = $(armurcflags) $(AM_CFLAGS)
+armurrestart_CFLAGS = $(armurcflags) -DAMPSU_PERF $(AM_CFLAGS)
 
 ##########################
 #

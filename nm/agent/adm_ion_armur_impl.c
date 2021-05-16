@@ -25,6 +25,9 @@
 #include "../shared/adm/adm_amp_agent.h"
 #include "instr.h"
 #include "../shared/adm/adm_ion_armur.h"
+#ifdef AMPSU_PERF
+#include "../shared/utils/tictoc.h"
+#endif
 
 
 /*   STOP CUSTOM INCLUDES HERE  */
@@ -465,6 +468,9 @@ tnv_t *dtn_ion_armur_ctrl_init(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
  */
 tnv_t *dtn_ion_armur_ctrl_start(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(0);
+#endif
 	tnv_t *result = NULL;
 	*status = CTRL_FAILURE;
 	/*
@@ -667,6 +673,9 @@ tnv_t *dtn_ion_armur_ctrl_restart(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
  */
 tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(1);
+#endif
 	tnv_t *result = NULL;
 	*status = CTRL_FAILURE;
 	/*
@@ -763,6 +772,9 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |STOP CUSTOM FUNCTION ctrl_report BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+#ifdef AMPSU_PERF
+	CLOCK_END(1, "report_all");
+#endif
 	return result;
 }
 
@@ -771,6 +783,9 @@ tnv_t *dtn_ion_armur_ctrl_report(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
  */
 tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 {
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(1);
+#endif
 	tnv_t *result = NULL;
 	*status = CTRL_FAILURE;
 	/*
@@ -831,6 +846,12 @@ tnv_t *dtn_ion_armur_ctrl_fin(eid_t *def_mgr, tnvc_t *parms, int8_t *status)
 	 * |STOP CUSTOM FUNCTION ctrl_fin BODY
 	 * +-------------------------------------------------------------------------+
 	 */
+#ifdef AMPSU_PERF
+	CLOCK_END(1, "fin_all");
+#endif
+#ifdef AMPSU_PERF
+	CLOCK_END(0, "all");
+#endif
 	return result;
 }
 

@@ -4,6 +4,9 @@
 #include "armur.h"
 #include "armur_restart.h"
 #include "armur_rhht.h"
+#ifdef AMPSU_PERF
+#include "../shared/utils/tictoc.h"
+#endif
 
 /*	*	*	Restart functions	*	*	*/
 
@@ -1132,6 +1135,9 @@ static int	stop(ARMUR_VImage *vimage, int level)
 			return -1;
 		}
 		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STOPPED;
+#ifdef AMPSU_PERF
+		CLOCK_RESTART(imageBuf.name);
+#endif
 	}
 	}
 
@@ -1202,6 +1208,9 @@ static int	start(ARMUR_VImage *vimage, int level)
 			return -1;
 		}
 		vimage->as.lv2.vstat |= ARMUR_VSTAT_LV2_STARTED;
+#ifdef AMPSU_PERF
+		CLOCK_RESTART(imageBuf.name);
+#endif
 	}
 	}
 
@@ -1210,6 +1219,9 @@ static int	start(ARMUR_VImage *vimage, int level)
 
 int	main(int argc, char *argv[])
 {
+#ifdef AMPSU_PERF
+	CLOCK_BEGIN(1);
+#endif
 	Sdr			sdr;
 	PsmPartition		wm;
 	ARMUR_VDB		*armurvdb;
@@ -1438,5 +1450,8 @@ FIN:
 	armurAppendRptMsg("Successfully restarted.", 0);//JIGI
 	oK(armurUpdateStat(ARMUR_STAT_REPORT_PENDING, CHANGE));
 
+#ifdef AMPSU_PERF
+	CLOCK_END(1, "restart_all");
+#endif
 	return 0;
 }
