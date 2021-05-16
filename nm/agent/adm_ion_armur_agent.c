@@ -11,6 +11,7 @@
  ** Modification History: 
  **  YYYY-MM-DD  AUTHOR           DESCRIPTION
  **  ----------  --------------   --------------------------------------------
+ **  2021-05-16  Hoyeon Hwang     Added AMPSU_RA-specific code by macro.
  **  2020-10-26  jigi             added EDD_RECORDS, CTRL_INIT.
  **  2020-08-12  jigi             initial integration of ARMUR to the nm module.
  **
@@ -117,6 +118,7 @@ void dtn_ion_armur_init_tblt()
 
 void dtn_ion_armur_init_sbr()
 {
+#ifdef AMPSU_RA
 	ari_t	*id = NULL;
 	expr_t	*state = NULL;
 	ac_t	*action = NULL;
@@ -179,6 +181,7 @@ void dtn_ion_armur_init_sbr()
 	{
 		gAgentInstr.num_sbrs++;
 	}
+#endif //AMPSU_RA
 }
 
 #endif // _HAVE_DTN_ION_ARMUR_ADM_
